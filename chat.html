@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Público Realtime</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <!-- Modal de Entrada -->
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+
+            <h1>💬 Entrar no Chat</h1>
+
+            <p>Escolha um nome e um avatar</p>
+
+            <input type="text" id="username" maxlength="30" placeholder="Digite seu nome">
+
+            <div class="selected-avatar">
+                <span id="selectedAvatar">😀</span>
+            </div>
+
+            <div id="emojiGrid" class="emoji-grid"></div>
+
+            <button id="enterBtn">
+                Entrar no Chat
+            </button>
+
+        </div>
+    </div>
+
+    <!-- Aplicação -->
+
+    <div class="app">
+
+        <!-- Header -->
+
+        <header class="topbar">
+
+            <div class="logo">
+                💬 Chat Público
+            </div>
+
+            <div class="user-info">
+
+                <span id="currentAvatar">
+                    😀
+                </span>
+
+                <span id="currentName">
+                    Usuário
+                </span>
+
+            </div>
+
+        </header>
+
+        <!-- Mensagens -->
+
+        <main id="messagesContainer" class="messages-container">
+
+            <div class="loading">
+                Conectando...
+            </div>
+
+        </main>
+
+        <!-- Composer -->
+
+        <footer class="composer">
+
+            <textarea id="messageInput" maxlength="500" placeholder="Digite sua mensagem..."></textarea>
+
+            <button id="sendBtn">
+                Enviar
+            </button>
+
+        </footer>
+
+    </div>
+
+    <script>
+
+        /* ======================================================
+           CONFIGURAÇÃO SUPABASE
+        ====================================================== */
+
+        const SUPABASE_URL =
+            "https://spvibyluspkoeejhwuxc.supabase.co";
+
+        const SUPABASE_ANON_KEY =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwdmlieWx1c3Brb2Vlamh3dXhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjE5NDgsImV4cCI6MjA5NjQzNzk0OH0.BdV2Y3TahRInI6yLqZBN93gfjSUpSbc_-n7p1_PVga0";
+
+        const supabase =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_ANON_KEY
+            );
+
+        /* ======================================================
+           ELEMENTOS
+        ====================================================== */
+
+        const loginModal =
+            document.getElementById("loginModal");
+
+        const usernameInput =
+            document.getElementById("username");
+
+        const selectedAvatar =
+            document.getElementById("selectedAvatar");
+
+        const enterBtn =
+            document.getElementById("enterBtn");
+
+        const messagesContainer =
+            document.getElementById("messagesContainer");
+
+        const messageInput =
+            document.getElementById("messageInput");
+
+        const sendBtn =
+            document.getElementById("sendBtn");
+
+        const currentAvatar =
+            document.getElementById("currentAvatar");
+
+        const currentName =
+            document.getElementById("currentName");
+
+        /* ======================================================
+           EMOJIS
+        ====================================================== */
+
+        const emojis = [
+            "😀", "😁", "😂", "🤣", "😎", "😍", "🥳", "🤖", "👻", "🎃",
+            "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯",
+            "🦁", "🐮", "🐷", "🐸", "🐵", "🐧", "🐦", "🦄", "🐢", "🐙",
+            "🌎", "🌙", "⭐", "⚡", "🔥", "🌈", "🍎", "🍕", "🍔", "🍟",
+            "🍩", "🍪", "🍰", "🎂", "⚽", "🏀", "🎮", "🎲", "🚗", "🚀",
+            "✈️", "🛸", "🎧", "📚", "💡", "🔧", "💻", "📱", "❤️", "💙",
+            "💚", "💜", "🖤", "🤍", "💛", "🧡", "👑", "🎩", "🕶️", "🏆",
+            "🥇", "🎯", "🧠", "🦉", "🐺", "🦅", "🦈", "🐬", "🐲", "🐉"
+        ];
+
+        const emojiGrid =
+            document.getElementById("emojiGrid");
+
+        emojis.forEach(emoji => {
+
+            const btn =
+                document.createElement("button");
+
+            btn.className = "emoji-btn";
+
+            btn.textContent = emoji;
+
+            btn.addEventListener("click", () => {
+
+                selectedAvatar.textContent =
+                    emoji;
+
+            });
+
+            emojiGrid.appendChild(btn);
+
+        });
+
+        /* ======================================================
+           USUÁRIO
+        ====================================================== */
+
+        let username =
+            localStorage.getItem("chat_username");
+
+        let avatar =
+            localStorage.getItem("chat_avatar");
+
+        if (username && avatar) {
+
+            loginModal.style.display =
+                "none";
+
+            currentName.textContent =
+                username;
+
+            currentAvatar.textContent =
+                avatar;
+
+        }
+
+        enterBtn.addEventListener("click", () => {
+
+            const name =
+                usernameInput.value.trim();
+
+            if (name.length < 2) {
+
+                alert("Informe um nome.");
+
+                return;
+            }
+
+            username = name;
+
+            avatar =
+                selectedAvatar.textContent;
+
+            localStorage.setItem(
+                "chat_username",
+                username
+            );
+
+            localStorage.setItem(
+                "chat_avatar",
+                avatar
+            );
+
+            currentName.textContent =
+                username;
+
+            currentAvatar.textContent =
+                avatar;
+
+            loginModal.style.display =
+                "none";
+
+        });
+
+        /* ======================================================
+           MENSAGENS
+        ====================================================== */
+
+        function formatDate(date) {
+
+            return new Date(date)
+                .toLocaleTimeString(
+                    "pt-BR",
+                    {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                );
+        }
+
+        function renderMessages(messages) {
+
+            messagesContainer.innerHTML = "";
+
+            messages.forEach(msg => {
+
+                const card =
+                    document.createElement("div");
+
+                card.className =
+                    "message-card";
+
+                const avatarEl =
+                    document.createElement("div");
+
+                avatarEl.className =
+                    "avatar";
+
+                avatarEl.textContent =
+                    msg.avatar;
+
+                const content =
+                    document.createElement("div");
+
+                content.className =
+                    "content";
+
+                const top =
+                    document.createElement("div");
+
+                top.className =
+                    "message-top";
+
+                const name =
+                    document.createElement("span");
+
+                name.className =
+                    "message-name";
+
+                name.textContent =
+                    msg.username;
+
+                const time =
+                    document.createElement("span");
+
+                time.className =
+                    "message-time";
+
+                time.textContent =
+                    formatDate(msg.created_at);
+
+                top.appendChild(name);
+                top.appendChild(time);
+
+                const text =
+                    document.createElement("div");
+
+                text.className =
+                    "message-text";
+
+                text.textContent =
+                    msg.text;
+
+                content.appendChild(top);
+                content.appendChild(text);
+
+                card.appendChild(avatarEl);
+                card.appendChild(content);
+
+                messagesContainer.appendChild(card);
+
+            });
+
+        }
+
+        /* ======================================================
+           CARREGAR ÚLTIMAS 5
+        ====================================================== */
+
+        async function loadMessages() {
+
+            const { data, error } =
+                await supabase
+                    .from("messages")
+                    .select("*")
+                    .order("created_at",
+                        {
+                            ascending: false
+                        }
+                    )
+                    .limit(5);
+
+            if (error) {
+
+                console.error(error);
+
+                return;
+            }
+
+            renderMessages(
+                data.reverse()
+            );
+
+        }
+
+        loadMessages();
+
+        /* ======================================================
+           REALTIME
+        ====================================================== */
+
+        supabase
+            .channel("messages-channel")
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "messages"
+                },
+                () => {
+
+                    loadMessages();
+
+                }
+            )
+            .subscribe();
+
+        /* ======================================================
+           ENVIAR
+        ====================================================== */
+
+        async function sendMessage() {
+
+            if (!username) {
+
+                return;
+            }
+
+            const text =
+                messageInput.value.trim();
+
+            if (!text) {
+
+                return;
+            }
+
+            const { error } =
+                await supabase
+                    .from("messages")
+                    .insert([
+                        {
+                            username,
+                            avatar,
+                            text
+                        }
+                    ]);
+
+            if (error) {
+
+                console.error(error);
+
+                alert(
+                    "Erro ao enviar mensagem"
+                );
+
+                return;
+            }
+
+            messageInput.value = "";
+
+        }
+
+        sendBtn.addEventListener(
+            "click",
+            sendMessage
+        );
+
+        messageInput.addEventListener(
+            "keydown",
+            e => {
+
+                if (
+                    e.key === "Enter" &&
+                    !e.shiftKey
+                ) {
+
+                    e.preventDefault();
+
+                    sendMessage();
+
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
