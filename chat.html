@@ -102,11 +102,11 @@
         const SUPABASE_ANON_KEY =
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwdmlieWx1c3Brb2Vlamh3dXhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjE5NDgsImV4cCI6MjA5NjQzNzk0OH0.BdV2Y3TahRInI6yLqZBN93gfjSUpSbc_-n7p1_PVga0";
 
-        const supabase =
-            window.supabase.createClient(
-                SUPABASE_URL,
-                SUPABASE_ANON_KEY
-            );
+        const supabaseClient =
+window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
         /* ======================================================
            ELEMENTOS
@@ -336,7 +336,7 @@
         async function loadMessages() {
 
             const { data, error } =
-                await supabase
+                await supabaseClient
                     .from("messages")
                     .select("*")
                     .order("created_at",
@@ -365,7 +365,7 @@
            REALTIME
         ====================================================== */
 
-        supabase
+        supabaseClient
             .channel("messages-channel")
             .on(
                 "postgres_changes",
@@ -402,7 +402,7 @@
             }
 
             const { error } =
-                await supabase
+                await supabaseClient
                     .from("messages")
                     .insert([
                         {
