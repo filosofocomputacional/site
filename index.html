@@ -1,230 +1,405 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulação de Empréstimo CLT</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            background-color: #f0f4f8; 
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; margin: 0; padding: 15px;
-        }
-        .container { 
-            background: white; padding: 30px 20px; border-radius: 12px; 
-            box-shadow: 0 8px 20px rgba(0,40,100,0.1); 
-            width: 100%; max-width: 450px; border-top: 6px solid #003366;
-            min-height: 350px; display: flex; flex-direction: column; justify-content: center;
-        }
-
-        /* Estilo dos Passos */
-        .step { display: none; animation: fadeIn 0.4s; }
-        .step.active { display: block; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 { color: #003366; text-align: center; font-size: 20px; margin-top: 0; }
-        p.desc { color: #546e7a; text-align: center; font-size: 15px; line-height: 1.5; }
-
-        .security-info {
-            background: #e8f0fe; padding: 15px; border-radius: 8px;
-            font-size: 13px; color: #3c4043; border-left: 4px solid #1a73e8; margin: 20px 0;
-        }
-
-        label { display: block; margin-top: 20px; color: #003366; font-size: 13px; font-weight: 700; text-transform: uppercase; }
-        input { 
-            width: 100%; padding: 16px; margin-top: 8px; border: 1px solid #cfd8dc; 
-            border-radius: 8px; font-size: 18px; color: #333; transition: all 0.3s;
-        }
-        input:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1); }
-
-        .tempo-container { display: flex; gap: 12px; }
-        
-        /* Botões */
-        .btn-group { margin-top: 30px; display: flex; gap: 10px; }
-        button { 
-            flex: 2; padding: 16px; background-color: #003366; color: white; 
-            border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;
-            text-transform: uppercase;
-        }
-        button.btn-back { flex: 1; background-color: #cfd8dc; color: #546e7a; }
-        button:disabled { background-color: #ccc; }
-
-        /* Barra de Progresso */
-        .progress-bar { 
-            height: 6px; background: #e0e0e0; margin-bottom: 20px; border-radius: 3px; overflow: hidden;
-        }
-        .progress-fill { 
-            height: 100%; background: #1a73e8; width: 0%; transition: width 0.3s;
-        }
-    </style>
+    <title>Correção de Gabaritos por Câmera</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
-<div class="container">
-    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-
-    <form id="meuFormulario">
-        <div class="step active" id="step0">
-            <h2>Dados para simulação de empréstimo CLT</h2>
-            <div class="security-info">
-                Buscamos as melhores taxas nos <strong>mais de 20 bancos parceiros</strong>. 
-                Seus dados estão protegidos pela <strong>LGPD</strong> e são usados apenas para esta consulta.
+    <!-- App Container -->
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i data-lucide="camera-scan" class="logo-icon animate-pulse"></i>
+                <div class="logo-text">
+                    <h1>GabaScan</h1>
+                    <span class="logo-subtitle">Corretor de Gabaritos Smart</span>
+                </div>
             </div>
-            <button type="button" onclick="nextStep()">Começar Simulação</button>
+            <div class="status-badge" id="storageStatusBadge">
+                <i data-lucide="database"></i>
+                <span id="storageStatusText">Local Storage</span>
+            </div>
+        </header>
+
+        <!-- Main Navigation Tabs -->
+        <nav class="app-nav">
+            <button class="nav-item active" data-tab="students-tab">
+                <i data-lucide="users"></i>
+                <span>Alunos</span>
+            </button>
+            <button class="nav-item" data-tab="gabarito-tab">
+                <i data-lucide="check-square"></i>
+                <span>Máscara</span>
+            </button>
+            <button class="nav-item" data-tab="settings-tab">
+                <i data-lucide="sliders"></i>
+                <span>Configurar</span>
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+
+            <!-- TAB 1: STUDENTS LIST -->
+            <section id="students-tab" class="tab-content active">
+                <div class="section-actions">
+                    <div class="search-box">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="studentSearch" placeholder="Buscar aluno...">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="btnOpenImport">
+                            <i data-lucide="upload"></i>
+                            <span>Importar CSV</span>
+                        </button>
+                        <button class="btn btn-primary" id="btnExportCSV">
+                            <i data-lucide="download"></i>
+                            <span>Exportar CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats summary -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-blue-light text-blue">
+                            <i data-lucide="users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statTotalStudents">0</span>
+                            <span class="stat-label">Total de Alunos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-green-light text-green">
+                            <i data-lucide="check-circle-2"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statGradedStudents">0</span>
+                            <span class="stat-label">Corrigidos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-orange-light text-orange">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statPendingStudents">0</span>
+                            <span class="stat-label">Pendentes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-container">
+                    <div class="list-header">
+                        <h2>Lista de Alunos</h2>
+                        <button class="btn btn-text-icon text-primary" id="btnAddStudent">
+                            <i data-lucide="plus-circle"></i> Novo Aluno
+                        </button>
+                    </div>
+                    
+                    <div class="empty-state" id="studentsEmptyState">
+                        <i data-lucide="user-plus" class="empty-icon"></i>
+                        <h3>Nenhum aluno cadastrado</h3>
+                        <p>Importe uma lista via CSV ou adicione um aluno individualmente.</p>
+                        <button class="btn btn-primary btn-sm" id="btnEmptyStateImport">
+                            <i data-lucide="upload"></i> Importar CSV
+                        </button>
+                    </div>
+
+                    <div class="students-list" id="studentsList">
+                        <!-- Dynamic Student Cards will be injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: CONFIG MASCARA & GENERATOR -->
+            <section id="gabarito-tab" class="tab-content">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <i data-lucide="settings-2"></i>
+                        <h2>Configuração do Gabarito Oficial</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="numQuestions">Número de Questões</label>
+                                <select id="numQuestions">
+                                    <option value="5">5 Questões</option>
+                                    <option value="10" selected>10 Questões</option>
+                                    <option value="15">15 Questões</option>
+                                    <option value="20">20 Questões</option>
+                                    <option value="25">25 Questões</option>
+                                    <option value="30">30 Questões</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="numAlternatives">Alternativas</label>
+                                <select id="numAlternatives">
+                                    <option value="4">4 Opções (A, B, C, D)</option>
+                                    <option value="5" selected>5 Opções (A, B, C, D, E)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="info-alert">
+                            <i data-lucide="info"></i>
+                            <p>Defina o gabarito correto clicando sobre as letras correspondentes abaixo. Este gabarito será usado como máscara para a correção automática.</p>
+                        </div>
+
+                        <!-- Visual Grid of Official Key -->
+                        <div class="key-creator-container">
+                            <h3>Respostas Corretas (Gabarito Oficial)</h3>
+                            <div class="gabarito-grid" id="officialKeyGrid">
+                                <!-- Dynamic rows of options will be injected here -->
+                            </div>
+                        </div>
+
+                        <div class="gabarito-actions mt-4">
+                            <button class="btn btn-primary btn-block" id="btnSaveMask">
+                                <i data-lucide="save"></i> Salvar Gabarito Oficial
+                            </button>
+                            <button class="btn btn-secondary btn-block mt-2" id="btnPrintBlankSheet">
+                                <i data-lucide="printer"></i> Visualizar/Imprimir Folhas em Branco
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: CONFIGURACOES -->
+            <section id="settings-tab" class="tab-content">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <i data-lucide="hard-drive"></i>
+                        <h2>Armazenamento de Dados</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Método de Armazenamento</label>
+                            <div class="radio-group">
+                                <label class="radio-card active">
+                                    <input type="radio" name="storageType" value="local" checked>
+                                    <i data-lucide="smartphone"></i>
+                                    <div class="radio-card-text">
+                                        <h4>Local Storage</h4>
+                                        <p>Armazena apenas neste dispositivo (Navegador/Celular).</p>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="storageType" value="supabase">
+                                    <i data-lucide="cloud"></i>
+                                    <div class="radio-card-text">
+                                        <h4>Supabase (Nuvem)</h4>
+                                        <p>Sincroniza notas em tempo real em um banco na nuvem.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Supabase Config Form -->
+                        <div id="supabaseConfigArea" class="supabase-config-area hidden">
+                            <div class="form-group">
+                                <label for="supabaseUrl">URL do Supabase</label>
+                                <input type="text" id="supabaseUrl" placeholder="https://xxxxxxxxxxxx.supabase.co">
+                            </div>
+                            <div class="form-group">
+                                <label for="supabaseAnonKey">Anon Key (Chave Pública API)</label>
+                                <input type="password" id="supabaseAnonKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                            </div>
+                            <div class="flex-actions">
+                                <button class="btn btn-secondary" id="btnTestSupabase">Testar Conexão</button>
+                                <button class="btn btn-primary" id="btnSaveSupabase">Conectar e Salvar</button>
+                            </div>
+                            
+                            <div class="supabase-info mt-3">
+                                <h5>Estrutura da Tabela do Supabase:</h5>
+                                <p>Crie uma tabela chamada <code>gabaritos_alunos</code> com os seguintes campos:</p>
+                                <pre><code>id: uuid (Primary Key)
+name: text (Not Null)
+status: text (Default 'Pendente')
+score: int4 (Nullable)
+answers: jsonb (Nullable)
+scanned_at: timestamptz (Nullable)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-danger">
+                    <div class="card-header bg-danger-light">
+                        <i data-lucide="alert-triangle" class="text-danger"></i>
+                        <h2 class="text-danger">Zona de Perigo</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Essas ações limparão permanentemente as informações salvas no celular.</p>
+                        <div class="flex-actions mt-3">
+                            <button class="btn btn-outline-danger" id="btnClearLocalData">
+                                <i data-lucide="trash-2"></i> Excluir Todos os Dados
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Modal 1: Import CSV / Nomes -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Importar Alunos</h2>
+                <button class="btn-close" id="btnCloseImportModal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-container-modal">
+                    <!-- Drop zone for CSV -->
+                    <div class="csv-upload-zone" id="csvDropZone">
+                        <i data-lucide="file-spreadsheet" class="upload-icon"></i>
+                        <p>Arraste seu arquivo CSV aqui ou clique para selecionar</p>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                        <button class="btn btn-secondary btn-sm mt-3" onclick="document.getElementById('csvFileInput').click()">Selecionar Arquivo</button>
+                    </div>
+                    
+                    <div class="separator-text"><span>OU COLE UMA LISTA DE NOMES</span></div>
+
+                    <div class="form-group mt-2">
+                        <label for="textNamesList">Um nome por linha:</label>
+                        <textarea id="textNamesList" rows="6" placeholder="Ana Silva&#10;Bruno Santos&#10;Carlos Souza"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCancelImport">Cancelar</button>
+                <button class="btn btn-primary" id="btnConfirmImport">Importar Alunos</button>
+            </div>
         </div>
+    </div>
 
-        <div class="step" id="step1">
-            <label>Qual seu nome completo?</label>
-            <input type="text" name="nome" id="input_nome" placeholder="Digite seu nome" required>
-            <div class="btn-group">
-                <button type="button" class="btn-back" onclick="prevStep()">Voltar</button>
-                <button type="button" onclick="nextStep()">Próximo</button>
+    <!-- Modal 2: Novo Aluno Individual -->
+    <div id="addStudentModal" class="modal">
+        <div class="modal-content max-w-sm">
+            <div class="modal-header">
+                <h2>Novo Aluno</h2>
+                <button class="btn-close" id="btnCloseAddStudentModal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newStudentName">Nome Completo</label>
+                    <input type="text" id="newStudentName" placeholder="Ex: Maria Oliveira">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCancelAddStudent">Cancelar</button>
+                <button class="btn btn-primary" id="btnSaveNewStudent">Salvar</button>
             </div>
         </div>
+    </div>
 
-        <div class="step" id="step2">
-            <label>Informe seu CPF</label>
-            <input type="tel" name="cpf" id="cpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" required>
-            <div class="btn-group">
-                <button type="button" class="btn-back" onclick="prevStep()">Voltar</button>
-                <button type="button" onclick="nextStep()">Próximo</button>
+    <!-- Modal 3: Câmera Scanner -->
+    <div id="cameraModal" class="modal modal-fullscreen">
+        <div class="scanner-container">
+            <!-- Active camera view -->
+            <video id="cameraVideo" autoplay playsinline muted></video>
+            
+            <!-- Graphic overlay for alignment guidelines -->
+            <canvas id="cameraOverlayCanvas"></canvas>
+
+            <!-- Top scanner control toolbar -->
+            <div class="scanner-header">
+                <button class="btn-circle btn-scanner-exit" id="btnExitScanner">
+                    <i data-lucide="x"></i>
+                </button>
+                <div class="scanner-student-name">
+                    <span class="label">Escaneando:</span>
+                    <span class="name" id="scannerStudentName">Carregando...</span>
+                </div>
+                <div class="camera-selector-container">
+                    <button class="btn-circle" id="btnToggleCamera" title="Mudar Câmera">
+                        <i data-lucide="switch-camera"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toast-like notifications for OMR feedback -->
+            <div class="scanner-feedback" id="scannerFeedback">
+                Alinhe os 4 cantos da folha com as marcações amarelas
+            </div>
+
+            <!-- Bottom scanner actions -->
+            <div class="scanner-footer">
+                <button class="btn btn-scanner-action btn-capture" id="btnCapturePhoto">
+                    <div class="capture-inner"></div>
+                </button>
             </div>
         </div>
+    </div>
 
-        <div class="step" id="step3">
-            <label>Seu telefone WhatsApp</label>
-            <input type="tel" name="whatsapp" id="whatsapp" class="sp_celulares" placeholder="00 9 - 0000-0000" maxlength="16" required>
-            <div class="btn-group">
-                <button type="button" class="btn-back" onclick="prevStep()">Voltar</button>
-                <button type="button" onclick="nextStep()">Próximo</button>
+    <!-- Modal 4: Revisar e Confirmar Correção (Visual OMR feedback) -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content max-w-md">
+            <div class="modal-header">
+                <h2>Revisar Correção</h2>
+                <button class="btn-close" id="btnCloseReviewModal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="score-badge-large">
+                    <span class="score-num" id="reviewScoreValue">0 / 0</span>
+                    <span class="score-lbl">Acertos</span>
+                </div>
+                
+                <p class="review-student-info">Aluno: <strong id="reviewStudentName">Nome do Aluno</strong></p>
+
+                <!-- Processed canvas preview of what the computer read -->
+                <div class="canvas-preview-container">
+                    <canvas id="processedCanvasPreview"></canvas>
+                    <div class="canvas-zoom-tip">
+                        <i data-lucide="zoom-in"></i> Imagem digitalizada e processada pelo OMR
+                    </div>
+                </div>
+
+                <!-- Review list of questions -->
+                <div class="review-details-container">
+                    <h3>Detalhe por Questão</h3>
+                    <div class="review-questions-list" id="reviewQuestionsList">
+                        <!-- Dynamic elements showing Q1: Correct (A), Q2: Incorrect (Selected B, Expected C) -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer flex-column-gap">
+                <button class="btn btn-outline-danger btn-block" id="btnRetryScan">
+                    <i data-lucide="refresh-cw"></i> Escanear Novamente
+                </button>
+                <button class="btn btn-success btn-block" id="btnConfirmScore">
+                    <i data-lucide="check-circle-2"></i> Confirmar Nota e Gravar
+                </button>
             </div>
         </div>
+    </div>
 
-        <div class="step" id="step4">
-            <label>Um telefone para receber SMS</label>
-            <input type="tel" name="sms" id="sms" class="sp_celulares" placeholder="00 9 - 0000-0000" maxlength="16" required>
-            <div class="btn-group">
-                <button type="button" class="btn-back" onclick="prevStep()">Voltar</button>
-                <button type="button" onclick="nextStep()">Próximo</button>
-            </div>
-        </div>
+    <!-- ==================== VIEW/PRINT BLANK SHEETS SCREEN ==================== -->
+    <div id="printableArea" class="printable-area hidden">
+        <!-- Inside here we will dynamically generate the answer sheet. 
+             This section is completely hidden in normal app state, but shown under @media print. -->
+    </div>
 
-        <div class="step" id="step5">
-            <label>Tempo de Empresa</label>
-            <div class="tempo-container">
-                <input type="tel" id="anos" placeholder="Anos" inputmode="numeric" required>
-                <input type="tel" id="meses" placeholder="Meses" inputmode="numeric" required>
-            </div>
-            <div class="btn-group">
-                <button type="button" class="btn-back" onclick="prevStep()">Voltar</button>
-                <button type="button" onclick="nextStep()">Próximo</button>
-            </div>
-        </div>
-
-        <div class="step" id="step6">
-            <label>Data de Nascimento</label>
-            <input type="date" name="nascimento" required>
-            <div class="btn-group">
-                <button type="button" class="btn-back" onclick="prevStep()">Voltar</button>
-                <button type="button" onclick="nextStep()">Próximo</button>
-            </div>
-        </div>
-
-        <div class="step" id="step7">
-            <label>Para finalizar, seu melhor e-mail</label>
-            <input type="email" name="email" placeholder="email@exemplo.com" required>
-            <input type="hidden" name="tempo_final" id="tempo_final">
-            <div class="btn-group">
-                <button type="button" class="btn-back" onclick="prevStep()">Voltar</button>
-                <button type="submit" id="btnEnviar">Concluir Simulação</button>
-            </div>
-        </div>
-    </form>
-    <p id="mensagem" style="display:none; text-align:center; color:#00c853; font-weight:bold; margin-top:20px;">✅ Enviado com sucesso! Entraremos em contato.</p>
-</div>
-
-<script>
-    let currentStep = 0;
-    const steps = document.querySelectorAll(".step");
-    const progressFill = document.getElementById("progressFill");
-
-    function updateProgress() {
-        const percent = (currentStep / (steps.length - 1)) * 100;
-        progressFill.style.width = percent + "%";
-    }
-
-    function nextStep() {
-        const currentInputs = steps[currentStep].querySelectorAll("input");
-        let valid = true;
-        currentInputs.forEach(input => { if(!input.checkValidity()) valid = false; });
-
-        if(valid && currentStep < steps.length - 1) {
-            steps[currentStep].classList.remove("active");
-            currentStep++;
-            steps[currentStep].classList.add("active");
-            updateProgress();
-        } else if (!valid) {
-            alert("Por favor, preencha o campo corretamente.");
-        }
-    }
-
-    function prevStep() {
-        if(currentStep > 0) {
-            steps[currentStep].classList.remove("active");
-            currentStep--;
-            steps[currentStep].classList.add("active");
-            updateProgress();
-        }
-    }
-
-    // Máscaras (Mesma lógica anterior)
-    document.querySelectorAll('.sp_celulares').forEach(input => {
-        input.addEventListener('input', (e) => {
-            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,1})(\d{0,4})(\d{0,4})/);
-            e.target.value = !x[2] ? x[1] : x[1] + ' ' + x[2] + (x[3] ? ' - ' + x[3] + (x[4] ? '-' + x[4] : '') : '');
-        });
-    });
-    document.getElementById('cpf').addEventListener('input', (e) => {
-        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
-        e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + '.' + x[3] + (x[4] ? '-' + x[4] : '');
-    });
-
-    // Envio
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbw-fV-DubghPYNXSJsvfqgFlRIKFkC01leKGL2-uQIGtK5CucnD8oqw56FZ72RXVBGm/exec';
-    const form = document.getElementById('meuFormulario');
-
-    form.addEventListener('submit', e => {
-        e.preventDefault();
-        const btn = document.getElementById('btnEnviar');
-        btn.disabled = true;
-        btn.innerText = "Enviando...";
-
-        const anos = document.getElementById('anos').value || '0';
-        const meses = document.getElementById('meses').value || '0';
-        document.getElementById('tempo_final').value = anos + "A " + meses + "M";
-
-        const formData = new FormData(form);
-        formData.set('cpf', formData.get('cpf').replace(/\D/g, ''));
-        formData.set('whatsapp', formData.get('whatsapp').replace(/\D/g, ''));
-        formData.set('sms', formData.get('sms').replace(/\D/g, ''));
-
-        fetch(scriptURL, { method: 'POST', body: formData})
-            .then(response => {
-                steps[currentStep].classList.remove("active");
-                document.getElementById('mensagem').style.display = "block";
-            })
-            .catch(error => {
-                alert('Erro ao enviar.');
-                btn.disabled = false;
-            });
-    });
-</script>
+    <!-- Custom App Logic Script -->
+    <script src="app.js"></script>
 </body>
 </html>
-    
