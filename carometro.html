@@ -268,15 +268,56 @@
 }
 
         // Remover foto (Define photo_url como null)
-        async function removerFoto(alunoId) {
-            if (!confirm("Tem certeza que deseja remover a foto deste aluno?")) return;
+        // Deletar foto do Aluno (No Banco e no Storage)
+async function removerFoto(alunoId) {
+    if (!confirm("Tem certeza que deseja remover a foto deste aluno?")) return;
 
-            const { error } = await supabaseClient.from('carometro').update({ photo_url: null }).eq('id', alunoId);
-            if (error) return alert("Erro ao remover foto: " + error.message);
+    // 1. Busca o aluno para pegar a photo_url atual antes de apagar
+    const { data: aluno, error: fetchError } = await supabaseClient
+        .from('carometro')
+        .select('photo_url')
+        .eq('id', alunoId)
+        .single();
 
-            const turmaAtual = document.getElementById("select-turmas").value;
-            carregarAlunos(turmaAtual);
+    if (fetchError) return alert("Erro ao buscar dados do aluno: " + fetchError.message);
+
+    // 2. Se o aluno tiver uma foto cadastrada, apaga ela do Storage primeiro
+    if (aluno && aluno.photo_url) {
+        try {
+            // Extrai o caminho relativo do arquivo de dentro da URL pública do Supabase
+            // Exemplo: de "https://.../fotos-alunos/public/foto.jpg" pega apenas "public/foto.jpg"
+            const caminhoArquivo = aluno.photo_url.split('/fotos-alunos/')[1];
+
+            if (caminhoArquivo) {
+                // Deleta o arquivo físico do bucket
+                const { error: storageError } = await supabaseClient.storage
+                    .from('fotos-alunos')
+                    .remove([caminhoArquivo]);
+
+                if (storageError) {
+                    console.error("Aviso: Não foi possível deletar o arquivo do Storage (pode ser que já não existia):", storageError.message);
+                    // Não travamos o código aqui caso o arquivo já tenha sido apagado manualmente no painel
+                }
+            }
+        } catch (err) {
+            console.error("Erro ao processar o caminho do arquivo para exclusão:", err);
         }
+    }
+
+    // 3. Atualiza a tabela definindo a photo_url como null
+    const { error: dbError } = await supabaseClient
+        .from('carometro')
+        .update({ photo_url: null })
+        .eq('id', alunoId);
+
+    if (dbError) return alert("Erro ao remover o vínculo da foto no banco de dados: " + dbError.message);
+
+    // 4. Recarrega a listagem atualizada na tela
+    const turmaAtual = document.getElementById("select-turmas").value;
+    carregarAlunos(turmaAtual);
+    
+    alert("Foto excluída com sucesso do banco de dados e do Storage!");
+}
 
         // --- MODAL DE EDIÇÃO ---
         function abrirModalEdicao(id, nome, turma) {
