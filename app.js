@@ -1,3 +1,222 @@
+// Controles de Tamanho do Gabarito na Câmera
+document.addEventListener('DOMContentLoaded', function() {
+    const cameraModal = document.getElementById('cameraModal');
+    const cameraOverlayCanvas = document.getElementById('cameraOverlayCanvas');
+    const scannerSizeControls = document.getElementById('scannerSizeControls');
+    const btnToggleControls = document.getElementById('btnToggleControls');
+    
+    // Sliders de controle
+    const gabaritoWidth = document.getElementById('gabaritoWidth');
+    const gabaritoHeight = document.getElementById('gabaritoHeight');
+    const gabaritoX = document.getElementById('gabaritoX');
+    const gabaritoY = document.getElementById('gabaritoY');
+    
+    // Displays de valor
+    const gabaritoWidthValue = document.getElementById('gabaritoWidthValue');
+    const gabaritoHeightValue = document.getElementById('gabaritoHeightValue');
+    const gabaritoXValue = document.getElementById('gabaritoXValue');
+    const gabaritoYValue = document.getElementById('gabaritoYValue');
+    
+    const btnResetSize = document.getElementById('btnResetSize');
+    const btnApplySize = document.getElementById('btnApplySize');
+    
+    // Estado do gabarito
+    let gabaritoConfig = {
+        width: 80,
+        height: 70,
+        x: 50,
+        y: 50
+    };
+    
+    // Toggle dos controles
+    btnToggleControls.addEventListener('click', function() {
+        scannerSizeControls.classList.toggle('hidden');
+    });
+    
+    // Atualização em tempo real dos sliders
+    gabaritoWidth.addEventListener('input', function() {
+        gabaritoConfig.width = parseInt(this.value);
+        gabaritoWidthValue.textContent = this.value;
+        updateGabaritoOverlay();
+    });
+    
+    gabaritoHeight.addEventListener('input', function() {
+        gabaritoConfig.height = parseInt(this.value);
+        gabaritoHeightValue.textContent = this.value;
+        updateGabaritoOverlay();
+    });
+    
+    gabaritoX.addEventListener('input', function() {
+        gabaritoConfig.x = parseInt(this.value);
+        gabaritoXValue.textContent = this.value;
+        updateGabaritoOverlay();
+    });
+    
+    gabaritoY.addEventListener('input', function() {
+        gabaritoConfig.y = parseInt(this.value);
+        gabaritoYValue.textContent = this.value;
+        updateGabaritoOverlay();
+    });
+    
+    // Resetar para valores padrão
+    btnResetSize.addEventListener('click', function() {
+        gabaritoConfig = { width: 80, height: 70, x: 50, y: 50 };
+        gabaritoWidth.value = 80;
+        gabaritoHeight.value = 70;
+        gabaritoX.value = 50;
+        gabaritoY.value = 50;
+        gabaritoWidthValue.textContent = '80';
+        gabaritoHeightValue.textContent = '70';
+        gabaritoXValue.textContent = '50';
+        gabaritoYValue.textContent = '50';
+        updateGabaritoOverlay();
+    });
+    
+    // Aplicar configuração
+    btnApplySize.addEventListener('click', function() {
+        // Salva a configuração no localStorage
+        localStorage.setItem('gabaritoSizeConfig', JSON.stringify(gabaritoConfig));
+        
+        // Feedback visual
+        const feedback = document.getElementById('scannerFeedback');
+        feedback.textContent = '✓ Tamanho do gabarito aplicado!';
+        feedback.style.background = 'rgba(34, 197, 94, 0.9)';
+        
+        setTimeout(() => {
+            feedback.textContent = 'Alinhe os 4 cantos da folha com as marcações amarelas';
+            feedback.style.background = '';
+        }, 2000);
+        
+        // Oculta os controles
+        scannerSizeControls.classList.add('hidden');
+    });
+    
+    // Função para atualizar o overlay do gabarito na câmera
+    function updateGabaritoOverlay() {
+        const video = document.getElementById('cameraVideo');
+        const canvas = cameraOverlayCanvas;
+        const ctx = canvas.getContext('2d');
+        
+        // Ajusta o tamanho do canvas para o tamanho do vídeo
+        canvas.width = video.videoWidth || video.clientWidth;
+        canvas.height = video.videoHeight || video.clientHeight;
+        
+        // Limpa o canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Calcula as dimensões do gabarito em pixels
+        const gabWidth = (canvas.width * gabaritoConfig.width) / 100;
+        const gabHeight = (canvas.height * gabaritoConfig.height) / 100;
+        const gabX = (canvas.width * gabaritoConfig.x) / 100 - gabWidth / 2;
+        const gabY = (canvas.height * gabaritoConfig.y) / 100 - gabHeight / 2;
+        
+        // Desenha o retângulo do gabarito
+        ctx.strokeStyle = '#4f46e5';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 5]);
+        ctx.strokeRect(gabX, gabY, gabWidth, gabHeight);
+        
+        // Preenchimento semi-transparente
+        ctx.fillStyle = 'rgba(79, 70, 229, 0.1)';
+        ctx.fillRect(gabX, gabY, gabWidth, gabHeight);
+        
+        // Desenha os marcadores de canto (amarelos)
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 4;
+        
+        const cornerSize = 30;
+        
+        // Canto superior esquerdo
+        ctx.beginPath();
+        ctx.moveTo(gabX, gabY + cornerSize);
+        ctx.lineTo(gabX, gabY);
+        ctx.lineTo(gabX + cornerSize, gabY);
+        ctx.stroke();
+        
+        // Canto superior direito
+        ctx.beginPath();
+        ctx.moveTo(gabX + gabWidth - cornerSize, gabY);
+        ctx.lineTo(gabX + gabWidth, gabY);
+        ctx.lineTo(gabX + gabWidth, gabY + cornerSize);
+        ctx.stroke();
+        
+        // Canto inferior esquerdo
+        ctx.beginPath();
+        ctx.moveTo(gabX, gabY + gabHeight - cornerSize);
+        ctx.lineTo(gabX, gabY + gabHeight);
+        ctx.lineTo(gabX + cornerSize, gabY + gabHeight);
+        ctx.stroke();
+        
+        // Canto inferior direito
+        ctx.beginPath();
+        ctx.moveTo(gabX + gabWidth - cornerSize, gabY + gabHeight);
+        ctx.lineTo(gabX + gabWidth, gabY + gabHeight);
+        ctx.lineTo(gabX + gabWidth, gabY + gabHeight - cornerSize);
+        ctx.stroke();
+        
+        // Desenha grid interno (opcional - para visualização)
+        ctx.strokeStyle = 'rgba(79, 70, 229, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        
+        const numQuestions = parseInt(document.getElementById('numQuestions')?.value || 10);
+        const rowHeight = gabHeight / numQuestions;
+        
+        for (let i = 1; i < numQuestions; i++) {
+            ctx.beginPath();
+            ctx.moveTo(gabX, gabY + i * rowHeight);
+            ctx.lineTo(gabX + gabWidth, gabY + i * rowHeight);
+            ctx.stroke();
+        }
+    }
+    
+    // Atualiza o overlay quando o vídeo começar a tocar
+    const video = document.getElementById('cameraVideo');
+    video.addEventListener('loadedmetadata', function() {
+        updateGabaritoOverlay();
+    });
+    
+    // Atualiza continuamente enquanto a câmera está aberta
+    let overlayInterval;
+    
+    // Quando o modal da câmera abre
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.target.id === 'cameraModal') {
+                if (cameraModal.style.display === 'flex' || cameraModal.classList.contains('active')) {
+                    // Carrega configuração salva
+                    const savedConfig = localStorage.getItem('gabaritoSizeConfig');
+                    if (savedConfig) {
+                        gabaritoConfig = JSON.parse(savedConfig);
+                        gabaritoWidth.value = gabaritoConfig.width;
+                        gabaritoHeight.value = gabaritoConfig.height;
+                        gabaritoX.value = gabaritoConfig.x;
+                        gabaritoY.value = gabaritoConfig.y;
+                        gabaritoWidthValue.textContent = gabaritoConfig.width;
+                        gabaritoHeightValue.textContent = gabaritoConfig.height;
+                        gabaritoXValue.textContent = gabaritoConfig.x;
+                        gabaritoYValue.textContent = gabaritoConfig.y;
+                    }
+                    
+                    // Inicia atualização contínua
+                    overlayInterval = setInterval(updateGabaritoOverlay, 100);
+                } else {
+                    // Para a atualização quando fechar
+                    if (overlayInterval) {
+                        clearInterval(overlayInterval);
+                    }
+                }
+            }
+        });
+    });
+    
+    observer.observe(cameraModal, { attributes: true, attributeFilter: ['style', 'class'] });
+    
+    // Redimensiona o overlay quando a janela mudar de tamanho
+    window.addEventListener('resize', updateGabaritoOverlay);
+});
+
 /* ==========================================================================
    STATE MANAGEMENT & GLOBAL CONFIGURATIONS
    ========================================================================== */
