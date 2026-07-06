@@ -1,9 +1,22 @@
-// Controles de Tamanho do Gabarito na Câmera
+// Controles de Tamanho do Gabarito na Câmera - VERSÃO CORRIGIDA
 document.addEventListener('DOMContentLoaded', function() {
+    // Aguarda um pouco para garantir que todos os elementos estão carregados
+    setTimeout(function() {
+        initGabaritoSizeControls();
+    }, 500);
+});
+
+function initGabaritoSizeControls() {
     const cameraModal = document.getElementById('cameraModal');
     const cameraOverlayCanvas = document.getElementById('cameraOverlayCanvas');
     const scannerSizeControls = document.getElementById('scannerSizeControls');
     const btnToggleControls = document.getElementById('btnToggleControls');
+    
+    // Verifica se todos os elementos existem
+    if (!cameraModal || !cameraOverlayCanvas || !scannerSizeControls || !btnToggleControls) {
+        console.warn('Elementos do controle de tamanho não encontrados');
+        return;
+    }
     
     // Sliders de controle
     const gabaritoWidth = document.getElementById('gabaritoWidth');
@@ -28,78 +41,122 @@ document.addEventListener('DOMContentLoaded', function() {
         y: 50
     };
     
+    // Carrega configuração salva se existir
+    const savedConfig = localStorage.getItem('gabaritoSizeConfig');
+    if (savedConfig) {
+        try {
+            gabaritoConfig = JSON.parse(savedConfig);
+            if (gabaritoWidth) gabaritoWidth.value = gabaritoConfig.width;
+            if (gabaritoHeight) gabaritoHeight.value = gabaritoConfig.height;
+            if (gabaritoX) gabaritoX.value = gabaritoConfig.x;
+            if (gabaritoY) gabaritoY.value = gabaritoConfig.y;
+            if (gabaritoWidthValue) gabaritoWidthValue.textContent = gabaritoConfig.width;
+            if (gabaritoHeightValue) gabaritoHeightValue.textContent = gabaritoConfig.height;
+            if (gabaritoXValue) gabaritoXValue.textContent = gabaritoConfig.x;
+            if (gabaritoYValue) gabaritoYValue.textContent = gabaritoConfig.y;
+        } catch (e) {
+            console.error('Erro ao carregar configuração salva:', e);
+        }
+    }
+    
     // Toggle dos controles
-    btnToggleControls.addEventListener('click', function() {
-        scannerSizeControls.classList.toggle('hidden');
-    });
+    if (btnToggleControls) {
+        btnToggleControls.addEventListener('click', function() {
+            scannerSizeControls.classList.toggle('hidden');
+        });
+    }
     
     // Atualização em tempo real dos sliders
-    gabaritoWidth.addEventListener('input', function() {
-        gabaritoConfig.width = parseInt(this.value);
-        gabaritoWidthValue.textContent = this.value;
-        updateGabaritoOverlay();
-    });
+    if (gabaritoWidth) {
+        gabaritoWidth.addEventListener('input', function() {
+            gabaritoConfig.width = parseInt(this.value);
+            if (gabaritoWidthValue) gabaritoWidthValue.textContent = this.value;
+            updateGabaritoOverlay();
+        });
+    }
     
-    gabaritoHeight.addEventListener('input', function() {
-        gabaritoConfig.height = parseInt(this.value);
-        gabaritoHeightValue.textContent = this.value;
-        updateGabaritoOverlay();
-    });
+    if (gabaritoHeight) {
+        gabaritoHeight.addEventListener('input', function() {
+            gabaritoConfig.height = parseInt(this.value);
+            if (gabaritoHeightValue) gabaritoHeightValue.textContent = this.value;
+            updateGabaritoOverlay();
+        });
+    }
     
-    gabaritoX.addEventListener('input', function() {
-        gabaritoConfig.x = parseInt(this.value);
-        gabaritoXValue.textContent = this.value;
-        updateGabaritoOverlay();
-    });
+    if (gabaritoX) {
+        gabaritoX.addEventListener('input', function() {
+            gabaritoConfig.x = parseInt(this.value);
+            if (gabaritoXValue) gabaritoXValue.textContent = this.value;
+            updateGabaritoOverlay();
+        });
+    }
     
-    gabaritoY.addEventListener('input', function() {
-        gabaritoConfig.y = parseInt(this.value);
-        gabaritoYValue.textContent = this.value;
-        updateGabaritoOverlay();
-    });
+    if (gabaritoY) {
+        gabaritoY.addEventListener('input', function() {
+            gabaritoConfig.y = parseInt(this.value);
+            if (gabaritoYValue) gabaritoYValue.textContent = this.value;
+            updateGabaritoOverlay();
+        });
+    }
     
     // Resetar para valores padrão
-    btnResetSize.addEventListener('click', function() {
-        gabaritoConfig = { width: 80, height: 70, x: 50, y: 50 };
-        gabaritoWidth.value = 80;
-        gabaritoHeight.value = 70;
-        gabaritoX.value = 50;
-        gabaritoY.value = 50;
-        gabaritoWidthValue.textContent = '80';
-        gabaritoHeightValue.textContent = '70';
-        gabaritoXValue.textContent = '50';
-        gabaritoYValue.textContent = '50';
-        updateGabaritoOverlay();
-    });
+    if (btnResetSize) {
+        btnResetSize.addEventListener('click', function() {
+            gabaritoConfig = { width: 80, height: 70, x: 50, y: 50 };
+            if (gabaritoWidth) gabaritoWidth.value = 80;
+            if (gabaritoHeight) gabaritoHeight.value = 70;
+            if (gabaritoX) gabaritoX.value = 50;
+            if (gabaritoY) gabaritoY.value = 50;
+            if (gabaritoWidthValue) gabaritoWidthValue.textContent = '80';
+            if (gabaritoHeightValue) gabaritoHeightValue.textContent = '70';
+            if (gabaritoXValue) gabaritoXValue.textContent = '50';
+            if (gabaritoYValue) gabaritoYValue.textContent = '50';
+            updateGabaritoOverlay();
+        });
+    }
     
     // Aplicar configuração
-    btnApplySize.addEventListener('click', function() {
-        // Salva a configuração no localStorage
-        localStorage.setItem('gabaritoSizeConfig', JSON.stringify(gabaritoConfig));
-        
-        // Feedback visual
-        const feedback = document.getElementById('scannerFeedback');
-        feedback.textContent = '✓ Tamanho do gabarito aplicado!';
-        feedback.style.background = 'rgba(34, 197, 94, 0.9)';
-        
-        setTimeout(() => {
-            feedback.textContent = 'Alinhe os 4 cantos da folha com as marcações amarelas';
-            feedback.style.background = '';
-        }, 2000);
-        
-        // Oculta os controles
-        scannerSizeControls.classList.add('hidden');
-    });
+    if (btnApplySize) {
+        btnApplySize.addEventListener('click', function() {
+            // Salva a configuração no localStorage
+            localStorage.setItem('gabaritoSizeConfig', JSON.stringify(gabaritoConfig));
+            
+            // Feedback visual
+            const feedback = document.getElementById('scannerFeedback');
+            if (feedback) {
+                feedback.textContent = '✓ Tamanho do gabarito aplicado!';
+                feedback.style.background = 'rgba(34, 197, 94, 0.9)';
+                
+                setTimeout(() => {
+                    feedback.textContent = 'Alinhe os 4 cantos da folha com as marcações amarelas';
+                    feedback.style.background = '';
+                }, 2000);
+            }
+            
+            // Oculta os controles
+            scannerSizeControls.classList.add('hidden');
+        });
+    }
     
     // Função para atualizar o overlay do gabarito na câmera
     function updateGabaritoOverlay() {
         const video = document.getElementById('cameraVideo');
         const canvas = cameraOverlayCanvas;
-        const ctx = canvas.getContext('2d');
         
-        // Ajusta o tamanho do canvas para o tamanho do vídeo
-        canvas.width = video.videoWidth || video.clientWidth;
-        canvas.height = video.videoHeight || video.clientHeight;
+        if (!video || !canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        // Só desenha se o vídeo tiver dimensões válidas
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+            // Usa as dimensões do cliente como fallback
+            canvas.width = video.clientWidth || 640;
+            canvas.height = video.clientHeight || 480;
+        } else {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        }
         
         // Limpa o canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -156,109 +213,69 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.stroke();
         
         // Desenha grid interno (opcional - para visualização)
-        ctx.strokeStyle = 'rgba(79, 70, 229, 0.3)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([5, 5]);
+        const numQuestionsSelect = document.getElementById('numQuestions');
+        const numQuestions = numQuestionsSelect ? parseInt(numQuestionsSelect.value || 10) : 10;
         
-        const numQuestions = parseInt(document.getElementById('numQuestions')?.value || 10);
-        const rowHeight = gabHeight / numQuestions;
-        
-        for (let i = 1; i < numQuestions; i++) {
-            ctx.beginPath();
-            ctx.moveTo(gabX, gabY + i * rowHeight);
-            ctx.lineTo(gabX + gabWidth, gabY + i * rowHeight);
-            ctx.stroke();
+        if (numQuestions > 0) {
+            ctx.strokeStyle = 'rgba(79, 70, 229, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            
+            const rowHeight = gabHeight / numQuestions;
+            
+            for (let i = 1; i < numQuestions; i++) {
+                ctx.beginPath();
+                ctx.moveTo(gabX, gabY + i * rowHeight);
+                ctx.lineTo(gabX + gabWidth, gabY + i * rowHeight);
+                ctx.stroke();
+            }
         }
     }
     
-    // Atualiza o overlay quando o vídeo começar a tocar
-    const video = document.getElementById('cameraVideo');
-    video.addEventListener('loadedmetadata', function() {
-        updateGabaritoOverlay();
-    });
+    // Expõe a função globalmente para que o código original possa chamá-la
+    window.updateGabaritoOverlay = updateGabaritoOverlay;
     
-    // Atualiza continuamente enquanto a câmera está aberta
-    let overlayInterval;
+    // Adiciona listener para quando o modal da câmera abrir
+    // Usa um observer mais simples e seguro
+    let overlayInterval = null;
     
-    // Quando o modal da câmera abre
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.target.id === 'cameraModal') {
-                if (cameraModal.style.display === 'flex' || cameraModal.classList.contains('active')) {
-                    // Carrega configuração salva
-                    const savedConfig = localStorage.getItem('gabaritoSizeConfig');
-                    if (savedConfig) {
-                        gabaritoConfig = JSON.parse(savedConfig);
-                        gabaritoWidth.value = gabaritoConfig.width;
-                        gabaritoHeight.value = gabaritoConfig.height;
-                        gabaritoX.value = gabaritoConfig.x;
-                        gabaritoY.value = gabaritoConfig.y;
-                        gabaritoWidthValue.textContent = gabaritoConfig.width;
-                        gabaritoHeightValue.textContent = gabaritoConfig.height;
-                        gabaritoXValue.textContent = gabaritoConfig.x;
-                        gabaritoYValue.textContent = gabaritoConfig.y;
-                    }
-                    
-                    // Inicia atualização contínua
-                    overlayInterval = setInterval(updateGabaritoOverlay, 100);
-                } else {
-                    // Para a atualização quando fechar
-                    if (overlayInterval) {
-                        clearInterval(overlayInterval);
-                    }
-                }
+    function checkCameraModal() {
+        if (cameraModal.classList.contains('active') || cameraModal.style.display === 'flex') {
+            // Câmera está aberta, inicia atualização
+            if (!overlayInterval) {
+                overlayInterval = setInterval(updateGabaritoOverlay, 200);
             }
-        });
-    });
+        } else {
+            // Câmera fechada, para atualização
+            if (overlayInterval) {
+                clearInterval(overlayInterval);
+                overlayInterval = null;
+            }
+        }
+    }
     
-    observer.observe(cameraModal, { attributes: true, attributeFilter: ['style', 'class'] });
+    // Verifica a cada 500ms se o modal está aberto
+    setInterval(checkCameraModal, 500);
     
     // Redimensiona o overlay quando a janela mudar de tamanho
-    window.addEventListener('resize', updateGabaritoOverlay);
-});
-
-/* ==========================================================================
-   STATE MANAGEMENT & GLOBAL CONFIGURATIONS
-   ========================================================================== */
-
-let students = [];
-let officialMask = {
-    numQuestions: 10,
-    numAlternatives: 5,
-    answers: {} // e.g., { 1: 'A', 2: 'B', ... }
-};
-
-let settings = {
-    storageType: 'local', // 'local' or 'supabase'
-    supabaseUrl: '',
-    supabaseAnonKey: ''
-};
-
-let activeStudentId = null;
-let supabaseClient = null;
-
-// Camera configuration
-let currentStream = null;
-let useBackCamera = true;
-
-// OMR coordinate calculations configuration
-// Percentages relative to the 4 corner alignment markers
-const layoutConfig = {
-    uStart: 0.12,      // Grid start horizontal
-    uEnd: 0.88,        // Grid end horizontal
-    vStart: 0.28,      // Grid start vertical (below header and student name)
-    vEnd: 0.88,        // Grid end vertical (above footer)
-    markerGuideTL: { x: 70, y: 70 },   // Guideline coordinates in a 1000x1000 square
-    markerGuideTR: { x: 930, y: 70 },
-    markerGuideBL: { x: 70, y: 930 },
-    markerGuideBR: { x: 930, y: 930 },
-    searchRadius: 70   // Size of search window (140x140 square centered at guide)
-};
-
-// Auto-run initialization on load
-document.addEventListener("DOMContentLoaded", () => {
-    initApp();
-});
+    window.addEventListener('resize', function() {
+        if (cameraModal.classList.contains('active') || cameraModal.style.display === 'flex') {
+            updateGabaritoOverlay();
+        }
+    });
+    
+    // Atualiza quando o vídeo começar a tocar
+    const video = document.getElementById('cameraVideo');
+    if (video) {
+        video.addEventListener('loadedmetadata', function() {
+            updateGabaritoOverlay();
+        });
+        
+        video.addEventListener('play', function() {
+            setTimeout(updateGabaritoOverlay, 100);
+        });
+    }
+}
 
 /* ==========================================================================
    INITIALIZATION & PERSISTENCE
