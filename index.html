@@ -313,43 +313,96 @@ scanned_at: timestamptz (Nullable)</code></pre>
     </div>
 
     <!-- Modal 3: Câmera Scanner -->
-    <div id="cameraModal" class="modal modal-fullscreen">
-        <div class="scanner-container">
-            <!-- Active camera view -->
-            <video id="cameraVideo" autoplay playsinline muted></video>
-            
-            <!-- Graphic overlay for alignment guidelines -->
-            <canvas id="cameraOverlayCanvas"></canvas>
+   <!-- Modal 3: Câmera Scanner com Controles de Tamanho -->
+<div id="cameraModal" class="modal modal-fullscreen">
+    <div class="scanner-container">
+        <!-- Active camera view -->
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        
+        <!-- Graphic overlay for alignment guidelines -->
+        <canvas id="cameraOverlayCanvas"></canvas>
 
-            <!-- Top scanner control toolbar -->
-            <div class="scanner-header">
-                <button class="btn-circle btn-scanner-exit" id="btnExitScanner">
-                    <i data-lucide="x"></i>
+        <!-- Top scanner control toolbar -->
+        <div class="scanner-header">
+            <button class="btn-circle btn-scanner-exit" id="btnExitScanner">
+                <i data-lucide="x"></i>
+            </button>
+            <div class="scanner-student-name">
+                <span class="label">Escaneando:</span>
+                <span class="name" id="scannerStudentName">Carregando...</span>
+            </div>
+            <div class="camera-selector-container">
+                <button class="btn-circle" id="btnToggleCamera" title="Mudar Câmera">
+                    <i data-lucide="switch-camera"></i>
                 </button>
-                <div class="scanner-student-name">
-                    <span class="label">Escaneando:</span>
-                    <span class="name" id="scannerStudentName">Carregando...</span>
-                </div>
-                <div class="camera-selector-container">
-                    <button class="btn-circle" id="btnToggleCamera" title="Mudar Câmera">
-                        <i data-lucide="switch-camera"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Toast-like notifications for OMR feedback -->
-            <div class="scanner-feedback" id="scannerFeedback">
-                Alinhe os 4 cantos da folha com as marcações amarelas
-            </div>
-
-            <!-- Bottom scanner actions -->
-            <div class="scanner-footer">
-                <button class="btn btn-scanner-action btn-capture" id="btnCapturePhoto">
-                    <div class="capture-inner"></div>
+                <button class="btn-circle" id="btnToggleControls" title="Mostrar/Ocultar Controles">
+                    <i data-lucide="sliders"></i>
                 </button>
             </div>
         </div>
+
+        <!-- Toast-like notifications for OMR feedback -->
+        <div class="scanner-feedback" id="scannerFeedback">
+            Alinhe os 4 cantos da folha com as marcações amarelas
+        </div>
+
+        <!-- Controles de Tamanho do Gabarito (Flutuantes) -->
+        <div class="scanner-size-controls hidden" id="scannerSizeControls">
+            <div class="size-control-header">
+                <i data-lucide="maximize-2"></i>
+                <span>Ajustar Tamanho do Gabarito</span>
+            </div>
+            
+            <div class="size-control-group">
+                <label>
+                    <i data-lucide="move-horizontal"></i>
+                    Largura: <strong id="gabaritoWidthValue">80</strong>%
+                </label>
+                <input type="range" id="gabaritoWidth" min="30" max="95" value="80" class="slider-vertical">
+            </div>
+
+            <div class="size-control-group">
+                <label>
+                    <i data-lucide="move-vertical"></i>
+                    Altura: <strong id="gabaritoHeightValue">70</strong>%
+                </label>
+                <input type="range" id="gabaritoHeight" min="30" max="95" value="70" class="slider-vertical">
+            </div>
+
+            <div class="size-control-group">
+                <label>
+                    <i data-lucide="move"></i>
+                    Posição X: <strong id="gabaritoXValue">50</strong>%
+                </label>
+                <input type="range" id="gabaritoX" min="5" max="95" value="50" class="slider-vertical">
+            </div>
+
+            <div class="size-control-group">
+                <label>
+                    <i data-lucide="move"></i>
+                    Posição Y: <strong id="gabaritoYValue">50</strong>%
+                </label>
+                <input type="range" id="gabaritoY" min="5" max="95" value="50" class="slider-vertical">
+            </div>
+
+            <div class="size-control-actions">
+                <button class="btn btn-sm btn-secondary" id="btnResetSize">
+                    <i data-lucide="rotate-ccw"></i> Resetar
+                </button>
+                <button class="btn btn-sm btn-primary" id="btnApplySize">
+                    <i data-lucide="check"></i> Aplicar
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom scanner actions -->
+        <div class="scanner-footer">
+            <button class="btn btn-scanner-action btn-capture" id="btnCapturePhoto">
+                <div class="capture-inner"></div>
+            </button>
+        </div>
     </div>
+</div>
 
     <!-- Modal 4: Revisar e Confirmar Correção (Visual OMR feedback) -->
     <div id="reviewModal" class="modal">
