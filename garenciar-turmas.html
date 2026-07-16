@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEu6XYfBX6dLECkxfarfPyb2WfE9KQSWr1B8WeCshx2w&s">
+    <title>Gerenciador de Turmas - Firmo de Mattos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+    <!-- TELA DE CARREGAMENTO (LOADING OVERLAY) -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/75 hidden flex flex-col items-center justify-center p-4 z-[9999]">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+        <p class="text-white font-semibold text-lg text-center" id="loading-text">Processando alteração...</p>
+    </div>
+
+    <!-- TELA DE LOGIN -->
+    <div id="tela-login" class="hidden flex flex-col items-center justify-center min-h-screen p-4 bg-slate-900">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-100">
+            <div class="flex justify-center mb-6">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEu6XYfBX6dLECkxfarfPyb2WfE9KQSWr1B8WeCshx2w&s" class="h-20 w-20 rounded-full border-2 border-blue-900 shadow" alt="Logo">
+            </div>
+            <h2 class="text-2xl font-bold text-center text-blue-900 mb-2">Acesso ao Gerenciador</h2>
+            <p class="text-sm text-center text-gray-500 mb-6">Insira os dados da escola para prosseguir</p>
+            
+            <form id="form-login" onsubmit="efetuarLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Usuário / Escola</label>
+                    <input type="text" id="login-username" name="username" value="E.E FIRMO DE MATOS" readonly autocomplete="username"
+                        class="w-full p-3 border border-gray-300 bg-gray-100 rounded-lg font-semibold text-gray-700 cursor-not-allowed focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Senha de Acesso</label>
+                    <input type="password" id="login-password" name="password" placeholder="Digite a senha" required autocomplete="current-password"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md">
+                    Entrar <i class="fa-solid fa-right-to-bracket ml-1"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TELA DE SELEÇÃO DE TURMAS -->
+    <div id="tela-selecao" class="hidden flex flex-col items-center justify-center min-h-screen p-4">
+        <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-gray-200">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-blue-900">Configuração</h2>
+                <button onclick="efetuarLogout()" class="text-xs font-semibold text-red-600 hover:text-red-800 transition">
+                    <i class="fa-solid fa-power-off"></i> Sair
+                </button>
+            </div>
+            
+            <!-- ETAPA DE ENSINO -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-2">1º Passo: Escolha a Etapa de Ensino</label>
+                <select id="select-etapa" onchange="filtrarTurmasPorEtapa()" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                    <option value="">-- Selecione a Etapa --</option>
+                    <option value="1 REG">1º Ano Regular (1 REG)</option>
+                    <option value="1 ADM">1º Ano Administração (TEC ADM)</option>
+                    <option value="2 REG">2º Ano Regular (2 REG)</option>
+                    <option value="3 REG">3º Ano Regular (3 REG)</option>
+                </select>
+            </div>
+
+            <!-- TURMA -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold mb-2">2º Passo: Escolha a Turma</label>
+                <select id="select-turmas" disabled class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-not-allowed">
+                    <option value="">Selecione uma etapa primeiro...</option>
+                </select>
+            </div>
+
+            <button onclick="entrarNaTurma()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow">
+                Gerenciar Alunos
+            </button>
+        </div>
+    </div>
+
+    <!-- TELA PRINCIPAL DO GERENCIADOR -->
+    <div id="tela-gerenciador" class="hidden">
+        <header class="bg-blue-900 text-white p-6 shadow-md">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 id="titulo-turma" class="text-2xl font-bold">Gerenciador de Turmas</h1>
+                    <p class="text-sm text-blue-200">Realoque alunos e gerencie novas matrículas</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="voltarParaSelecao()" class="bg-blue-800 hover:bg-blue-700 px-4 py-2 rounded shadow transition font-semibold text-sm">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Voltar
+                    </button>
+                    <button onclick="efetuarLogout()" class="bg-red-700 hover:bg-red-800 px-4 py-2 rounded shadow transition font-semibold text-sm">
+                        <i class="fa-solid fa-power-off"></i> Sair
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-4 md:p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- LISTA DE ALUNOS (Esquerda / 2 Colunas no Desktop) -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h2 class="text-lg font-bold text-blue-950 mb-4 flex items-center justify-between">
+                            <span>Alunos na Turma</span>
+                            <span id="contador-alunos" class="text-xs bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-semibold">0 alunos</span>
+                        </h2>
+                        
+                        <!-- LISTA DINÂMICA -->
+                        <div id="lista-alunos" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                            <!-- Inserido via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CADASTRO DE NOVO ALUNO (Direita / 1 Coluna no Desktop) -->
+                <div class="space-y-4">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 sticky top-6">
+                        <h2 class="text-lg font-bold text-blue-950 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus text-blue-700"></i> Cadastrar Aluno
+                        </h2>
+                        
+                        <form id="form-novo-aluno" onsubmit="adicionarAluno(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nome Completo <span class="text-red-500">*</span></label>
+                                <input type="text" id="novo-nome" placeholder="Digite o nome do aluno" required
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Turma Destino <span class="text-red-500">*</span></label>
+                                <select id="novo-turma-select" onchange="toggleNovaTurmaInput()" required
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm">
+                                    <option value="">-- Selecione a Turma --</option>
+                                    <!-- Populado dinamicamente -->
+                                </select>
+                            </div>
+
+                            <!-- Campo adicional se escolher criar nova turma -->
+                            <div id="campo-nova-turma" class="hidden">
+                                <label class="block text-xs font-bold text-amber-700 uppercase mb-1">Nome da Nova Turma</label>
+                                <input type="text" id="novo-turma-manual" placeholder="Ex: 1 REG 3 ou TEC ADM 2"
+                                    class="w-full p-3 border border-amber-300 bg-amber-50 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none font-medium text-sm uppercase">
+                            </div>
+
+                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md text-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i> Salvar Registro
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= CONEXÃO E LÓGICA DO SUPABASE ================= -->
+    <script>
+        const SUPABASE_URL = "https://vydnefdeqljazqaisslq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
+         
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let todasAsTurmas = [];
+        const CHAVE_EXPIRACAO = "carometro_sessao_expiracao";
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            verificarSessao();
+        });
+
+        // Controle do Loading Overlay
+        function mostrarLoading(mensagem) {
+            document.getElementById("loading-text").innerText = mensagem || "Processando...";
+            document.getElementById("loading-overlay").classList.remove("hidden");
+        }
+
+        function esconderLoading() {
+            document.getElementById("loading-overlay").classList.add("hidden");
+        }
+
+        // Controle de Sessão de Login (24 Horas)
+        function verificarSessao() {
+            const expiracao = localStorage.getItem(CHAVE_EXPIRACAO);
+            const agora = Date.now();
+
+            if (expiracao && agora < parseInt(expiracao)) {
+                document.getElementById("tela-login").classList.add("hidden");
+                document.getElementById("tela-selecao").classList.remove("hidden");
+                document.getElementById("tela-gerenciador").classList.add("hidden");
+                carregarTurmas();
+            } else {
+                localStorage.removeItem(CHAVE_EXPIRACAO);
+                document.getElementById("tela-login").classList.remove("hidden");
+                document.getElementById("tela-selecao").classList.add("hidden");
+                document.getElementById("tela-gerenciador").classList.add("hidden");
+            }
+        }
+
+        function efetuarLogin(event) {
+            event.preventDefault();
+            const senhaDigitada = document.getElementById("login-password").value;
+
+            if (senhaDigitada === "8737") {
+                const tempoExpiracao = Date.now() + (24 * 60 * 60 * 1000); 
+                localStorage.setItem(CHAVE_EXPIRACAO, tempoExpiracao.toString());
+                
+                document.getElementById("login-password").value = "";
+                verificarSessao();
+            } else {
+                alert("Senha inválida! Tente novamente.");
+                document.getElementById("login-password").focus();
+            }
+        }
+
+        function efetuarLogout() {
+            if (confirm("Tem certeza que deseja sair do sistema?")) {
+                localStorage.removeItem(CHAVE_EXPIRACAO);
+                verificarSessao();
+            }
+        }
+
+        // Busca as turmas únicas diretamente da tabela 'carometro' do Supabase
+        async function carregarTurmas() {
+            const { data, error } = await supabaseClient.from('carometro').select('class_name');
+            if (error) return alert("Erro ao carregar turmas do servidor: " + error.message);
+            
+            todasAsTurmas = [...new Set(data.map(item => item.class_name))].filter(Boolean).sort();
+            
+            // Reseta os campos de seleção da tela de configurações
+            document.getElementById("select-etapa").value = "";
+            const selectTurmas = document.getElementById("select-turmas");
+            selectTurmas.innerHTML = '<option value="">Selecione uma etapa primeiro...</option>';
+            selectTurmas.disabled = true;
+            selectTurmas.classList.add("bg-gray-50", "cursor-not-allowed");
+
+            // Popula também a lista do formulário de novos alunos
+            atualizarSelectNovoAluno();
+        }
+
+        // Filtra as turmas de acordo com a etapa de ensino escolhida
+        function filtrarTurmasPorEtapa() {
+            const etapaSelecionada = document.getElementById("select-etapa").value;
+            const selectTurmas = document.getElementById("select-turmas");
+
+            if (!etapaSelecionada) {
+                selectTurmas.innerHTML = '<option value="">Selecione uma etapa primeiro...</option>';
+                selectTurmas.disabled = true;
+                selectTurmas.classList.add("bg-gray-50", "cursor-not-allowed");
+                return;
+            }
+
+            let turmasFiltradas = [];
+
+            if (etapaSelecionada === "1 REG") {
+                turmasFiltradas = todasAsTurmas.filter(nomeTurma => nomeTurma.toUpperCase().startsWith("1 REG"));
+            } else if (etapaSelecionada === "1 ADM") {
+                turmasFiltradas = todasAsTurmas.filter(nomeTurma => nomeTurma.toUpperCase().includes("ADM"));
+            } else if (etapaSelecionada === "2 REG") {
+                turmasFiltradas = todasAsTurmas.filter(nomeTurma => nomeTurma.toUpperCase().startsWith("2 REG"));
+            } else if (etapaSelecionada === "3 REG") {
+                turmasFiltradas = todasAsTurmas.filter(nomeTurma => nomeTurma.toUpperCase().startsWith("3 REG"));
+            }
+
+            selectTurmas.innerHTML = '<option value="">-- Escolha uma Turma --</option>';
+            
+            if (turmasFiltradas.length === 0) {
+                selectTurmas.innerHTML = '<option value="">Nenhuma turma encontrada</option>';
+            } else {
+                turmasFiltradas.forEach(turma => {
+                    selectTurmas.innerHTML += `<option value="${turma}">${turma}</option>`;
+                });
+            }
+
+            selectTurmas.disabled = false;
+            selectTurmas.classList.remove("bg-gray-50", "cursor-not-allowed");
+        }
+
+        // Atualiza a seleção de turmas no formulário de cadastro de aluno
+        function atualizarSelectNovoAluno() {
+            const select = document.getElementById("novo-turma-select");
+            select.innerHTML = '<option value="">-- Selecione a Turma --</option>';
+            todasAsTurmas.forEach(t => {
+                select.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+            select.innerHTML += '<option value="NOVA" class="text-blue-600 font-bold">+ Criar Nova Turma...</option>';
+        }
+
+        // Exibe ou esconde o input de criação manual de turma
+        function toggleNovaTurmaInput() {
+            const select = document.getElementById("novo-turma-select");
+            const campoManual = document.getElementById("campo-nova-turma");
+            const inputManual = document.getElementById("novo-turma-manual");
+            
+            if (select.value === "NOVA") {
+                campoManual.classList.remove("hidden");
+                inputManual.required = true;
+                inputManual.focus();
+            } else {
+                campoManual.classList.add("hidden");
+                inputManual.required = false;
+                inputManual.value = "";
+            }
+        }
+
+        // Entrar na tela do gerenciador
+        function entrarNaTurma() {
+            const nomeTurma = document.getElementById("select-turmas").value;
+            if (!nomeTurma) return alert("Selecione uma turma para prosseguir!");
+            
+            document.getElementById("titulo-turma").innerText = `Gerenciamento - ${nomeTurma}`;
+            
+            document.getElementById("tela-selecao").classList.add("hidden");
+            document.getElementById("tela-gerenciador").classList.remove("hidden");
+            
+            // Pré-seleciona a turma atual no formulário de cadastro
+            document.getElementById("novo-turma-select").value = nomeTurma;
+            toggleNovaTurmaInput();
+            
+            carregarAlunos(nomeTurma);
+        }
+
+        function voltarParaSelecao() {
+            document.getElementById("tela-gerenciador").classList.add("hidden");
+            document.getElementById("tela-selecao").classList.remove("hidden");
+            carregarTurmas();
+        }
+
+        // Buscar Alunos da Turma selecionada
+        async function carregarAlunos(nomeTurma) {
+            mostrarLoading("Carregando alunos...");
+            
+            try {
+                const { data: alunos, error } = await supabaseClient
+                    .from('carometro')
+                    .select('*')
+                    .eq('class_name', nomeTurma)
+                    .order('student_name');
+
+                if (error) throw error;
+
+                document.getElementById("contador-alunos").innerText = `${alunos.length} ${alunos.length === 1 ? 'aluno' : 'alunos'}`;
+
+                const container = document.getElementById("lista-alunos");
+                container.innerHTML = "";
+
+                if (alunos.length === 0) {
+                    container.innerHTML = `
+                        <div class="p-8 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+                            <i class="fa-solid fa-users-slash text-4xl mb-2 text-gray-300"></i>
+                            <p class="font-medium">Nenhum aluno encontrado nesta turma.</p>
+                            <p class="text-xs text-gray-400 mt-1">Adicione um novo aluno usando o formulário ao lado.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                alunos.forEach(aluno => {
+                    const row = document.createElement("div");
+                    row.className = "flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 gap-4 transition hover:border-blue-300";
+
+                    // Mini Foto do Aluno
+                    let areaFoto = `
+                        <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center border border-gray-300 overflow-hidden flex-shrink-0">
+                            <i class="fa-solid fa-user text-lg text-gray-400"></i>
+                        </div>`;
+                    
+                    if (aluno.photo_url) {
+                        areaFoto = `
+                            <div class="w-10 h-10 rounded-full border border-blue-500 overflow-hidden flex-shrink-0">
+                                <img src="${aluno.photo_url}" class="w-full h-full object-cover">
+                            </div>`;
+                    }
+
+                    // Gera as opções do dropdown com as turmas existentes
+                    const opcoesTurma = todasAsTurmas.map(t => 
+                        `<option value="${t}" ${t === aluno.class_name ? 'selected' : ''}>${t}</option>`
+                    ).join('');
+
+                    const nomeEscapado = (aluno.student_name || "").replace(/'/g, "\\'");
+
+                    row.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            ${areaFoto}
+                            <div class="min-w-0 flex-1">
+                                <p class="font-bold text-gray-800 truncate uppercase text-sm sm:text-base">${aluno.student_name}</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Alterar Turma:</span>
+                            <select onchange="atualizarTurmaAluno('${aluno.id}', this.value, '${nomeEscapado}')" 
+                                class="p-2 border border-gray-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 w-full sm:w-44 shadow-sm cursor-pointer">
+                                ${opcoesTurma}
+                            </select>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+
+            } catch (err) {
+                alert("Erro ao buscar dados: " + err.message);
+            } finally {
+                esconderLoading();
+            }
+        }
+
+        // Alteração da turma do aluno em tempo real no banco
+        async function atualizarTurmaAluno(alunoId, novaTurma, nomeAluno) {
+            mostrarLoading(`Movendo ${nomeAluno} para a turma ${novaTurma}...`);
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('carometro')
+                    .update({ class_name: novaTurma })
+                    .eq('id', alunoId);
+
+                if (error) throw error;
+
+                // Atualiza a listagem da turma atual (removendo o aluno que acabou de mudar)
+                const turmaAtual = document.getElementById("select-turmas").value;
+                await carregarAlunos(turmaAtual);
+                
+            } catch (err) {
+                alert("Erro ao alterar turma do aluno: " + err.message);
+            } finally {
+                esconderLoading();
+            }
+        }
+
+        // Inserção de Novo Aluno
+        async function adicionarAluno(event) {
+            event.preventDefault();
+
+            const nome = document.getElementById("novo-nome").value.trim();
+            const selectTurma = document.getElementById("novo-turma-select").value;
+            const turmaManual = document.getElementById("novo-turma-manual").value.trim();
+
+            let turmaFinal = selectTurma;
+            if (selectTurma === "NOVA") {
+                if (!turmaManual) return alert("Por favor, digite o nome da nova turma!");
+                turmaFinal = turmaManual.toUpperCase();
+            }
+
+            if (!nome || !turmaFinal) return alert("Nome e Turma são campos obrigatórios!");
+
+            mostrarLoading("Cadastrando aluno no sistema...");
+
+            try {
+                const { error } = await supabaseClient
+                    .from('carometro')
+                    .insert({
+                        student_name: nome,
+                        class_name: turmaFinal
+                    });
+
+                if (error) throw error;
+
+                // Limpa o formulário
+                document.getElementById("form-novo-aluno").reset();
+                document.getElementById("campo-nova-turma").classList.add("hidden");
+                document.getElementById("novo-turma-manual").required = false;
+
+                // Recarrega todas as turmas para que a nova apareça nos dropdowns
+                await carregarTurmas();
+
+                // Se o aluno foi cadastrado na turma que está atualmente aberta no gerenciador, recarrega a lista
+                const turmaVisualizada = document.getElementById("select-turmas").value;
+                if (turmaVisualizada === turmaFinal) {
+                    await carregarAlunos(turmaFinal);
+                    document.getElementById("novo-turma-select").value = turmaVisualizada;
+                } else {
+                    alert(`Aluno(a) "${nome}" foi cadastrado(a) com sucesso na turma "${turmaFinal}"!`);
+                }
+
+            } catch (err) {
+                alert("Erro ao cadastrar aluno: " + err.message);
+            } finally {
+                esconderLoading();
+            }
+        }
+    </script>
+</body>
+</html>
