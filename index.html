@@ -2,457 +2,1455 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Correção de Gabaritos por Câmera</title>
-    <!-- Google Fonts: Outfit -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Custom Style Sheet -->
-    <link rel="stylesheet" href="app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Correção de Provas - CorrigePro</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --dark: #343a40;
+            --light: #f8f9fa;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #eef2f5; color: #333; }
+        
+        /* Cabeçalho e Navegação */
+        header { background: var(--dark); color: white; padding: 15px 20px; text-align: center; }
+        nav { display: flex; justify-content: center; background: #212529; }
+        nav button { background: none; border: none; color: #aaa; padding: 14px 20px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        nav button.active { color: white; border-bottom: 3px solid var(--primary); background: rgba(255,255,255,0.05); }
+
+        .container { max-width: 800px; margin: 20px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        
+        /* Selects de Turmas */
+        .filter-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
+        
+        /* Tabela de Alunos */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
+        th { background: var(--light); font-weight: 600; }
+        .btn-cam { background: #eef9ff; border: 1px solid #b6e0fe; color: var(--primary); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-cam:hover { background: var(--primary); color: white; }
+        .nota-badge { font-weight: bold; padding: 4px 10px; border-radius: 12px; background: #e2e3e5; color: #383d41; }
+        .nota-badge.tem-nota { background: #d4edda; color: #155724; }
+
+        /* Modal da Câmera */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; max-width: 600px; width: 90%; text-align: center; position: relative; }
+        video, canvas { width: 100%; border-radius: 8px; background: #111; }
+        .btn-close-modal { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #888; }
+
+        /* Aba Calibragem */
+        .slider-group { margin: 12px 0; text-align: left; }
+        .slider-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 3px; }
+        .grid-gabarito { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; text-align: left; }
+
+        /* Botões Gerais */
+        .btn-action { background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
+        .btn-action:hover { opacity: 0.9; }
+
+        #statusCv { padding: 10px; background: #fff3cd; color: #856404; border-radius: 6px; text-align: center; margin-bottom: 15px; font-size: 14px; }
+    </style>
 </head>
 <body>
 
-    <!-- App Container -->
-    <div class="app-container">
+<header>
+    <h2>🎓 CorrigePro - Gestão de Correção</h2>
+</header>
+
+<nav>
+    <button class="tab-btn active" onclick="trocarAba('abaCorrecao')">📝 Correção</button>
+    <button class="tab-btn" onclick="trocarAba('abaCalibragem')">⚙️ Calibragem</button>
+    <button class="tab-btn" onclick="trocarAba('abaExportar')">📄 Exportar Notas</button>
+</nav>
+
+<div class="container">
+    <div id="statusCv">⏳ Baixando motor de visão computacional (OpenCV.js)...</div>
+
+    <!-- ================= ABA 1: CORREÇÃO ================= -->
+    <div id="abaCorrecao" class="tab-content">
+        <div class="filter-group">
+            <div>
+                <label><strong>Etapa de Ensino:</strong></label>
+                <select id="selectEtapa" class="form-control" onchange="carregarTurmas()"></select>
+            </div>
+            <div>
+                <label><strong>Turma:</strong></label>
+                <select id="selectTurma" class="form-control" onchange="carregarAlunos()"></select>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome do Aluno</th>
+                    <th style="text-align: center; width: 100px;">Capturar</th>
+                    <th style="text-align: center; width: 100px;">Nota</th>
+                </tr>
+            </thead>
+            <tbody id="listaAlunosBody">
+                <tr><td colspan="3" style="text-align:center;">Selecione a etapa e a turma.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ================= ABA 2: CALIBRAGEM (Salva em Cookie) ================= -->
+    <div id="abaCalibragem" class="tab-content" style="display:none;">
+        <h3>🎛️ Calibragem do Modelo Mestre</h3>
+        <p style="font-size: 13px; color: #666;">Tire a foto de um gabarito modelo e ajuste as miras vermelhas sobre as alternativas. O ajuste ficará salvo no Cookie do navegador.</p>
         
-        <!-- Header -->
-        <header class="app-header">
-            <div class="logo-area">
-                <i data-lucide="camera-scan" class="logo-icon animate-pulse"></i>
-                <div class="logo-text">
-                    <h1>GabaScan</h1>
-                    <span class="logo-subtitle">Corretor de Gabaritos Smart</span>
-                </div>
-            </div>
-            <div class="status-badge" id="storageStatusBadge">
-                <i data-lucide="database"></i>
-                <span id="storageStatusText">Local Storage</span>
-            </div>
-        </header>
+        <video id="webcamCalib" autoplay playsinline></video>
+        <button class="btn-action" id="btnCapturarModelo" style="background:#007bff;" disabled>📸 CAPTURAR FOTO PARA AJUSTAR</button>
 
-        <!-- Main Navigation Tabs -->
-        <nav class="app-nav">
-            <button class="nav-item active" data-tab="students-tab">
-                <i data-lucide="users"></i>
-                <span>Alunos</span>
-            </button>
-            <button class="nav-item" data-tab="gabarito-tab">
-                <i data-lucide="check-square"></i>
-                <span>Máscara</span>
-            </button>
-            <button class="nav-item" data-tab="settings-tab">
-                <i data-lucide="sliders"></i>
-                <span>Configurar</span>
-            </button>
-        </nav>
+        <div id="painelSliders" style="display:none; margin-top:20px;">
+            <canvas id="canvasCalibPreview"></canvas>
 
-        <!-- Main Content Area -->
-        <main class="app-main">
+            <h4>Ajuste de Posição da Grade:</h4>
+            <div class="slider-group"><label>Q01-05 Horiz (X1): <span id="val_x1">100</span>px</label><input type="range" id="input_x1" min="0" max="400" value="100"></div>
+            <div class="slider-group"><label>Q01-05 Vert (Y1): <span id="val_y1">104</span>px</label><input type="range" id="input_y1" min="0" max="400" value="104"></div>
+            <div class="slider-group"><label>Q06-10 Horiz (X2): <span id="val_x2">356</span>px</label><input type="range" id="input_x2" min="200" max="600" value="356"></div>
+            <div class="slider-group"><label>Q06-10 Vert (Y2): <span id="val_y2">105</span>px</label><input type="range" id="input_y2" min="0" max="400" value="105"></div>
+            <div class="slider-group"><label>Largura Letras (spX): <span id="val_spX">33</span>px</label><input type="range" id="input_spX" min="5" max="100" value="33"></div>
+            <div class="slider-group"><label>Altura Linhas (spY): <span id="val_spY">51</span>px</label><input type="range" id="input_spY" min="5" max="150" value="51"></div>
 
-            <!-- TAB 1: STUDENTS LIST -->
-            <section id="students-tab" class="tab-content active">
-                <div class="section-actions">
-                    <div class="search-box">
-                        <i data-lucide="search"></i>
-                        <input type="text" id="studentSearch" placeholder="Buscar aluno...">
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn btn-secondary" id="btnOpenImport">
-                            <i data-lucide="upload"></i>
-                            <span>Importar CSV</span>
-                        </button>
-                        <button class="btn btn-primary" id="btnExportCSV">
-                            <i data-lucide="download"></i>
-                            <span>Exportar CSV</span>
-                        </button>
-                    </div>
-                </div>
+            <h4>📝 Gabarito Oficial Padrão:</h4>
+            <div class="grid-gabarito" id="containerGabaritoCalib"></div>
 
-                <!-- Stats summary -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon bg-blue-light text-blue">
-                            <i data-lucide="users"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="statTotalStudents">0</span>
-                            <span class="stat-label">Total de Alunos</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon bg-green-light text-green">
-                            <i data-lucide="check-circle-2"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="statGradedStudents">0</span>
-                            <span class="stat-label">Corrigidos</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon bg-orange-light text-orange">
-                            <i data-lucide="clock"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="statPendingStudents">0</span>
-                            <span class="stat-label">Pendentes</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="list-container">
-                    <div class="list-header">
-                        <h2>Lista de Alunos</h2>
-                        <button class="btn btn-text-icon text-primary" id="btnAddStudent">
-                            <i data-lucide="plus-circle"></i> Novo Aluno
-                        </button>
-                    </div>
-                    
-                    <div class="empty-state" id="studentsEmptyState">
-                        <i data-lucide="user-plus" class="empty-icon"></i>
-                        <h3>Nenhum aluno cadastrado</h3>
-                        <p>Importe uma lista via CSV ou adicione um aluno individualmente.</p>
-                        <button class="btn btn-primary btn-sm" id="btnEmptyStateImport">
-                            <i data-lucide="upload"></i> Importar CSV
-                        </button>
-                    </div>
-
-                    <div class="students-list" id="studentsList">
-                        <!-- Dynamic Student Cards will be injected here -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 2: CONFIG MASCARA & GENERATOR -->
-            <section id="gabarito-tab" class="tab-content">
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <i data-lucide="settings-2"></i>
-                        <h2>Configuração do Gabarito Oficial</h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="numQuestions">Número de Questões</label>
-                                <select id="numQuestions">
-                                    <option value="5">5 Questões</option>
-                                    <option value="10" selected>10 Questões</option>
-                                    <option value="15">15 Questões</option>
-                                    <option value="20">20 Questões</option>
-                                    <option value="25">25 Questões</option>
-                                    <option value="30">30 Questões</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="numAlternatives">Alternativas</label>
-                                <select id="numAlternatives">
-                                    <option value="4">4 Opções (A, B, C, D)</option>
-                                    <option value="5" selected>5 Opções (A, B, C, D, E)</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="info-alert">
-                            <i data-lucide="info"></i>
-                            <p>Defina o gabarito correto clicando sobre as letras correspondentes abaixo. Este gabarito será usado como máscara para a correção automática.</p>
-                        </div>
-
-                        <!-- Visual Grid of Official Key -->
-                        <div class="key-creator-container">
-                            <h3>Respostas Corretas (Gabarito Oficial)</h3>
-                            <div class="gabarito-grid" id="officialKeyGrid">
-                                <!-- Dynamic rows of options will be injected here -->
-                            </div>
-                        </div>
-
-                        <div class="gabarito-actions mt-4">
-                            <button class="btn btn-primary btn-block" id="btnSaveMask">
-                                <i data-lucide="save"></i> Salvar Gabarito Oficial
-                            </button>
-                            <button class="btn btn-secondary btn-block mt-2" id="btnPrintBlankSheet">
-                                <i data-lucide="printer"></i> Visualizar/Imprimir Folhas em Branco
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 3: CONFIGURACOES -->
-            <section id="settings-tab" class="tab-content">
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <i data-lucide="hard-drive"></i>
-                        <h2>Armazenamento de Dados</h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label>Método de Armazenamento</label>
-                            <div class="radio-group">
-                                <label class="radio-card active">
-                                    <input type="radio" name="storageType" value="local" checked>
-                                    <i data-lucide="smartphone"></i>
-                                    <div class="radio-card-text">
-                                        <h4>Local Storage</h4>
-                                        <p>Armazena apenas neste dispositivo (Navegador/Celular).</p>
-                                    </div>
-                                </label>
-                                <label class="radio-card">
-                                    <input type="radio" name="storageType" value="supabase">
-                                    <i data-lucide="cloud"></i>
-                                    <div class="radio-card-text">
-                                        <h4>Supabase (Nuvem)</h4>
-                                        <p>Sincroniza notas em tempo real em um banco na nuvem.</p>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Supabase Config Form -->
-                        <div id="supabaseConfigArea" class="supabase-config-area hidden">
-                            <div class="form-group">
-                                <label for="supabaseUrl">URL do Supabase</label>
-                                <input type="text" id="supabaseUrl" placeholder="https://xxxxxxxxxxxx.supabase.co">
-                            </div>
-                            <div class="form-group">
-                                <label for="supabaseAnonKey">Anon Key (Chave Pública API)</label>
-                                <input type="password" id="supabaseAnonKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-                            </div>
-                            <div class="flex-actions">
-                                <button class="btn btn-secondary" id="btnTestSupabase">Testar Conexão</button>
-                                <button class="btn btn-primary" id="btnSaveSupabase">Conectar e Salvar</button>
-                            </div>
-                            
-                            <div class="supabase-info mt-3">
-                                <h5>Estrutura da Tabela do Supabase:</h5>
-                                <p>Crie uma tabela chamada <code>gabaritos_alunos</code> com os seguintes campos:</p>
-                                <pre><code>id: uuid (Primary Key)
-name: text (Not Null)
-status: text (Default 'Pendente')
-score: int4 (Nullable)
-answers: jsonb (Nullable)
-scanned_at: timestamptz (Nullable)</code></pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm border-danger">
-                    <div class="card-header bg-danger-light">
-                        <i data-lucide="alert-triangle" class="text-danger"></i>
-                        <h2 class="text-danger">Zona de Perigo</h2>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">Essas ações limparão permanentemente as informações salvas no celular.</p>
-                        <div class="flex-actions mt-3">
-                            <button class="btn btn-outline-danger" id="btnClearLocalData">
-                                <i data-lucide="trash-2"></i> Excluir Todos os Dados
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- ==================== MODALS ==================== -->
-
-    <!-- Modal 1: Import CSV / Nomes -->
-    <div id="importModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Importar Alunos</h2>
-                <button class="btn-close" id="btnCloseImportModal"><i data-lucide="x"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="tab-container-modal">
-                    <!-- Drop zone for CSV -->
-                    <div class="csv-upload-zone" id="csvDropZone">
-                        <i data-lucide="file-spreadsheet" class="upload-icon"></i>
-                        <p>Arraste seu arquivo CSV aqui ou clique para selecionar</p>
-                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
-                        <button class="btn btn-secondary btn-sm mt-3" onclick="document.getElementById('csvFileInput').click()">Selecionar Arquivo</button>
-                    </div>
-                    
-                    <div class="separator-text"><span>OU COLE UMA LISTA DE NOMES</span></div>
-
-                    <div class="form-group mt-2">
-                        <label for="textNamesList">Um nome por linha:</label>
-                        <textarea id="textNamesList" rows="6" placeholder="Ana Silva&#10;Bruno Santos&#10;Carlos Souza"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="btnCancelImport">Cancelar</button>
-                <button class="btn btn-primary" id="btnConfirmImport">Importar Alunos</button>
-            </div>
+            <button class="btn-action" onclick="salvarCalibracaoCookie()">💾 SALVAR NO COOKIE</button>
         </div>
     </div>
 
-    <!-- Modal 2: Novo Aluno Individual -->
-    <div id="addStudentModal" class="modal">
-        <div class="modal-content max-w-sm">
-            <div class="modal-header">
-                <h2>Novo Aluno</h2>
-                <button class="btn-close" id="btnCloseAddStudentModal"><i data-lucide="x"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="newStudentName">Nome Completo</label>
-                    <input type="text" id="newStudentName" placeholder="Ex: Maria Oliveira">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="btnCancelAddStudent">Cancelar</button>
-                <button class="btn btn-primary" id="btnSaveNewStudent">Salvar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 3: Câmera Scanner -->
-   <!-- Modal 3: Câmera Scanner com Controles de Tamanho -->
-<div id="cameraModal" class="modal modal-fullscreen">
-    <div class="scanner-container">
-        <!-- Active camera view -->
-        <video id="cameraVideo" autoplay playsinline muted></video>
+    <!-- ================= ABA 3: EXPORTAÇÃO CSV ================= -->
+    <div id="abaExportar" class="tab-content" style="display:none;">
+        <h3>📊 Resumo das Turmas Alteradas</h3>
+        <p>Abaixo estão apenas as turmas que possuem alunos com notas corrigidas no sistema:</p>
         
-        <!-- Graphic overlay for alignment guidelines -->
-        <canvas id="cameraOverlayCanvas"></canvas>
+        <ul id="listaTurmasAlteradas" style="text-align: left; margin: 20px 0;"></ul>
 
-        <!-- Top scanner control toolbar -->
-        <div class="scanner-header">
-            <button class="btn-circle btn-scanner-exit" id="btnExitScanner">
-                <i data-lucide="x"></i>
-            </button>
-            <div class="scanner-student-name">
-                <span class="label">Escaneando:</span>
-                <span class="name" id="scannerStudentName">Carregando...</span>
-            </div>
-            <div class="camera-selector-container">
-                <button class="btn-circle" id="btnToggleCamera" title="Mudar Câmera">
-                    <i data-lucide="switch-camera"></i>
-                </button>
-                <button class="btn-circle" id="btnToggleControls" title="Mostrar/Ocultar Controles">
-                    <i data-lucide="sliders"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Toast-like notifications for OMR feedback -->
-        <div class="scanner-feedback" id="scannerFeedback">
-            Alinhe os 4 cantos da folha com as marcações amarelas
-        </div>
-
-        <!-- Controles de Tamanho do Gabarito (Flutuantes) -->
-        <div class="scanner-size-controls hidden" id="scannerSizeControls">
-            <div class="size-control-header">
-                <i data-lucide="maximize-2"></i>
-                <span>Ajustar Tamanho do Gabarito</span>
-            </div>
-            
-            <div class="size-control-group">
-                <label>
-                    <i data-lucide="move-horizontal"></i>
-                    Largura: <strong id="gabaritoWidthValue">80</strong>%
-                </label>
-                <input type="range" id="gabaritoWidth" min="30" max="95" value="80" class="slider-vertical">
-            </div>
-
-            <div class="size-control-group">
-                <label>
-                    <i data-lucide="move-vertical"></i>
-                    Altura: <strong id="gabaritoHeightValue">70</strong>%
-                </label>
-                <input type="range" id="gabaritoHeight" min="30" max="95" value="70" class="slider-vertical">
-            </div>
-
-            <div class="size-control-group">
-                <label>
-                    <i data-lucide="move"></i>
-                    Posição X: <strong id="gabaritoXValue">50</strong>%
-                </label>
-                <input type="range" id="gabaritoX" min="5" max="95" value="50" class="slider-vertical">
-            </div>
-
-            <div class="size-control-group">
-                <label>
-                    <i data-lucide="move"></i>
-                    Posição Y: <strong id="gabaritoYValue">50</strong>%
-                </label>
-                <input type="range" id="gabaritoY" min="5" max="95" value="50" class="slider-vertical">
-            </div>
-
-            <div class="size-control-actions">
-                <button class="btn btn-sm btn-secondary" id="btnResetSize">
-                    <i data-lucide="rotate-ccw"></i> Resetar
-                </button>
-                <button class="btn btn-sm btn-primary" id="btnApplySize">
-                    <i data-lucide="check"></i> Aplicar
-                </button>
-            </div>
-        </div>
-
-        <!-- Bottom scanner actions -->
-        <div class="scanner-footer">
-            <button class="btn btn-scanner-action btn-capture" id="btnCapturePhoto">
-                <div class="capture-inner"></div>
-            </button>
-        </div>
+        <button class="btn-action" onclick="exportarCSV()">📥 BAIXAR NOTAS EM CSV</button>
     </div>
 </div>
 
-    <!-- Modal 4: Revisar e Confirmar Correção (Visual OMR feedback) -->
-    <div id="reviewModal" class="modal">
-        <div class="modal-content max-w-md">
-            <div class="modal-header">
-                <h2>Revisar Correção</h2>
-                <button class="btn-close" id="btnCloseReviewModal"><i data-lucide="x"></i></button>
-            </div>
-            <div class="modal-body text-center">
-                <div class="score-badge-large">
-                    <span class="score-num" id="reviewScoreValue">0 / 0</span>
-                    <span class="score-lbl">Acertos</span>
-                </div>
-                
-                <p class="review-student-info">Aluno: <strong id="reviewStudentName">Nome do Aluno</strong></p>
-
-                <!-- Processed canvas preview of what the computer read -->
-                <div class="canvas-preview-container">
-                    <canvas id="processedCanvasPreview"></canvas>
-                    <div class="canvas-zoom-tip">
-                        <i data-lucide="zoom-in"></i> Imagem digitalizada e processada pelo OMR
-                    </div>
-                </div>
-
-                <!-- Review list of questions -->
-                <div class="review-details-container">
-                    <h3>Detalhe por Questão</h3>
-                    <div class="review-questions-list" id="reviewQuestionsList">
-                        <!-- Dynamic elements showing Q1: Correct (A), Q2: Incorrect (Selected B, Expected C) -->
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer flex-column-gap">
-                <button class="btn btn-outline-danger btn-block" id="btnRetryScan">
-                    <i data-lucide="refresh-cw"></i> Escanear Novamente
-                </button>
-                <button class="btn btn-success btn-block" id="btnConfirmScore">
-                    <i data-lucide="check-circle-2"></i> Confirmar Nota e Gravar
-                </button>
-            </div>
-        </div>
+<!-- MODAL DA CÂMERA DE ESCANEAMENTO -->
+<div id="modalCamera" class="modal">
+    <div class="modal-content">
+        <button class="btn-close-modal" onclick="fecharModalCamera()">&times;</button>
+        <h3 id="nomeAlunoModal">Lendo Prova...</h3>
+        <video id="webcamScan" autoplay playsinline></video>
+        <button class="btn-action" id="btnEscanearAluno">📸 ESCANEAR E SALVAR NOTA</button>
     </div>
+</div>
 
-    <!-- ==================== VIEW/PRINT BLANK SHEETS SCREEN ==================== -->
-    <div id="printableArea" class="printable-area hidden">
-        <!-- Inside here we will dynamically generate the answer sheet. 
-             This section is completely hidden in normal app state, but shown under @media print. -->
-    </div>
+<canvas id="canvasHidden" style="display:none;"></canvas>
 
-    <!-- Custom App Logic Script -->
-    <script src="app.js"></script>
+<!-- OpenCV.js -->
+<script>
+    let cvReady = false;
+    var Module = {
+        onRuntimeInitialized: function() {
+            cvReady = true;
+            const statusEl = document.getElementById('statusCv');
+            statusEl.innerText = "✅ Motor de visão computacional pronto!";
+            statusEl.style.background = "#d4edda"; statusEl.style.color = "#155724";
+            setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
+            document.getElementById('btnCapturarModelo').disabled = false;
+        }
+    };
+</script>
+<script async src="https://docs.opencv.org/4.9.0/opencv.js"></script>
+
+<script>
+    // ================= 1. BASE DE DADOS DOS ALUNOS (ESTRUTURA DO SEU JSON) =================
+    const DADOS_ALUNOS = {
+  "Ensino Fundamental": {
+    "801": [
+      "AGATHA LAVINIA OLIVEIRA DA SILVA",
+      "ALICE MARQUES DE OLIVEIRA LOPES",
+      "ALICE MONTEIRO DOS SANTOS",
+      "ALINE SOUZA QUENUPE",
+      "ANA LAURA SILVA FREITAS",
+      "ARTHUR YAGO FAGUNDES VIEIRA",
+      "BERNARDO DE PAULA DO CARMO",
+      "DAVI LUCA SANTOS DE SOUZA",
+      "DAVI LUCAS RODRIGUES DOS SANTOS",
+      "EDUARDA CRISTINA SOARES",
+      "ELOAH RAISSA MENDONCA MARTA",
+      "EMANUELLE SILVA GONCALVES BARRETO",
+      "EVELYN SOFHIA DA SILVA FERNANDES",
+      "GEANY CAROLINE GONCALVES COSTA",
+      "HENRIQUE FREITAS MAGALHAES",
+      "ISABELLY EDUARDA MARQUES DUARTE",
+      "JHONATAN ALEX SANTOS SOUZA",
+      "JULIA GABRIELE DA SILVA ALVES",
+      "JUNIO CESAR VIEIRA SILVA",
+      "KETHELYN RAISSA FIAU DOS SANTOS",
+      "KETHLEN SUELLEM DE SALLES OLIVEIRA",
+      "LAURA EMANUELLY DIAS GOMES",
+      "LAVINIA GABRIELY SANTOS DA SILVA",
+      "LAVINYA RODRIGUES DA SILVA",
+      "LINDSAY DE OLIVEIRA SILVA",
+      "LUCAS GABRIEL RODRIGUES FARIAS",
+      "MARIA ALICE SANTOS SILVA",
+      "MARIA EDUARDA DE SOUZA BARBOSA",
+      "MARIA EDUARDA SOARES DA SILVA",
+      "MARIANA MENDES DOS SANTOS",
+      "MATHEUS SILVA PONTES",
+      "MIGUEL FILIPE SILVA DE SOUZA",
+      "NATHALIA CAROLINE ARAUJO PEREIRA",
+      "SOPHIA EMANUELLE SOUZA DE OLIVEIRA"
+    ],
+    "802": [
+      "ALEXIA VITORIA RODRIGUES ROCHA",
+      "ANA CLARA SILVA FERREIRA BATISTA",
+      "ANNE GABRIELLY ALVES VIEIRA",
+      "BEATRIZ MOTA PAIVA MARCAL",
+      "CAUA PIERRE GONCALVES MUNIZ",
+      "DAVI LUCAS DOS SANTOS LANA",
+      "DAVI LUCAS GUSMAO BATISTA",
+      "ELIZA ABREU CORREA",
+      "ERICK FERNANDO OLIVEIRA SILVA",
+      "GABRIEL MORAIS OLIVEIRA DE SOUZA",
+      "GEOVANNA STEPHANY COELHO AMORIM",
+      "GIOVANNA VIEIRA MENDES RODRIGUES",
+      "HADASSA VITORIA ALMEIDA RAMOS",
+      "HEITOR SILVA DE PAULA",
+      "HELOISA CAMPOS CLEMENTE",
+      "ISABELLA SANTANA VIEIRA",
+      "JOAO MIGUEL SILVA CANDIDO",
+      "KETLEN RODRIGUES MIRANDA",
+      "LAUANY CRISTINA ALVES CLEMENTE",
+      "MAIKI FILIPE SILVA BARBOSA",
+      "MARIA CECILIA ROCHA PIMENTA",
+      "MARIA CLARA SILVA GONCALVES",
+      "MARIA JULIA DE OLIVEIRA",
+      "NATIELLY WILIANE FERREIRA DA SILVA",
+      "PEDRO HENRIQUE PIMENTA DA SILVA",
+      "PEDRO HENRIQUE TEIXEIRA GOMES",
+      "RAYANE VALLENTINA GOMES DE MATOS",
+      "RODRIGO AUGUSTO RIBEIRO DOS SANTOS",
+      "SABRINA CRISTINA DOS SANTOS",
+      "SAYMON VINICIUS CIRILO LOBO",
+      "SOFIA LORENZA DE OLIVEIRA MENDES",
+      "SOPHIA EMANUELLE DE JESUS COSTA",
+      "YASMIN VITORIA TOGUIAS LIRIO"
+    ],
+    "803": [
+      "ALESSANDRO EUSTAQUIO BORGES JUNIOR",
+      "ANA CLARA OLIVEIRA FERREIRA",
+      "ANA JULIA ABREU DA SILVA",
+      "ANDRESSA SANTOS HERMISDORFF RIBEIRO",
+      "ARTHUR JADSON SANTOS MARTINS ANDRADE",
+      "AUDREY MIRELLA SOARES SANTANA",
+      "DAYVID GOMES DE OLIVEIRA",
+      "DIOGO LUCCA SOUZA BORGES",
+      "ELIZA EMANUELE SOARES PEREIRA",
+      "EMILY VICTORIA FERREIRA GUEDES",
+      "EMMANUEL MOREIRA DOS SANTOS",
+      "ENDRIO MIGUEL PACHECO PRISCO",
+      "FILIPE ARAUJO LOPES",
+      "GABRIEL RODRIGUES PEREIRA NUNES",
+      "GUSTAVO ALMEIDA CAVALCANTI",
+      "ISABELLE HELENA BARBOSA DIAS",
+      "ISADORA VITORIA PEREIRA DOS SANTOS",
+      "ITALO PEREIRA LACERDA",
+      "JADSON JESUS DOS SANTOS",
+      "KAIO HENRIQUE MATHIAS DA SILVA",
+      "KAYLAINE VICTORIA DE SOUZA MORAIS",
+      "LIVIA APARECIDA OLIVEIRA DA SILVA",
+      "MARIA LUIZA RODRIGUES",
+      "MARIANA APARECIDA DA COSTA",
+      "NARYELLY LAYSLA ROMUALDO DE JESUS",
+      "PETRICK SAMUEL DE CARVALHO MARTINS ROSA",
+      "REBECA VITORIA ALBERTO DE REZENDE",
+      "RUAN VANDERLEI XAVIER SILVA",
+      "VITOR RODRIGUES FARIA",
+      "WESLEY MATHEUS DOS REIS PEREIRA",
+      "YAN EMANUEL MENDES LOPES",
+      "YURI HENRIQUE BENZAQUEM FERREIRA"
+    ],
+    "901": [
+      "ALICE EMANUELLE RODRIGUES SILVA",
+      "ARTHUR SANTOS OLIVEIRA",
+      "CAROLINA VITORIA DA SILVA CLEMENTE",
+      "CAROLINE DA SILVA OLIVEIRA",
+      "DAVI CEZAR BARBOSA CARVALHAIS",
+      "ELOA MARIA MADUREIRA ALVES",
+      "EMANUELLY VITORIA SOUZA ROCHA",
+      "FRANCIELLE VICTORIA DA SILVA",
+      "GLORIA MARIA BORGES SILVA",
+      "GUILHERME CARDOSO MARTINS DA SILVA",
+      "ISABELLA CRISTINA PAIM DA SILVA",
+      "JAMILE DE JESUS OLIVEIRA",
+      "JOAO VITOR DE PAULA DOS SANTOS",
+      "KAUA HENRIQUE SOARES TASSI",
+      "KEMILLY VITORIA AZEVEDO DE SOUSA",
+      "LAVINIA VITORIA LOPES",
+      "LEANDRO HENRIQUE DA SILVA LOPES",
+      "LETICIA KAROLLYNE LIBRELON KROGER",
+      "MARIA FERNANDA MAIA DA SILVA OLIVEIRA",
+      "MIGUEL NIVIO LEONEL IZIDORO",
+      "NATHALIA LORRAYNE GUEDES CARDOSO",
+      "NATHAN RODRIGO DA SILVA PEREIRA",
+      "NICOLAS EMANOEL SOUZA PIRES",
+      "PABLO GABRIEL DE SOUZA",
+      "PEDRO HENRIQUE DA SILVA DE PAULA",
+      "RAYSSA NOBRE DA SILVA",
+      "RICKELMY RIBEIRO MARQUES",
+      "SOPHIE RANIELLY GOMES DA SILVA",
+      "TAYLAN CARLOS PEREIRA DE SA",
+      "TAYNA NASCIMENTO ROCHA",
+      "VITORIA CRISTINA GONCALVES FERREIRA",
+      "WAGNER ROBERTO NEVES",
+      "YGOR HENRIQUE DE OLIVEIRA KNUPP",
+      "YURI HENRIQUE DE SOUSA SILVA"
+    ],
+    "902": [
+      "ANA JULIA GONCALVES MARTINS",
+      "ANNY EMANUELLY LOURENCO SOARES",
+      "BEATRIZ VITORIA SANTOS DE JESUS",
+      "CARLOS GABRIEL DA SILVA MERCEDES",
+      "DAVI TELLES SILVA",
+      "DOUGLAS SANTANA SOUZA",
+      "EDUARDO DE SOUZA LEITE",
+      "ELIABE BARREIROS DO CARMO",
+      "EMANUEL OLIVEIRA MOREIRA",
+      "EMANUELLY VITORIA SANTOS DE AVELAR",
+      "GUILHERME HENRIQUE ROCHA DA SILVA",
+      "IAGO PHILIPE FRUTUOSO DE SOUZA",
+      "ISABELA LETICIA SOUZA DE JESUS",
+      "JOAO VICTOR CASTRO ROMA",
+      "KAIQUE EMANUEL COSTA DE SOUZA",
+      "KAUA HENRIQUE DA SILVA ANICETO",
+      "LAVINIA VITORIA OLIVEIRA DUARTE",
+      "LAYS GABRYELLY BARRETO DE MOURA",
+      "LUAN PEREIRA LOPES DOS SANTOS",
+      "LUIZ GABRIEL ALVES DO CARMO",
+      "MARIA EDUARDA DA CRUZ DINIZ",
+      "MARIA EDUARDA DE JESUS MARTINS",
+      "MARIANA CARVALHO VERTEIRO",
+      "MIGUEL DE SOUZA SILVA",
+      "PEDRO HENRIQUE DIONIZIO GONCALVES",
+      "PETHERSON MAX REZENDE DOS SANTOS",
+      "RAFAELA CANCADO CALDEIRA",
+      "RYAN RAFAEL DA SILVA",
+      "SABRINA VITORIA DOS SANTOS BELO",
+      "SOPHIA EMANUELY RODRIGUES DOS SANTOS COSTA",
+      "THALISON GUILHERMINO DE PAIVA FRANCISCO",
+      "VICTORIA EMANUELLY PEREIRA DA SILVA",
+      "YASMIN MANOELLA NUNES MARTINS",
+      "YASMIN STEFANNY DE OLIVEIRA CRESPO"
+    ],
+    "903": [
+      "ANA CARLA DOS SANTOS SILVA",
+      "ARTHUR RAMOS DE SOUZA",
+      "BEATRIZ CAROLAYNE DE JESUS SOUSA",
+      "BRUNO HENRIQUE RAMOS GOMES",
+      "DANIELLY CAROLINE RAMOS BATISTA",
+      "DAVI HENRIQUE PEREIRA BARROSO DA SILVA",
+      "DIEGO RENAN AGUIAR DA SILVA",
+      "EMILLY KAROLINE OLIVEIRA SANTOS",
+      "ENZO GABRIEL PACHECO PRISCO",
+      "GABRIEL GOMES SIQUEIRA",
+      "GEAN CARLOS GONCALVES COSTA SOUZA E SILVA",
+      "GUSTAVO HENRIQUE SILVA ANDRADE",
+      "GUSTAVO LAMEU GONCALVES DA SILVA",
+      "IASMIN VITORIA DA COSTA OLIVEIRA",
+      "ISABELLA VITORIA NASCIMENTO COSTA",
+      "ISABELLY DOS SANTOS SOBRINHO",
+      "ISAQUE DENIS LOPES DE JESUS",
+      "JOAO PEDRO TORRES DA SILVA SANTOS",
+      "LEANDRO MARQUES DA SILVA",
+      "LUISA ESTER DA SILVA ANDRADE",
+      "MARIA CLARA FELIPE SCHENEIDER",
+      "MARIA EDUARDA KLIER FARIAS",
+      "MATEUS GARCIA DE CARVALHO",
+      "MIGUEL HENRIQUE GONCALVES MOURA",
+      "MONIQUE MAYRA DE OLIVEIRA ALVES",
+      "NIKOLAS MIGUEL COELHO DE OLIVEIRA",
+      "RICKELME JUNIO DOS SANTOS RIBEIRO",
+      "SAMUEL ARAUJO VIANA CARDOSO DE CAMPOS",
+      "SARA DANIELE BARROSO TEIXEIRA",
+      "SOFIA EMANUELLY SOARES SANTOS",
+      "STEFANY RIBEIRO DE OLIVEIRA",
+      "WALLACY RENAN SILVA BATISTA"
+    ]
+  },
+  "Ensino Médio - 1º Ano": {
+    "1001": [
+      "ANA CLARA SOUZA SANTOS",
+      "ARTHUR AMORIM OLIVEIRA",
+      "ARTHUR FELIPE DA SILVA MOREIRA",
+      "BRIAN GABRIEL SILVA",
+      "CAIO PETHERSON OLIVEIRA TRINDADE",
+      "CRISTOFER OLIVEIRA DE ASSIS",
+      "DAVI GABRIEL FERREIRA DA SILVA",
+      "ELEIR KERLON EVANGELISTA GONCALVES",
+      "GEOVANE ROCHA MACIEL DE OLIVEIRA",
+      "GIOVANNA LARAH DE JESUS SOUZA",
+      "GUILHERME ALVES AMARAL",
+      "GUILHERME HUGO GOMES DE SOUZA",
+      "GUSTAVO DUTRA GONCALVES",
+      "JOAO VICTOR RODRIGUES LOPES SOARES",
+      "KAMILY VITORIA TEIXEIRA DA SILVA",
+      "KAUANE SANTOS RODRIGUES",
+      "LARA ESTER FERREIRA GONCALVES",
+      "MICHELLY VIEIRA DE OLIVEIRA",
+      "NICOLAS GONCALVES FERREIRA",
+      "PIERRE AUGUSTO DE OLIVEIRA MENDES",
+      "RIAN MARTINS DUTRA",
+      "RYAN RIKELME DE SOUZA SANTOS",
+      "SAMUEL LUIZ OLIVEIRA DA SILVA",
+      "WELLINGTON JUNIO JESUS SILVA",
+      "YASMIN PRINCE DE JESUS OLIVEIRA"
+    ],
+    "1002": [
+      "SARA BOREL DE OLIVEIRA",
+      "CARLOS EDUARDO GONCALVES PEREIRA",
+      "CLAUDIO DA SILVA LAMEU",
+      "DAVI EMANUEL VIEIRA BRAICK",
+      "DIEGO ISMAR LEAL DE FREITAS DOS REIS",
+      "DIOGO PETER DA SILVA RODRIGUES",
+      "GABRIEL DE AZEVEDO OLIVEIRA MARTINS",
+      "GUSTAVO HENRIQUE SILVA DE ASSIS",
+      "IURY GABRIEL FELIX GOMES",
+      "JHULIA KETLEN MARQUES LEANDRO",
+      "JUAN CARLOS DE OLIVEIRA MENDES",
+      "JUNIA GABRIELLY LOPES VIANA",
+      "KAIKY GONSALVIS AFONSO DE MEDEIROS",
+      "KAMILLY LAUANA GOMES VITAL",
+      "LIVIA LAYSA DOS SANTOS TORRES",
+      "LUIZ OTAVIO GONCALVES DIAS",
+      "MARCELA EDUARDA OLIVEIRA RODRIGUES",
+      "MATEUS PIRES RAMOS DOS SANTOS",
+      "MAURICIO BRYAN NUNES OLIVEIRA",
+      "MIGUEL PIRES GONCALVES",
+      "NAULLANY RODRIGUES OLIVEIRA",
+      "RAFAEL ANTONIO SANTOS DE SOUZA",
+      "RICKELMY ASAPHY RODRIGUES LIMA",
+      "SAMUEL RYAN FERNANDES SILVA",
+      "SARAH EMMANUELLE LUCAS MARTINS NETTO",
+      "THAMYRES LIMA QUEIROZ",
+      "WALLACE LUCAS DE MEDEIROS",
+      "WANDERSON MIGUEL FELICIANO DA SILVA",
+      "YOGAN VINICIUS MARTINS DA MATA"
+    ],
+    "1003": [
+      "ANGELINA DE ALMEIDA OLIVEIRA",
+      "AGATHA GABRIELLY RODRIGUES DOS SANTOS",
+      "ALICE VICTORIA SILVA AVELAR",
+      "ANA CLARA DA SILVA SANTOS",
+      "CAIO FILIPE FERREIRA GOMES",
+      "CAIO OLIVEIRA DE SOUZA",
+      "CAMILA ROCHA DE JESUS",
+      "CARLOS DANIEL FERNANDES DE SOUZA",
+      "CARLOS DANIEL GOMES PEREIRA",
+      "CESAR ISAIAS BARBOSA FERREIRA",
+      "EMANUELLY CRISTINA DE SOUZA BICALHO",
+      "EMILY RAIARA RIBEIRO LOPES",
+      "GEOVANNA MARINS SILVA",
+      "GUILHERME CORREA DE MOURA ARAUJO",
+      "GUSTAVO HENRIQUE DA SILVA ROCHA PEREIRA",
+      "HEVELLYN LUIZA DE OLIVEIRA MARTINS",
+      "HILDA VITORIA DOS SANTOS DE JESUS",
+      "JOAO PEDRO DUTRA BRANDAO FLORES",
+      "JOAO VICTOR SANTOS ROCHA",
+      "JOSUE GABRIEL DOS SANTOS NEVES",
+      "KAMILLY FERNANDA ARAUJO SANTOS",
+      "KAYO VITOR REIS FELIX",
+      "LARYSSA EMYLI VIEIRA DE SOUZA",
+      "LUCAS ALEXANDRE CARDOSO SILVA",
+      "MAELE LISLEY DOS REIS CONCEICAO",
+      "MATHEUS FELIPE FONSECA DA SILVA",
+      "PEDRO HENRIQUE DOS REIS GOMES",
+      "RICHARLLYSON ALAN GODINHO SANTOS",
+      "SAMUEL JUNIO COELHO RIBEIRO"
+    ],
+    "1004": [
+      "WELLINGTON DOUGLAS DOMINGOS",
+      "BEATRIZ RODRIGUES FERREIRA",
+      "ADRIEL RUBENS DOS REIS COUTINHO",
+      "ADRYAN HENRIQUE DE SOUZA MOTA",
+      "ANA CAROLINA MATOS PARDIM BENTO",
+      "ARTHUR HENRIQUE PEREIRA OLIVEIRA",
+      "ARTHUR MIGUEL SOARES DA SILVA",
+      "ARTHUR VINICIUS RODRIGUES MARTINS",
+      "BERNARDO OLIVEIRA SAMPAIO",
+      "BIANCA CAMILY DA SILVA SANTOS",
+      "DAFINY ALINE COLARES DE ALMEIDA",
+      "DIANA CHAVES PEREIRA",
+      "EDUARDO HENRIQUE RIBEIRO VENTURIM",
+      "ISABELY OLIVEIRA GONCALVES",
+      "JULIA AMORIM DA SILVA",
+      "JULIA GABRIELA XAVIER DA SILVA",
+      "KAROLINA NASCIMENTO DA SILVA LIMA",
+      "KELY AMANDA DOS SANTOS SILVA",
+      "LEANDRO OLIVEIRA DOS SANTOS",
+      "MATEUS ALMEIDA BATISTA",
+      "MIGUEL LUIZ DE ALMEIDA RODRIGUES",
+      "MIGUEL RODRIGUES DOS SANTOS",
+      "MIRIAM KELLY FERREIRA DE JESUS",
+      "PEDRO HENRIQUE RASPANTE PEREIRA",
+      "RENATA DE SOUZA ALVES",
+      "RYAN OLIVEIRA RODRIGUES COSTA",
+      "SOFIA ARAUJO VIANA",
+      "TAYLOR HENRIQUE FERREIRA DE SOUSA",
+      "WALISSON DIAS DE SOUSA",
+      "WALLISON JUNIOR DOS SANTOS"
+    ],
+    "1005": [
+      "HERLEY SOUZA ALVES",
+      "ADRIAN LEMES VIANA",
+      "ARTHUR DA COSTA COELHO",
+      "ARTHUR MIGUEL LOURENCO SILVA",
+      "DAVI LUCAS GONCALVES FERREIRA",
+      "DIEGO HENRIQUE MOREIRA BOREL",
+      "ESMERALDA PIRES DOS SANTOS",
+      "ESTER GABRIELLE MARTINS DE SOUZA",
+      "GUSTAVO COIMBRA DOS SANTOS",
+      "GUSTAVO PERES DA SILVA",
+      "ISABELY ADRIANE ALVES DE SOUZA",
+      "ISAC GABRIEL GOMES MARTINS",
+      "ISLARA SOFIA LAGO DOS SANTOS",
+      "JOAO VITOR DE OLIVEIRA RODRIGUES",
+      "JULIA DA SILVA FERNANDES PINHEIRO",
+      "JULIA RODRIGUES FERREIRA",
+      "KAUA CEZAR RODRIGUES",
+      "LAVINE EVELLYN MENDES DOS SANTOS",
+      "LUIZ EDUARDO DE SOUSA MELO",
+      "MARIA FERNANDA ALVES DOS SANTOS",
+      "NICOLAS NUNES DA CONCEICAO REIS",
+      "PABLO EDUARDO DE JESUS COSTA FERREIRA",
+      "PEDRO HENRIQUE MARTINS DA SILVA TAVARES DE MATOS",
+      "RAISSA GABRIELA ALVES MARTINS",
+      "RAYSSA HELEN VIEIRA DE SOUZA",
+      "RYAN GABRIEL SOUZA RIBEIRO",
+      "THAMIRES RAMOS ALVES BRAZ",
+      "VICTOR EMANUEL FAGUNDES VIEIRA",
+      "VITOR GABRIEL RODRIGUES ROQUE",
+      "VITOR RAFAEL QUEIROZ DE OLIVEIRA",
+      "VITORIA YASMIM PEREIRA DAS DORES"
+    ],
+    "1006": [
+      "ANA CLARA DE JESUS DA SILVA",
+      "ANA JULIA SOARES",
+      "ANGEL GUSTAVO FELIX MARQUES",
+      "ARTHUR SAMUEL SIQUEIRA COSTA",
+      "BEATRIZ MONTEIRO DE SOUZA",
+      "BRUNA INEZ CAETANO SANDER",
+      "DAVI HENRIQUE DOS SANTOS MOURA",
+      "EMANOEL SANTOS DOS PASSOS",
+      "EMILLY CRISTINA DE OLIVEIRA BATISTA",
+      "FLAVIO AUGUSTO DA SILVA",
+      "GUILHERME HENRIQUE DOS SANTOS ARAUJO",
+      "GUILHERME THIAGO SILVA SANTOS",
+      "IASMYN VITORIA LUIZA DA SILVA SOUZA",
+      "ISAAC FERREIRA DE SOUZA",
+      "ISABELLY CRISTINY GONCALVES DE SOUZA",
+      "IZABELLE RODRIGUES ROCHA",
+      "JOAO VICTOR DE OLIVEIRA DA SILVA",
+      "JULIA KAROLLAYNE LOPES FERREIRA",
+      "JULLIANA VICTORIA SILVA SOUZA",
+      "KAYRON BRITO ESTEVAO",
+      "KEVEN WILLIAN CHAGAS SANTOS FIRMO",
+      "KEVYN RYAN GONCALVES COSTA",
+      "LAVINIA JORY SANTOS",
+      "LETICIA NASCIMENTO SANTOS",
+      "MARIA LUIZA FERREIRA CORREIA",
+      "MATHEUS HENRIQUE GOMES DA SILVA",
+      "MIKAEL EUGENIO GONCALVES PEREIRA",
+      "PAULO HENRIQUE FERNANDES COELHO",
+      "PEDRO GUILHERME RESENDE DA SILVA",
+      "RUAN PABLO MARQUES DE SOUZA SILVA",
+      "SAMUEL TIAGO RODRIGUES AMARAL",
+      "SOPHIA EMANUELLE DO NASCIMENTO",
+      "STEFANY EMILE DE MIRANDA LOPES"
+    ],
+    "1007": [
+      "ADRIA LUIZA DE SOUZA FERREIRA",
+      "ANA CAROLINE AGUINEL RODRIGUES",
+      "ANA CLARA DOS SANTOS MONTEIRO",
+      "CAMILY VITORIA DAVID SILVA",
+      "DANIEL LANCELLOTT DE SOUZA PEREIRA VASCONCELOS",
+      "DANIELLY YASMIM VENANCIA DA SILVA",
+      "DAVI SOUZA BARBOSA",
+      "GABRIEL SAYMON COSTA DE JESUS",
+      "GABRIEL VITOR FERNANDES BUENOS AIRES",
+      "GABRIELLA STHEFANY GOMES DE JESUS",
+      "ISAQUE GUSTAVO DA SILVA NASCIMENTO",
+      "KEMILLY VICTORIA MARTINS DA SILVA",
+      "KEROLAYNE MONTEIRO DURVAL MAIA",
+      "KETLYN GABRIELLY MAIA LACERDA",
+      "LUIS HENRIQUE GOMES SILVA",
+      "MANOELLY ROBERTA LOPES NEVES",
+      "MARIA CLARA BARBOSA DA COSTA",
+      "PAOLA GABRIELE SILVA",
+      "PEDRO FELIPE DE SOUZA CERQUEIRA",
+      "PEDRO HENRIQUE PEREIRA RODRIGUES",
+      "RAYANE INES SANDER CAETANO",
+      "RIAN LEANDRO RODRIGUES",
+      "RUAN ALVES GOMES",
+      "SARA VICTORIA NEPOMUCENO DE LEMES",
+      "STHEPHANY EDUARDA COSTA DE OLIVEIRA",
+      "THALYTA ALVES DOS SANTOS",
+      "THIAGO GABRIEL DA SILVA SOUZA",
+      "TICIANE KETTELEY AMARAL PINTO",
+      "VICTOR GABRIEL SOUTO PEREIRA",
+      "VICTOR RODRIGUES ROCHA",
+      "VITOR PAULO LUZ DA SILVA",
+      "WANDER FRANCISCO SILVESTRE DE CASTRO",
+      "YASMIM PHAOLLA RICARDO FELIX",
+      "YASMIM VICTORIA DIAS DUARTE",
+      "YURI GABRIEL DE OLIVEIRA SANTOS"
+    ]
+  },
+  "Ensino Médio - 2º Ano": {
+    "2001": [
+      "AGATA AMANDA DOS SANTOS DE OLIVEIRA",
+      "BARBARA VITORIA REIS DE SOUZA",
+      "CAIO ISAAC DE PAULA",
+      "CAUA KEVEN DAVID CIRILO",
+      "DANIEL JUNIO COSTA DE JESUS",
+      "DAVI FERNANDES ELOI",
+      "DHIULYANE MARIA RODRIGUES FERREIRA",
+      "EMILLY VITORIA DOS SANTOS PINTO",
+      "ERICK WALLACE RIBEIRO KENUPE",
+      "GABRIEL HENRIQUE SANTOS REZENDE",
+      "GABRIELA VITORIA RODRIGUES DA SILVA",
+      "GABRYEL HENRIQUE DE ANDRADE CRUZ",
+      "JUAN SEBASTIAN DA SILVA",
+      "KAILANY VITORIA ALVES COSTA",
+      "KELLY CAROLINA DA SILVA MORAES",
+      "KHAYO RODRIGUES DA CUNHA",
+      "LARYSSA VITORIA FERREIRA LOPES",
+      "LUCAS KAUAN GONCALVES MARTINS",
+      "LUIS EDUARDO DE MORAIS RODRIGUES",
+      "MARCUS VINICIUS AGUIAR DA SILVA",
+      "MARIA LUIZA ANDRADE DOS SANTOS VIEIRA",
+      "MATHEUS FILLIPE FERREIRA AVELAR",
+      "MELLODY DE JESUS SANTOS",
+      "NATA ALVES PIO MACIEL",
+      "NATHASHA CAROLINE MOTA FONSECA DOS SANTOS",
+      "RAFAEL DAVI SOARES COELHO",
+      "RAFAEL MOREIRA DE CARVALHO",
+      "SAMUEL MEDINA SANTOS",
+      "SUELEN KARINE ALVES DOS SANTOS",
+      "THAILA CRISTINY REIS DE SOUZA BENTO",
+      "THALLYS GABRIEL PEREIRA GOMES",
+      "YURI HENRIQUE BATISTA RODRIGUES",
+      "YURI MATHEUS DE SOUZA SANTOS"
+    ],
+    "2002": [
+      "ADRYAN EDUARDO DA SILVA BEZERRA DUTRA",
+      "ANA CLARA DE FREITAS OLIVEIRA",
+      "ANA LUIZA DE FARIA RAMOS",
+      "ANDREY MARCAL OLIVEIRA DE MORAIS",
+      "BIANCA CAROLINE BICALHO SANTANA",
+      "CAMILY DE AGUIAR ALVES",
+      "DAVY ACACIO DIAS ALVES",
+      "EDUARDA INGRID BATISTA LINO",
+      "ENZO GABRIEL CARVALHO DA SILVA",
+      "ERICK GUSTAVO DOS SANTOS BARBOSA",
+      "GABRIEL DE SOUZA POSES",
+      "GABRIEL LORRAN DA SILVA LACERDA",
+      "GABRIELA GONCALVES DUARTE RODRIGUES",
+      "GABRIELY DE AGUIAR ALVES",
+      "HUGO COSTA DAVID",
+      "IAN AGUIAR REZENDE",
+      "ISABELLA CRISTINA DE SOUZA FERREIRA",
+      "ISABELLA DE JESUS PEREIRA BRAGA",
+      "JOAO VICTOR FERREIRA SILVA",
+      "JOYCE BORGES DE OLIVEIRA",
+      "KAUA LUCAS LOPES SOARES",
+      "KEIVISON VENANCIO DA CRUZ SALES",
+      "LAURA ROSD DE OLIVEIRA",
+      "MARIA EDUARDA LOPES RODRIGUES",
+      "MATHEUS PHILLIPE SOUTO DA SILVA",
+      "REBECA VITORIA DE SOUZA",
+      "SAMUEL REIS RODRIGUES",
+      "SARAH LUIZA LOPES MARINS",
+      "VICTOR GABRIEL DE ALMEIDA ROCHA",
+      "YAGO DOUGLAS DO CARMO SILVA"
+    ],
+    "2003": [
+      "ADRIANA GRAZIELA SILVA LIMA",
+      "ALEXANDRE SANTOS DE OLIVEIRA",
+      "ARTHUR FERNANDES DE LIMA",
+      "ARTHUR GABRIEL TEIXEIRA DA SILVA",
+      "CAMILE SANTOS DE ARAUJO",
+      "CAROLINE VITORIA ALCANTARA BARBOSA",
+      "DANIEL RIBEIRO DA SILVA",
+      "EDUARDA CAMILLE LIMA DE SOUZA",
+      "EMILY DE OLIVEIRA GONCALVES",
+      "EROS RODRIGUES GOMES",
+      "GABRIEL LEITE DE ANDRADE SILVA",
+      "GUILHERME JORGE COELHO DE JESUS",
+      "IURY MENDONCA VIEIRA MARTINS DOS SANTOS",
+      "JOAO CARLOS AMORIM DE SOUZA",
+      "JUAN PHELIP DA SILVA OLIVEIRA",
+      "KAMILA CRISTINA DE OLIVEIRA SILVA",
+      "LARA YASMIN ALVES FRUTUOSO",
+      "LUCAS GABRIEL RAMOS DE SOUZA",
+      "LUIZ EDUARDO DE OLIVEIRA PERES",
+      "LUIZ FILIPE PEREIRA DE ANDRADE",
+      "LUIZA VITORIA RABELO ALVES",
+      "MAISA APARECIDA ANUNCIACAO SANTANA",
+      "MARIA EDUARDA SOARES DIAS",
+      "MARIA EDUARDA VIEIRA TREGA",
+      "MELYSSA VITORIA GOMES DA SILVA",
+      "NICOLE DE JESUS DE SOUZA",
+      "VICTOR GABRIEL QUERINO DE JESUS",
+      "VICTOR HUGO SIQUEIRA DOS SANTOS",
+      "VITOR GABRIEL LOPES FERREIRA",
+      "WELLINGTON JUNIO DE ALMEIDA MORENO"
+    ],
+    "2004": [
+    "ABNER GABRYEL JACOB DA SILVA",
+    "ALEXSANDER RODRIGUES ROCHA",
+    "ANDRE EMANUEL CARDOSO NUNES",
+    "BEATRIZ DE OLIVEIRA SENRA",
+    "CAMILA VITORIA DE SOUZA SANTOS",
+    "CLARA LIMA DE MENEZES",
+    "DANIEL NASCIMENTO BORGES",
+    "DAVI DE OLIVEIRA MARTINS SOARES",
+    "EDUARDA ALINE CEZARIO DIAS DOS SANTOS",
+    "EMANUELLY SOARES VIEIRA",
+    "EVA CRISTINA PEREIRA DE JESUS",
+    "EVELLYN CRYSLAINE FERREIRA DE AMORIM DOS SANTOS",
+    "GIOVANNA VITORIA DA CRUZ SOUZA",
+    "HELLEN DE ALMEIDA CRUZ",
+    "ISABELLY CRISTINA FERREIRA DA SILVA",
+    "JULIO CESAR DE OLIVEIRA LOPES",
+    "KYMBERLLY VICTORIA DE OLIVEIRA MARTINS",
+    "LAVINNY EDUARDA SOUZA SENRA",
+    "LUCIANO ALVES FAUSTINO CAETANO",
+    "MARIA EDUARDA GOMES DA CRUZ",
+    "MARIA EDUARDA MOREIRA DE SOUZA",
+    "MAYSA ROBERTA LOPES NEVES",
+    "MIGUEL CARVALHO DOS SANTOS",
+    "MISUARA DE SOUZA SELES",
+    "NEEMIAS VICTOR MARTINS",
+    "NICOLAS CANDIDO DE SOUZA",
+    "NICOLLY FERNANDES SIQUEIRA",
+    "RHANYELE VITORIA MARTINS DOS REIS",
+    "RITA DE KASSIA SOUZA PEREIRA",
+    "SOPHIA EMANUELLE VIEIRA LATELISA"
+  ],
+  "2005": [
+    "ALICE PEREIRA SOUZA",
+    "ANA CLARA RODRIGUES DUMBA",
+    "ANA CLAUDIA BATISTA DE SOUZA OLIVEIRA",
+    "ANDRE PROCOPIO DOS SANTOS",
+    "ANNA JULIA RODRIGUES PEREIRA SOARES",
+    "ARTHUR RAFAEL DA SILVA NASCIMENTO",
+    "CLARA VITORIA MARTINS MACEDO",
+    "DANIELLE DE SOUZA SILVA",
+    "DANNYLO LOPES SOUZA",
+    "DAVI GONCALVES DOS SANTOS",
+    "EDUARDO OTAVIO DA SILVA",
+    "EMY EMANOELA MENDES MACHADO DOS SANTOS",
+    "GABRIEL SAMMER DA SILVA",
+    "ISAQUE CLODOALDO RIBEIRO DE SOUZA",
+    "JOAO VITOR DE SOUZA ALVES",
+    "KARLA MIRELLE COSTA DANTAS",
+    "KAUA FELIPE ALVES MARTINS",
+    "KAUA RIBEIRO MARTINS",
+    "LARA BEATRIZ DOS SANTOS SILVA",
+    "LARISSA EDUARDA SILVEIRA DE SOUZA",
+    "LETICIA LOPES MARINHO",
+    "LUIS HENRIQUE DE OLIVEIRA RIBEIRO",
+    "LUIZ FELIPE SANTOS GOMES",
+    "MARCOS VINICIUS FERREIRA QUARESMA",
+    "MARIA EDUARDA RODRIGUES XAVIER ALVES",
+    "MARIO JUNIO SILVA ARAUJO",
+    "MATHEUS OLIVEIRA PENA",
+    "NATHALLY VICTORIA MENDES GOMES DE JESUS",
+    "RICHARD KEVISSON ROCHA LOPES",
+    "THAVYNE LUIZA RIBEIRO REIS",
+    "THAYNA FREITAS VINDILINO",
+    "WALLACE DOS REIS ROCHA",
+    "WENDEL EMANUEL SANTOS MELO",
+    "YASMIM COUTO DE SOUZA"
+  ],
+  "2006": [
+    "ADRIEL ALVES DA SILVA",
+    "ANA LUIZA LACERDA DE OLIVEIRA CARVALHO",
+    "ANA LUIZA PEREIRA ELEUTERIO",
+    "ANA LUIZA SOUZA FERREIRA",
+    "ANNA JULIA ALBINA DE ALMEIDA",
+    "ARTHUR ROSARIO GOMES",
+    "CAUA HENRIQUE PINHEIRO DA SILVA",
+    "DANIEL FABIO SILVA FERREIRA",
+    "DANIELLY CRISTINA ALVES PEREIRA",
+    "ERIK FELIPE DOS SANTOS COSTA",
+    "FELIPE EMANUEL MARTINS SANTOS",
+    "GUSTAVO HENRIQUE MACIEL DE SOUZA",
+    "JOAO CARLOS MAGALHAES PINTO FELIPE",
+    "JOAQUIM MARTINS MAGALHAES FALEIRO",
+    "KAMILLY VITORIA RODRIGUES RIBEIRO",
+    "KAUA VINICIO REIS SILVA",
+    "KEYVISON FERNANDO ALVES DA SILVA",
+    "LAVINNYA EMANUELLE MOREIRA SANTOS",
+    "LETICIA ESTHER DA SILVA PEREIRA",
+    "LIZANDRA ROBERTA LUIZA DA SILVA",
+    "MICHAEL HENRIQUE MARTINS SILVA",
+    "NATHAN GUEDES DOS SANTOS",
+    "PIETRO HENRIQUE DE SOUZA COSTA",
+    "RYAN GABRIEL RAMALHO DE SOUZA",
+    "SAMUEL ALVES DA COSTA",
+    "SARA VITORIA NUNES FARIA",
+    "SOFIA CRISTINA MENDES FERNANDES",
+    "STEPHANIE VITORIA SOARES DOS SANTOS",
+    "THIAGO VICTOR RIBEIRO DA SILVA",
+    "VICTOR DOMINGOS FEITOZA",
+    "VITOR GONCALVES ANTUNES",
+    "YASMIM QUINTINO DA CUNHA"
+  ],
+  "2007": [
+    "ANA BEATRIZ FELIX MACHADO",
+    "ANA GABRIELLE DUARTE KNUPP",
+    "ARTHUR KENNEDY TELES SOARES",
+    "ARTHUR RODRIGUES SOUZA MARTINS",
+    "BRAYANE RAYCA QUARESMA DE SOUZA",
+    "DAYVISON DE OLIVEIRA SILVA",
+    "DIEGO RONAN CASSIMIRO GOMES",
+    "EVELLEN SUELLEN GONCALVES FERREIRA",
+    "GABRIELLE HELOISY RICARDO DA SILVA",
+    "HENRIQUE SAMUEL FERREIRA DA SILVA",
+    "ISABELA LOCKMANN DOMINGOS",
+    "ISABELY GUIMARAES DUARTE DE OLIVEIRA",
+    "ISAQUE EMANNUEL DE OLIVEIRA SOARES",
+    "ISMAEL AVELAR DE MATOS",
+    "JULIA DIAS FERREIRA",
+    "KAUA MOREIRA SANTOS CARVALHO",
+    "KETHELEN BIANCA TOGUIAS LIRIO",
+    "LETICIA VITORIA DOS SANTOS PENA",
+    "LUANA GOMES AZEVEDO BASTOS",
+    "MARIA EDUARDA SOUZA BARBOSA",
+    "MARIA LUIZA BARBOSA DE MATOS",
+    "MARIANNY VITORIA DOS SANTOS BARBOSA",
+    "MARINA GABRIELA MENDES MARTINS",
+    "MATEUS FELIPE FERREIRA QUARESMA",
+    "MIRELLA MARIA DA SILVA BUENO DE SOUZA",
+    "NICOLAS HENRIQUE ROCHA ESTEVAO",
+    "NILSON GOMES DA SILVA JUNIOR",
+    "PABLO KEVEN CORREIA SANTOS",
+    "RAONI DANIEL RIBEIRO RODRIGUES",
+    "SAMUEL HENRIQUE CARDOSO NUNES",
+    "SAYMON GONCALVES SILVA",
+    "TAYLOR VITOR DA SILVA LOPES",
+    "YASMIN VICTORIA SANTOS DO CARMO"
+  ],
+  "2008": [
+    "AGATHA MARTINS RAMOS",
+    "ANA CLARA DE OLIVEIRA CABRAL",
+    "ANA LUISA FIAU",
+    "ANA LUIZA BORGES DE SOUZA",
+    "ANA VITORIA DA SILVA MORAIS",
+    "ARYELE PHELIPO MENDES LOPES",
+    "BRUNA GABRIELLI SOARES ROCHA",
+    "BRUNA LETICIA DE CARVALHO",
+    "DAVID PABLO DOS SANTOS RODRIGUES",
+    "EDUARDO SOARES PRATES",
+    "EMILLY RAINY SILVA DE ASSIS",
+    "EMILLY VITORIA PEREIRA ANTUNES",
+    "GEOVANNA RODRIGUES NETO",
+    "GUSTAVO COSTA DAVID",
+    "HEMILLY VICTORIA ROCHA FARIAS",
+    "IGOR TAUAN BATISTA LIMA",
+    "ISAAC BRANDAO SANTOS",
+    "ISABELLY CRISTINE MARTINS DE SOUZA",
+    "JEFFERSON KAUA LOPES ROCHA",
+    "JOAO VICTOR RODRIGUES SOARES",
+    "LETICIA RAYANNE DOS SANTOS PEREIRA",
+    "LUCAS GABRIEL ALVES VERCIANO",
+    "LUIZA EDUARDA DIAS DE SOUZA",
+    "MARIA EDUARDA ALMEIDA CAVALCANTI",
+    "MARIA EDUARDA REIS DE CARVALHO",
+    "MARIA PAULA VIEIRA",
+    "MIGUEL JUAN RODRIGUES RIBEIRO",
+    "SAMUEL HENRIQUE DINIZ BITENCOURT",
+    "THIAGO SOARES DA SILVA"
+  ]
+  }, 
+  "Ensino Médio - 3º Ano": {
+  "3001": [
+    "ADRIELLY MIRANDA GONCALVES",
+    "ANA LUIZA FERREIRA RODRIGUES",
+    "BEATRIZ FIGUEIREDO VIEIRA",
+    "CARLA CRISTINA DE OLIVEIRA SILVA",
+    "CLARISSE VIEIRA RODRIGUES",
+    "DANILO VENTURA ESTEVAM",
+    "ELLEN BATISTA RODRIGUES",
+    "EROS GABRIEL CASTRO DOS SANTOS",
+    "ERYCK FERNANDES DOS SANTOS",
+    "FERNANDA RAYSSA RIBEIRO RODRIGUES",
+    "GABRIEL LIMA PEREIRA",
+    "HELOA CRISTINA MARTINS DE MOURA",
+    "JULIA VITORIA KELLY DOMINGOS DE SOUZA",
+    "KAROLAINE MARESA SANTOS SILVA",
+    "KAUAN HENRYQUE LIMA EUFROSINO",
+    "LORRAN PABLO MAGALHAES OLIVEIRA",
+    "LUANY CRISTINA ANTUNES CARVALHO",
+    "MANUELA LUISA SANTOS DE SOUZA",
+    "MARCELLA GABRYELLY VIEIRA MENDES ALVES BARBOSA",
+    "MARIA EDUARDA FERREIRA DE SALES",
+    "MATEUS TORRES DA CRUZ",
+    "NATHALY DE SOUZA NASCIMENTO",
+    "NICKOLAS GOMES TOSTES",
+    "RAYSSA DA SILVA LOPES CASSIMIRO",
+    "TASILA JULIA DE MIRANDA SANTOS SOUZA",
+    "THIAGO HENRIQUE FERREIRA DA SILVA",
+    "THIERRY GOMES BARBOSA",
+    "VITOR SAMUEL RODRIGUES DOS SANTOS",
+    "WANDERLEI FERREIRA VIANA",
+    "YAN KAIK DOS SANTOS",
+    "YASMIN BRUNA RODRIGUES DE QUEIROZ",
+    "YUMI SHERON DE JESUS MARTINS"
+  ],
+  "3002": [
+    "AIANY CAROLLINY RODRIGUES DOS SANTOS",
+    "ANNA LUIZA CONCEICAO SANTOS",
+    "CALEB SAMUEL OLIVEIRA ROQUE",
+    "DANIEL FERNANDES DE SOUZA",
+    "DHIEMERSON LUCAS GONCALVES DOS SANTOS",
+    "ERICK RICHARD FERREIRA DOS SANTOS LOPES",
+    "GABRIELLY STEFANNY PAIXAO DE SOUZA",
+    "GUSTAVO HENRIQUE ARAUJO DE OLIVEIRA",
+    "ITALO RODRIGUES LUZ",
+    "JENNIFER SANTANA SILVA",
+    "JONATHAN HENRIQUE DOS SANTOS RIBEIRO",
+    "KETHELYN PEREIRA RAMOS DA SILVA",
+    "LAURA SOARES DA SILVA",
+    "LIS DE OLIVEIRA CEZAR CARVALHO",
+    "MARCOS PHILLIPPE VIEIRA DE ANDRADE",
+    "MATEUS DE OLIVEIRA BOREL",
+    "MATHEUS GABRIEL GONCALVES DIAS",
+    "NAIRON ROBSON EVANGELISTA COSTA",
+    "NICOLAS AUGUSTO VIEIRA AVILA",
+    "PAMELA MARTINS DOS SANTOS",
+    "PIETRA BRANDAO LIBERATO",
+    "RAYSSA LAYSLA ALVES NUNES",
+    "SAMUEL EDSON NUNES DA SILVA",
+    "SARA LUCAS DE OLIVEIRA MANSUR",
+    "SARAH EMANUELY PEDRO",
+    "SOFIA RAPHAELLY DE SOUZA OLIVEIRA",
+    "TAILLA MAYRA DA SILVA NASCIMENTO",
+    "THIAGO HENRIQUE FELIX SILVA",
+    "VITOR GABRIEL TOME DA SILVA",
+    "YUDI JOSE DA SILVA"
+  ],
+  "3003": [
+    "ANA CLARA CASTRO RODRIGUES",
+    "ANA JULIA MACEDO FERREIRA",
+    "CAMILLY EDUARDA CLEMENTE ARAUJO",
+    "CARLOS HENRI MENDES DO CARMO",
+    "CAUA SANT ANNA",
+    "DAVI CRISPIM DE ARAUJO",
+    "DIOGO MOREIRA MARQUES",
+    "DIOVANA GABRIELLY COSTA EUSTAQUIO",
+    "EMANUELLE DA SILVA CARDOSO",
+    "EMANUELLE MEDEIROS MARTINS",
+    "EMILLY VITORIA FERREIRA FRANCISCO",
+    "ERICK MARX MARTINS SILVA",
+    "FELIPE GABRIEL RODRIGUES OLIVEIRA",
+    "FERNANDO RODRIGUES DOS REIS CUNHA",
+    "GABRIEL RODRIGUES SANTOS",
+    "GABRIELLE CRISTINE BARROSO TEIXEIRA",
+    "JOAO VICTOR RIBEIRO MARINHO",
+    "JULIANA NOEMI RODRIGUES SILVA",
+    "KAIQUE OLIVEIRA GAIA RIBEIRO",
+    "KEMILLY EYSHILA RODRIGUES DA SILVA",
+    "LEONARDO HENRIQUE BARRETO DE MOURA",
+    "LUIZ AUGUSTO DE OLIVEIRA VENTURA",
+    "MICAELLY TEIXEIRA DIAS",
+    "NICOLAS VINICIUS DOS SANTOS SANTANA",
+    "RYAN DOUGLAS SOUSA COELHO",
+    "SABRYNA VIEIRA DIAS",
+    "SAMUEL NUNES DE SOUZA",
+    "SIDNEY PONTES BIBIANO",
+    "YUNARA VIEIRA DE SOUZA COSTA"
+  ],
+  "3004": [
+    "ANA CLARA BATISTA RIBEIRO",
+    "ANA CLARA DEMUNER DE SOUZA",
+    "BIANCA TAVARES DE PAULA",
+    "DANIEL OLIVEIRA SALDANHA",
+    "DANIELLY PEREIRA DOS SANTOS DA COSTA",
+    "DIOGO HENRIQUE DE OLIVEIRA ALMEIDA AGUIAR",
+    "ELISA ASSIS SOARES",
+    "ERICK LAYON RODRIGUES SANTOS",
+    "EVELYN VITORIA GOMES SILVA SOUZA",
+    "GABRIEL PIETRO HENRIQUE ANICETO PEREIRA",
+    "GABRIELLY ESTHEFANY GONCALVES LIDOINO",
+    "IZABELLE CAROLINE DOS SANTOS",
+    "JAMILY VITORIA LEMOS DOS SANTOS",
+    "KETLLEN VITORIA NUNES DA SILVA",
+    "KETLLEN VITORIA RODRIGUES DIVINO",
+    "LARISSA DE SOUZA SANTOS",
+    "MAISA VITORIA LOPES REIS",
+    "MARIA EDUARDA COELHO LIMA",
+    "MARIA EDUARDA HIPOLITO FERREIRA",
+    "MARIANE SOARES PEREIRA",
+    "MARYA EDUARDA DE JESUS LIMA",
+    "NICOLAS MIGUEL RODRIGUES DOS SANTOS",
+    "RAFAEL MARQUES DE OLIVEIRA LOPES",
+    "REBECA AQUILA ANDRADE CORDEIRO",
+    "RYAN PEREIRA MENDES",
+    "SAMUEL MADUREIRA DE SOUZA",
+    "SOPHIA LUIZA RODRIGUES DE SOUZA CRUZ",
+    "TAILAINE VITORIA PEREIRA MENDES",
+    "TAINARA CAUANA MORENO",
+    "VICTOR GABRIEL MAURICIO SOARES",
+    "YASMIN VITORIA RAMOS DE SOUZA"
+  ],
+  "3005": [
+    "ANDRE ELIEL TEIXEIRA SILVA",
+    "DANIEL DE OLIVEIRA SANTOS",
+    "EDUARDO ANTONIO ASSIS SALES",
+    "EMANUELY DA SILVA MONTEIRO",
+    "EMANUELY EDUARDA FERNANDES PEREIRA",
+    "EMILLY KAROLINE FERREIRA MENDES",
+    "ESTHER JULIA RODRIGUES SANTOS",
+    "GABRIEL DE SOUZA FERREIRA",
+    "GUSTAVO HENRIQUE CORREA AMORIM",
+    "ISABELLY MAGALHAES PINTO FELIPE",
+    "JHENIFER MOTA SOUZA",
+    "JOAO VICTOR RODRIGUES DOS SANTOS",
+    "JULIA SOARES DA SILVA",
+    "JULIANA ADLAY PEREIRA FERNANDES FERREIRA",
+    "KAYLA CRISTHINE ALVES MEIRELES",
+    "LETICIA VITORIA MIRANDA DOS SANTOS",
+    "LUCAS HENRIQUE CALDEIRA SILVA",
+    "LUIZ HENRIQUE DE SOUZA RIBEIRO",
+    "MILLENA CHRISTINA DOS SANTOS",
+    "NATALLY RARINE DE CASTRO BORGES",
+    "NATHALIA VITORIA JESUS NOVAES",
+    "NICOLE CAMILY CANDIDA PEREIRA",
+    "RAFAEL OLIVEIRA SILVA",
+    "RAFAEL RODRIGUES DOS SANTOS",
+    "RAIANE DE SOUSA OLIVEIRA",
+    "RENAN KAILANY MARTINS CALDEIRA",
+    "SOPHIA FURTADO SANTOS DA SILVA",
+    "TAYNA VITORIA SOUZA RODRIGUES",
+    "YASMIM KALINE FERREIRA E SILVA",
+    "YASMIN EMYLLE VITORIA JESUS DE SOUZA SANTOS"
+  ],
+  "3006": [
+    "ANA HELOISA DA SILVA LIMA",
+    "ANA JULIA DA SILVA LIMA",
+    "ANNA LUIZA GONCALVES",
+    "BRUNO JOSE DE OLIVEIRA",
+    "CAROLINA STEFANI BELTRAO DE MOURA",
+    "DANIEL SANTOS DE DEUS",
+    "DAVI GABRIEL TOLENTINO FERREIRA",
+    "DAVID MARCOS VIANA ARAUJO",
+    "FRANSHESKA VALENTINA VARGAS MOSQUEDA",
+    "GABRIEL TEIXEIRA SOUZA",
+    "IASMIN GABRIELLY DOS SANTOS",
+    "ICARO PEREIRA RODRIGUES",
+    "ISADORA SOARES GOMES",
+    "ITALO BRANDAO LEAL",
+    "JEFERSON GABRIEL SILVA FERREIRA",
+    "JOAO PEDRO DOS SANTOS ALMEIDA",
+    "KAUAN VICTOR ROCHA GUIMARAES",
+    "LINCONL STANISLAU MARQUES DIAS",
+    "MAICON FERNANDES GOMES",
+    "MARIA VITORIA DE SOUZA PEREIRA",
+    "MIGUEL DIAS DO CARMO",
+    "NICOLLAS DOMICIANO GONCALVES",
+    "RAMON FLAVIO OLIVEIRA",
+    "RAYCA LARISSA LORETE FERREIRA",
+    "RHAFAELLA NUNES PEREIRA",
+    "RUAN CESAR CARDOSO DOS SANTOS",
+    "SHEROLLY SOUZA DOS SANTOS",
+    "SINDY LUANDA VENANCIO MARTINS",
+    "THAIRONE NUNES FERREIRA DA SILVA",
+    "THAUANY MARGARETH DE OLIVEIRA",
+    "WARLEM MIGUEL VIEIRA BATISTA"
+  ],
+  "3007": [
+    "ANA BORGES PARREIRA",
+    "ANA JULIA MEDEIROS SILVA",
+    "ANNA LUIZA SANTOS DA SILVA",
+    "CHRISTIAN RYAN FERREIRA SILVA",
+    "DANIELLE ROBERTA SANTOS DIAS",
+    "DIOGO FERNANDO DOS SANTOS",
+    "FELIPE BORGES PARREIRA",
+    "HELLEN MAYARA GONCALVES DE MIRANDA SANTOS",
+    "HERICK GOMES RIBEIRO SILVA",
+    "JEISIANE FRANCISCA RIBEIRO DOS SANTOS",
+    "KAUA GOMES PARRELA",
+    "LETICIA EUSTAQUIO GOMES FERREIRA",
+    "LUCAS ALEF GONCALVES",
+    "MARIA EDUARDA CERQUEIRA DE OLIVEIRA",
+    "MATEUS GUERREIRO LOPES REIS",
+    "PEDRO MIGUEL CALASSIO LOPES",
+    "RAFAELLA MENDES MARTINS",
+    "RAISSA FERREIRA GOULART",
+    "RAQUEL DE CASSIA RIBEIRO LANA",
+    "RENAN DE SOUZA ARAGAO",
+    "ROBERT PIRES SOUZA",
+    "RYAN MARCIO TAVARES DE PAULA",
+    "SABRINA MARTINS ELIAS",
+    "SAMIRA TAINA DE LOURDES PEREIRA",
+    "SARA VITORIA RAMOS DE SOUSA",
+    "TACHYLA IDY FERREIRA SOUZA",
+    "TAMARA EDUARDA APARECIDA DE SOUZA",
+    "THALIA RAMOS",
+    "THAMARA CAMILY DE OLIVEIRA SIQUEIRA",
+    "THIAGO EMANUEL TELES FERREIRA"
+  ]
+  };
+    // Variaveis Globais de Estado
+    let alunoAtualParaCaptura = null;
+    let bancoNotasLocais = JSON.parse(localStorage.getItem('corrigePro_notas_alunos')) || {};
+    let configCalib = carregarCalibracaoCookie();
+    let streamVideoGlobal = null;
+    let imagemBaseWarpedCanvas = document.createElement('canvas');
+
+    const LETRAS = ["A", "B", "C", "D", "E"];
+    const defaultGabarito = ['B','D','C','B','C','D','C','B','A','B'];
+    const sliders = ['x1', 'y1', 'x2', 'y2', 'spX', 'spY'];
+
+    // ================= 2. NAVEGAÇÃO E GERENCIAMENTO DE INTERFACE =================
+    function trocarAba(idAba) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(idAba).style.display = 'block';
+        event.target.classList.add('active');
+
+        if (idAba === 'abaCalibragem') iniciarCamera('webcamCalib');
+        if (idAba === 'abaExportar') atualizarListaTurmasAlteradas();
+    }
+
+    // Carrega Dropdowns das Etapas
+    function inicializarSelects() {
+        const selectEtapa = document.getElementById('selectEtapa');
+        selectEtapa.innerHTML = "";
+        Object.keys(DADOS_ALUNOS).forEach(etapa => {
+            selectEtapa.innerHTML += `<option value="${etapa}">${etapa}</option>`;
+        });
+        carregarTurmas();
+    }
+
+    function carregarTurmas() {
+        const etapa = document.getElementById('selectEtapa').value;
+        const selectTurma = document.getElementById('selectTurma');
+        selectTurma.innerHTML = "";
+        if (DADOS_ALUNOS[etapa]) {
+            Object.keys(DADOS_ALUNOS[etapa]).forEach(turma => {
+                selectTurma.innerHTML += `<option value="${turma}">Turma ${turma}</option>`;
+            });
+        }
+        carregarAlunos();
+    }
+
+    function carregarAlunos() {
+        const etapa = document.getElementById('selectEtapa').value;
+        const turma = document.getElementById('selectTurma').value;
+        const tbody = document.getElementById('listaAlunosBody');
+        tbody.innerHTML = "";
+
+        const lista = DADOS_ALUNOS[etapa]?.[turma] || [];
+        
+        lista.forEach(aluno => {
+            const chaveNota = `${turma}_${aluno}`;
+            const notaSalva = bancoNotasLocais[chaveNota] !== undefined ? bancoNotasLocais[chaveNota].toFixed(1) : "---";
+            const temNotaClass = bancoNotasLocais[chaveNota] !== undefined ? "tem-nota" : "";
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${aluno}</strong></td>
+                    <td style="text-align:center;">
+                        <button class="btn-cam" onclick="abrirModalScan('${aluno}', '${turma}')">📷</button>
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="nota-badge ${temNotaClass}" id="nota_${aluno.replace(/\s+/g, '_')}">${notaSalva}</span>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // ================= 3. MANIPULAÇÃO DE COOKIES (CALIBRAGEM) =================
+    function setCookie(name, value, days) {
+        let expires = "";
+        if (days) {
+            let date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (JSON.stringify(value) || "") + expires + "; path=/";
+    }
+
+    function getCookie(name) {
+        let nameEQ = name + "=";
+        let ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return JSON.parse(c.substring(nameEQ.length, c.length));
+        }
+        return null;
+    }
+
+    function salvarCalibracaoCookie() {
+        const config = { gabarito: [] };
+        sliders.forEach(s => config[s] = parseInt(document.getElementById(`input_${s}`).value));
+        for (let i = 0; i < 10; i++) config.gabarito.push(document.getElementById(`qc_${i}`).value);
+        
+        setCookie('corrigePro_calib_v1', config, 365); // Salva por 1 ano
+        configCalib = config;
+        alert("✅ Calibragem salva com sucesso nos Cookies do navegador!");
+    }
+
+    function carregarCalibracaoCookie() {
+        const cookie = getCookie('corrigePro_calib_v1');
+        return cookie || { x1: 100, y1: 104, x2: 356, y2: 105, spX: 33, spY: 51, gabarito: defaultGabarito };
+    }
+
+    // ================= 4. CÂMERA E MODAL DE CORREÇÃO =================
+    function iniciarCamera(elementId) {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } })
+                .then(stream => {
+                    streamVideoGlobal = stream;
+                    document.getElementById(elementId).srcObject = stream;
+                });
+        }
+    }
+
+    function abrirModalScan(aluno, turma) {
+        alunoAtualParaCaptura = { nome: aluno, turma: turma };
+        document.getElementById('nomeAlunoModal').innerText = `Provas de: ${aluno}`;
+        document.getElementById('modalCamera').style.display = 'flex';
+        iniciarCamera('webcamScan');
+    }
+
+    function fecharModalCamera() {
+        document.getElementById('modalCamera').style.display = 'none';
+        if (streamVideoGlobal) streamVideoGlobal.getTracks().forEach(track => track.stop());
+    }
+
+    // ================= 5. PROCESSAMENTO OPENCV + VISÃO COMPUTACIONAL =================
+    document.getElementById('btnEscanearAluno').addEventListener('click', () => {
+        if (!cvReady || !alunoAtualParaCaptura) return;
+
+        const video = document.getElementById('webcamScan');
+        const canvasHidden = document.getElementById('canvasHidden');
+        canvasHidden.width = video.videoWidth; canvasHidden.height = video.videoHeight;
+        canvasHidden.getContext('2d').drawImage(video, 0, 0);
+
+        let src = cv.imread(canvasHidden);
+        let res = processarPerspectivaCompleta(src);
+        src.delete();
+
+        if (!res) {
+            alert("⚠️ Os 4 cantos do gabarito não foram identificados. Tente melhorar o enquadramento e a iluminação.");
+            return;
+        }
+
+        let warped = res.warped;
+        res.srcComPontos.delete();
+
+        // Leitura com o algoritmo de threshold + MORPH_CLOSE
+        let warpedGray = new cv.Mat();
+        cv.cvtColor(warped, warpedGray, cv.COLOR_RGBA2GRAY);
+        let warpedThresh = new cv.Mat();
+        let warpedBlur = new cv.Mat();
+        cv.GaussianBlur(warpedGray, warpedBlur, new cv.Size(3, 3), 0);
+        cv.threshold(warpedBlur, warpedThresh, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+
+        let stringGabarito = configCalib.gabarito.join('');
+        let acertos = 0;
+
+        for (let q = 0; q < 10; q++) {
+            let isCol2 = q >= 5;
+            let colBaseX = isCol2 ? configCalib.x2 : configCalib.x1;
+            let colBaseY = isCol2 ? configCalib.y2 : configCalib.y1;
+            let linhaIdx = isCol2 ? (q - 5) : q;
+            let yPonto = colBaseY + (linhaIdx * configCalib.spY);
+
+            let valoresAlternativas = [];
+            for (let i = 0; i < 5; i++) {
+                let xPonto = colBaseX + (i * configCalib.spX);
+                let totalPixels = 0;
+                if (yPonto >= 12 && yPonto < 450 - 12 && xPonto >= 12 && xPonto < 600 - 12) {
+                    let roi = warpedThresh.roi(new cv.Rect(xPonto - 12, yPonto - 12, 24, 24));
+                    totalPixels = cv.countNonZero(roi);
+                    roi.delete();
+                }
+                valoresAlternativas.push(totalPixels);
+            }
+
+            let maxPixels = Math.max(...valoresAlternativas);
+            let idxMarcado = valoresAlternativas.indexOf(maxPixels);
+            let outras = valoresAlternativas.filter((_, idx) => idx !== idxMarcado);
+            let mediaOutras = outras.reduce((a, b) => a + b, 0) / outras.length;
+
+            let respostaAluno = "-";
+            if (maxPixels > 120 && maxPixels > (mediaOutras * 1.8)) {
+                respostaAluno = LETRAS[idxMarcado];
+            }
+
+            if (respostaAluno === stringGabarito[q]) acertos++;
+        }
+
+        let notaFinal = (acertos / 10.0) * 10.0;
+        
+        // Salva Localmente
+        const chaveNota = `${alunoAtualParaCaptura.turma}_${alunoAtualParaCaptura.nome}`;
+        bancoNotasLocais[chaveNota] = notaFinal;
+        localStorage.setItem('corrigePro_notas_alunos', JSON.stringify(bancoNotasLocais));
+
+        // Toca Bip Sonoro
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        osc.connect(audioCtx.destination); osc.frequency.value = 800; osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+
+        fecharModalCamera();
+        carregarAlunos(); // Atualiza a tabela na tela
+
+        warped.delete(); warpedGray.delete(); warpedBlur.delete(); warpedThresh.delete();
+    });
+
+    // Pipeline Completo com Fechamento Morfológico (MORPH_CLOSE)
+    function processarPerspectivaCompleta(src) {
+        let gray = new cv.Mat(), blurred = new cv.Mat(), thresh = new cv.Mat(), morphed = new cv.Mat();
+        let kernel = null, contours = new cv.MatVector(), hierarchy = new cv.Mat();
+
+        try {
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+            cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
+            cv.adaptiveThreshold(blurred, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 11, 2);
+
+            // Ajuste Morfológico para selar bordas
+            kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+            cv.morphologyEx(thresh, morphed, cv.MORPH_CLOSE, kernel);
+
+            cv.findContours(morphed, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+            
+            let anchors = [];
+            for (let i = 0; i < contours.size(); i++) {
+                let cnt = contours.get(i);
+                let peri = cv.arcLength(cnt, true);
+                let approx = new cv.Mat();
+                cv.approxPolyDP(cnt, approx, 0.04 * peri, true);
+
+                if (approx.rows === 4) {
+                    let rect = cv.boundingRect(approx);
+                    let area = rect.width * rect.height;
+                    let ar = rect.width / rect.height;
+                    if (area > 300 && area < 60000 && ar > 0.7 && ar < 1.3) {
+                        let M = cv.moments(cnt);
+                        if (M.m00 !== 0) anchors.push({ x: Math.round(M.m10 / M.m00), y: Math.round(M.m01 / M.m00) });
+                    }
+                }
+                approx.delete(); cnt.delete();
+            }
+
+            if (anchors.length !== 4) return null;
+
+            let sum = anchors.map(p => p.x + p.y);
+            let diff = anchors.map(p => p.y - p.x);
+            let tl = anchors[sum.indexOf(Math.min(...sum))], br = anchors[sum.indexOf(Math.max(...sum))];
+            let tr = anchors[diff.indexOf(Math.min(...diff))], bl = anchors[diff.indexOf(Math.max(...diff))];
+
+            let srcComPontos = src.clone();
+            let dW = 600, dH = 450;
+            let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.x, tl.y, tr.x, tr.y, bl.x, bl.y, br.x, br.y]);
+            let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, dW, 0, 0, dH, dW, dH]);
+            let M_warp = cv.getPerspectiveTransform(srcTri, dstTri);
+
+            let warped = new cv.Mat();
+            cv.warpPerspective(src, warped, M_warp, new cv.Size(dW, dH));
+
+            srcTri.delete(); dstTri.delete(); M_warp.delete();
+            return { warped, srcComPontos };
+        } finally {
+            gray.delete(); blurred.delete(); thresh.delete(); morphed.delete();
+            if (kernel) kernel.delete();
+            contours.delete(); hierarchy.delete();
+        }
+    }
+
+    // ================= 6. EXPORTAÇÃO CSV APENAS DAS TURMAS ALTERADAS =================
+    function atualizarListaTurmasAlteradas() {
+        const ul = document.getElementById('listaTurmasAlteradas');
+        ul.innerHTML = "";
+
+        const turmasModificadas = new Set();
+        Object.keys(bancoNotasLocais).forEach(chave => {
+            const turma = chave.split('_')[0];
+            turmasModificadas.add(turma);
+        });
+
+        if (turmasModificadas.size === 0) {
+            ul.innerHTML = "<li><em>Nenhuma turma possui notas lançadas ainda.</em></li>";
+            return;
+        }
+
+        turmasModificadas.forEach(turma => {
+            let totalAlunosComNota = Object.keys(bancoNotasLocais).filter(k => k.startsWith(turma + "_")).length;
+            ul.innerHTML += `<li><strong>Turma ${turma}:</strong> ${totalAlunosComNota} prova(s) corrigida(s)</li>`;
+        });
+    }
+
+    function exportarCSV() {
+        const turmasModificadas = new Set();
+        Object.keys(bancoNotasLocais).forEach(chave => {
+            const turma = chave.split('_')[0];
+            turmasModificadas.add(turma);
+        });
+
+        if (turmasModificadas.size === 0) {
+            alert("Nenhuma alteração foi realizada para exportar.");
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,Etapa;Turma;Nome do Aluno;Nota\n";
+
+        Object.keys(DADOS_ALUNOS).forEach(etapa => {
+            Object.keys(DADOS_ALUNOS[etapa]).forEach(turma => {
+                if (turmasModificadas.has(turma)) {
+                    DADOS_ALUNOS[etapa][turma].forEach(aluno => {
+                        const chave = `${turma}_${aluno}`;
+                        const nota = bancoNotasLocais[chave] !== undefined ? bancoNotasLocais[chave].toFixed(1) : "";
+                        csvContent += `"${etapa}";"${turma}";"${aluno}";"${nota}"\n`;
+                    });
+                }
+            });
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `notas_corrigidas_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Inicialização da interface da calibragem
+    const containerGabCalib = document.getElementById('containerGabaritoCalib');
+    for (let i = 0; i < 10; i++) {
+        containerGabCalib.innerHTML += `<label>Q${(i+1).toString().padStart(2, '0')}: </label>
+            <select id="qc_${i}">
+                ${LETRAS.map(l => `<option value="${l}" ${l === configCalib.gabarito[i] ? 'selected' : ''}>${l}</option>`).join('')}
+            </select>`;
+    }
+
+    sliders.forEach(s => {
+        const el = document.getElementById(`input_${s}`);
+        if(configCalib[s]) el.value = configCalib[s];
+        document.getElementById(`val_${s}`).innerText = el.value;
+        el.addEventListener('input', (e) => document.getElementById(`val_${s}`).innerText = e.target.value);
+    });
+
+    // Inicia a Aplicação
+    inicializarSelects();
+</script>
+
 </body>
 </html>
