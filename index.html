@@ -158,9 +158,15 @@
     };
 </script>
 <script async src="https://docs.opencv.org/4.9.0/opencv.js"></script>
-
+<!-- Substitua o bloco <script> final do seu index.html por este: -->
 <script>
-    // ================= 1. BASE DE DADOS DOS ALUNOS (ESTRUTURA DO SEU JSON) =================
+    // ================= 1. CONSTANTES E VARIÁVEIS GLOBAIS =================
+    // (Devem ser declaradas no topo para que todas as funções possam acessá-las)
+    const LETRAS = ["A", "B", "C", "D", "E"];
+    const defaultGabarito = ['B','D','C','B','C','D','C','B','A','B'];
+    const sliders = ['x1', 'y1', 'x2', 'y2', 'spX', 'spY'];
+
+    // Cole aqui o seu objeto DADOS_ALUNOS completo:
     const DADOS_ALUNOS = {
   "Ensino Fundamental": {
     "801": [
@@ -1101,80 +1107,14 @@
       "THIAGO EMANUEL TELES FERREIRA"
     ]
   }
-}
-    // Variaveis Globais de Estado
+};
+    // Variáveis Globais de Estado
     let alunoAtualParaCaptura = null;
     let bancoNotasLocais = JSON.parse(localStorage.getItem('corrigePro_notas_alunos')) || {};
-    let configCalib = carregarCalibracaoCookie();
     let streamVideoGlobal = null;
     let imagemBaseWarpedCanvas = document.createElement('canvas');
 
-    const LETRAS = ["A", "B", "C", "D", "E"];
-    const defaultGabarito = ['B','D','C','B','C','D','C','B','A','B'];
-    const sliders = ['x1', 'y1', 'x2', 'y2', 'spX', 'spY'];
-
-    // ================= 2. NAVEGAÇÃO E GERENCIAMENTO DE INTERFACE =================
-    function trocarAba(idAba) {
-        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        
-        document.getElementById(idAba).style.display = 'block';
-        event.target.classList.add('active');
-
-        if (idAba === 'abaCalibragem') iniciarCamera('webcamCalib');
-        if (idAba === 'abaExportar') atualizarListaTurmasAlteradas();
-    }
-
-    // Carrega Dropdowns das Etapas
-    function inicializarSelects() {
-        const selectEtapa = document.getElementById('selectEtapa');
-        selectEtapa.innerHTML = "";
-        Object.keys(DADOS_ALUNOS).forEach(etapa => {
-            selectEtapa.innerHTML += `<option value="${etapa}">${etapa}</option>`;
-        });
-        carregarTurmas();
-    }
-
-    function carregarTurmas() {
-        const etapa = document.getElementById('selectEtapa').value;
-        const selectTurma = document.getElementById('selectTurma');
-        selectTurma.innerHTML = "";
-        if (DADOS_ALUNOS[etapa]) {
-            Object.keys(DADOS_ALUNOS[etapa]).forEach(turma => {
-                selectTurma.innerHTML += `<option value="${turma}">Turma ${turma}</option>`;
-            });
-        }
-        carregarAlunos();
-    }
-
-    function carregarAlunos() {
-        const etapa = document.getElementById('selectEtapa').value;
-        const turma = document.getElementById('selectTurma').value;
-        const tbody = document.getElementById('listaAlunosBody');
-        tbody.innerHTML = "";
-
-        const lista = DADOS_ALUNOS[etapa]?.[turma] || [];
-        
-        lista.forEach(aluno => {
-            const chaveNota = `${turma}_${aluno}`;
-            const notaSalva = bancoNotasLocais[chaveNota] !== undefined ? bancoNotasLocais[chaveNota].toFixed(1) : "---";
-            const temNotaClass = bancoNotasLocais[chaveNota] !== undefined ? "tem-nota" : "";
-
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${aluno}</strong></td>
-                    <td style="text-align:center;">
-                        <button class="btn-cam" onclick="abrirModalScan('${aluno}', '${turma}')">📷</button>
-                    </td>
-                    <td style="text-align:center;">
-                        <span class="nota-badge ${temNotaClass}" id="nota_${aluno.replace(/\s+/g, '_')}">${notaSalva}</span>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    // ================= 3. MANIPULAÇÃO DE COOKIES (CALIBRAGEM) =================
+    // ================= 2. FUNÇÕES DE COOKIES =================
     function setCookie(name, value, days) {
         let expires = "";
         if (days) {
@@ -1196,19 +1136,92 @@
         return null;
     }
 
+    function carregarCalibracaoCookie() {
+        const cookie = getCookie('corrigePro_calib_v1');
+        return cookie || { x1: 100, y1: 104, x2: 356, y2: 105, spX: 33, spY: 51, gabarito: defaultGabarito };
+    }
+
+    // Carrega a configuração dos cookies de forma segura
+    let configCalib = carregarCalibracaoCookie();
+
     function salvarCalibracaoCookie() {
         const config = { gabarito: [] };
         sliders.forEach(s => config[s] = parseInt(document.getElementById(`input_${s}`).value));
         for (let i = 0; i < 10; i++) config.gabarito.push(document.getElementById(`qc_${i}`).value);
         
-        setCookie('corrigePro_calib_v1', config, 365); // Salva por 1 ano
+        setCookie('corrigePro_calib_v1', config, 365);
         configCalib = config;
         alert("✅ Calibragem salva com sucesso nos Cookies do navegador!");
     }
 
-    function carregarCalibracaoCookie() {
-        const cookie = getCookie('corrigePro_calib_v1');
-        return cookie || { x1: 100, y1: 104, x2: 356, y2: 105, spX: 33, spY: 51, gabarito: defaultGabarito };
+    // ================= 3. NAVEGAÇÃO E DROPDOWNS =================
+    function trocarAba(idAba) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(idAba).style.display = 'block';
+        if (event && event.target) event.target.classList.add('active');
+
+        if (idAba === 'abaCalibragem') iniciarCamera('webcamCalib');
+        if (idAba === 'abaExportar') atualizarListaTurmasAlteradas();
+    }
+
+    function inicializarSelects() {
+        const selectEtapa = document.getElementById('selectEtapa');
+        if (!selectEtapa) return;
+        
+        selectEtapa.innerHTML = "";
+        Object.keys(DADOS_ALUNOS).forEach(etapa => {
+            selectEtapa.innerHTML += `<option value="${etapa}">${etapa}</option>`;
+        });
+        carregarTurmas();
+    }
+
+    function carregarTurmas() {
+        const etapa = document.getElementById('selectEtapa').value;
+        const selectTurma = document.getElementById('selectTurma');
+        if (!selectTurma) return;
+
+        selectTurma.innerHTML = "";
+        if (DADOS_ALUNOS[etapa]) {
+            Object.keys(DADOS_ALUNOS[etapa]).forEach(turma => {
+                selectTurma.innerHTML += `<option value="${turma}">Turma ${turma}</option>`;
+            });
+        }
+        carregarAlunos();
+    }
+
+    function carregarAlunos() {
+        const etapa = document.getElementById('selectEtapa').value;
+        const turma = document.getElementById('selectTurma').value;
+        const tbody = document.getElementById('listaAlunosBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = "";
+        const lista = DADOS_ALUNOS[etapa]?.[turma] || [];
+        
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Nenhum aluno encontrado nesta turma.</td></tr>';
+            return;
+        }
+
+        lista.forEach(aluno => {
+            const chaveNota = `${turma}_${aluno}`;
+            const notaSalva = bancoNotasLocais[chaveNota] !== undefined ? bancoNotasLocais[chaveNota].toFixed(1) : "---";
+            const temNotaClass = bancoNotasLocais[chaveNota] !== undefined ? "tem-nota" : "";
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${aluno}</strong></td>
+                    <td style="text-align:center;">
+                        <button class="btn-cam" onclick="abrirModalScan('${aluno}', '${turma}')">📷</button>
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="nota-badge ${temNotaClass}" id="nota_${aluno.replace(/\s+/g, '_')}">${notaSalva}</span>
+                    </td>
+                </tr>
+            `;
+        });
     }
 
     // ================= 4. CÂMERA E MODAL DE CORREÇÃO =================
@@ -1217,8 +1230,10 @@
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } })
                 .then(stream => {
                     streamVideoGlobal = stream;
-                    document.getElementById(elementId).srcObject = stream;
-                });
+                    const videoEl = document.getElementById(elementId);
+                    if (videoEl) videoEl.srcObject = stream;
+                })
+                .catch(err => console.log("Acesso à câmera bloqueado ou indisponível:", err));
         }
     }
 
@@ -1234,8 +1249,8 @@
         if (streamVideoGlobal) streamVideoGlobal.getTracks().forEach(track => track.stop());
     }
 
-    // ================= 5. PROCESSAMENTO OPENCV + VISÃO COMPUTACIONAL =================
-    document.getElementById('btnEscanearAluno').addEventListener('click', () => {
+    // ================= 5. PROCESSAMENTO OPENCV =================
+    document.getElementById('btnEscanearAluno')?.addEventListener('click', () => {
         if (!cvReady || !alunoAtualParaCaptura) return;
 
         const video = document.getElementById('webcamScan');
@@ -1248,14 +1263,13 @@
         src.delete();
 
         if (!res) {
-            alert("⚠️ Os 4 cantos do gabarito não foram identificados. Tente melhorar o enquadramento e a iluminação.");
+            alert("⚠️ Os 4 cantos do gabarito não foram identificados. Tente melhorar o enquadramento.");
             return;
         }
 
         let warped = res.warped;
         res.srcComPontos.delete();
 
-        // Leitura com o algoritmo de threshold + MORPH_CLOSE
         let warpedGray = new cv.Mat();
         cv.cvtColor(warped, warpedGray, cv.COLOR_RGBA2GRAY);
         let warpedThresh = new cv.Mat();
@@ -1288,7 +1302,7 @@
             let maxPixels = Math.max(...valoresAlternativas);
             let idxMarcado = valoresAlternativas.indexOf(maxPixels);
             let outras = valoresAlternativas.filter((_, idx) => idx !== idxMarcado);
-            let mediaOutras = outras.reduce((a, b) => a + b, 0) / outras.length;
+            let mediaOutras = outras.reduce((a, b) => a + b, 0) / (outras.length || 1);
 
             let respostaAluno = "-";
             if (maxPixels > 120 && maxPixels > (mediaOutras * 1.8)) {
@@ -1300,23 +1314,22 @@
 
         let notaFinal = (acertos / 10.0) * 10.0;
         
-        // Salva Localmente
         const chaveNota = `${alunoAtualParaCaptura.turma}_${alunoAtualParaCaptura.nome}`;
         bancoNotasLocais[chaveNota] = notaFinal;
         localStorage.setItem('corrigePro_notas_alunos', JSON.stringify(bancoNotasLocais));
 
-        // Toca Bip Sonoro
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        osc.connect(audioCtx.destination); osc.frequency.value = 800; osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            osc.connect(audioCtx.destination); osc.frequency.value = 800; osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        } catch(e) {}
 
         fecharModalCamera();
-        carregarAlunos(); // Atualiza a tabela na tela
+        carregarAlunos();
 
         warped.delete(); warpedGray.delete(); warpedBlur.delete(); warpedThresh.delete();
     });
 
-    // Pipeline Completo com Fechamento Morfológico (MORPH_CLOSE)
     function processarPerspectivaCompleta(src) {
         let gray = new cv.Mat(), blurred = new cv.Mat(), thresh = new cv.Mat(), morphed = new cv.Mat();
         let kernel = null, contours = new cv.MatVector(), hierarchy = new cv.Mat();
@@ -1326,7 +1339,6 @@
             cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
             cv.adaptiveThreshold(blurred, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 11, 2);
 
-            // Ajuste Morfológico para selar bordas
             kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
             cv.morphologyEx(thresh, morphed, cv.MORPH_CLOSE, kernel);
 
@@ -1376,9 +1388,10 @@
         }
     }
 
-    // ================= 6. EXPORTAÇÃO CSV APENAS DAS TURMAS ALTERADAS =================
+    // ================= 6. EXPORTAÇÃO CSV =================
     function atualizarListaTurmasAlteradas() {
         const ul = document.getElementById('listaTurmasAlteradas');
+        if (!ul) return;
         ul.innerHTML = "";
 
         const turmasModificadas = new Set();
@@ -1433,25 +1446,38 @@
         document.body.removeChild(link);
     }
 
-    // Inicialização da interface da calibragem
-    const containerGabCalib = document.getElementById('containerGabaritoCalib');
-    for (let i = 0; i < 10; i++) {
-        containerGabCalib.innerHTML += `<label>Q${(i+1).toString().padStart(2, '0')}: </label>
-            <select id="qc_${i}">
-                ${LETRAS.map(l => `<option value="${l}" ${l === configCalib.gabarito[i] ? 'selected' : ''}>${l}</option>`).join('')}
-            </select>`;
-    }
+    // ================= 7. INICIALIZAÇÃO DA PÁGINA =================
+    // O evento DOMContentLoaded garante que os elementos HTML já existem na tela antes de executar
+    document.addEventListener('DOMContentLoaded', () => {
+        // Inicializa a interface da calibragem
+        const containerGabCalib = document.getElementById('containerGabaritoCalib');
+        if (containerGabCalib) {
+            containerGabCalib.innerHTML = "";
+            for (let i = 0; i < 10; i++) {
+                containerGabCalib.innerHTML += `<label>Q${(i+1).toString().padStart(2, '0')}: </label>
+                    <select id="qc_${i}">
+                        ${LETRAS.map(l => `<option value="${l}" ${l === (configCalib.gabarito?.[i] || defaultGabarito[i]) ? 'selected' : ''}>${l}</option>`).join('')}
+                    </select>`;
+            }
+        }
 
-    sliders.forEach(s => {
-        const el = document.getElementById(`input_${s}`);
-        if(configCalib[s]) el.value = configCalib[s];
-        document.getElementById(`val_${s}`).innerText = el.value;
-        el.addEventListener('input', (e) => document.getElementById(`val_${s}`).innerText = e.target.value);
+        sliders.forEach(s => {
+            const el = document.getElementById(`input_${s}`);
+            if (el) {
+                if (configCalib[s]) el.value = configCalib[s];
+                const valEl = document.getElementById(`val_${s}`);
+                if (valEl) valEl.innerText = el.value;
+                el.addEventListener('input', (e) => {
+                    if (valEl) valEl.innerText = e.target.value;
+                });
+            }
+        });
+
+        // Carrega as etapas e turmas na tela
+        inicializarSelects();
     });
-
-    // Inicia a Aplicação
-    inicializarSelects();
 </script>
+
 
 </body>
 </html>
