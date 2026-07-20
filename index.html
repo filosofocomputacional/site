@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Correção de Provas - CorrigePro</title>
+    <title>CorrigePro - Gestão de Correção</title>
     <style>
         :root {
             --primary: #007bff;
@@ -43,7 +43,10 @@
         /* Aba Calibragem */
         .slider-group { margin: 12px 0; text-align: left; }
         .slider-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 3px; }
+        .slider-group input { width: 100%; }
         .grid-gabarito { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; text-align: left; }
+        .grid-gabarito select { padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; }
+        .preview-title { font-size: 14px; font-weight: bold; color: #495057; margin-top: 15px; margin-bottom: 5px; text-align: left; }
 
         /* Botões Gerais */
         .btn-action { background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
@@ -94,18 +97,23 @@
         </table>
     </div>
 
-    <!-- ================= ABA 2: CALIBRAGEM (Salva em Cookie) ================= -->
+    <!-- ================= ABA 2: CALIBRAGEM ================= -->
     <div id="abaCalibragem" class="tab-content" style="display:none;">
         <h3>🎛️ Calibragem do Modelo Mestre</h3>
-        <p style="font-size: 13px; color: #666;">Tire a foto de um gabarito modelo e ajuste as miras vermelhas sobre as alternativas. O ajuste ficará salvo no Cookie do navegador.</p>
+        <p style="font-size: 13px; color: #666;">Tire a foto de um gabarito modelo para alinhar os eixos e definir as respostas corretas. Os ajustes ficarão gravados nos Cookies.</p>
         
         <video id="webcamCalib" autoplay playsinline></video>
         <button class="btn-action" id="btnCapturarModelo" style="background:#007bff;" disabled>📸 CAPTURAR FOTO PARA AJUSTAR</button>
 
         <div id="painelSliders" style="display:none; margin-top:20px;">
+            <div class="preview-title">🟢 1. Cantos Mapeados (Foto Original):</div>
+            <canvas id="canvasFotoOriginalAjuste"></canvas>
+
+            <div class="preview-title" style="margin-top:20px;">🎯 2. Alinhamento dos Eixos (Imagem Desentortada):</div>
+            <p style="font-size: 12px; color: #666; text-align: left; margin-top:0;">Mova os sliders abaixo para posicionar as miras sobre as bolinhas do gabarito.</p>
             <canvas id="canvasCalibPreview"></canvas>
 
-            <h4>Ajuste de Posição da Grade:</h4>
+            <h4 style="text-align:left; margin-top:20px;">🎛️ Controles de Posição dos Eixos (X, Y)</h4>
             <div class="slider-group"><label>Q01-05 Horiz (X1): <span id="val_x1">100</span>px</label><input type="range" id="input_x1" min="0" max="400" value="100"></div>
             <div class="slider-group"><label>Q01-05 Vert (Y1): <span id="val_y1">104</span>px</label><input type="range" id="input_y1" min="0" max="400" value="104"></div>
             <div class="slider-group"><label>Q06-10 Horiz (X2): <span id="val_x2">356</span>px</label><input type="range" id="input_x2" min="200" max="600" value="356"></div>
@@ -113,10 +121,10 @@
             <div class="slider-group"><label>Largura Letras (spX): <span id="val_spX">33</span>px</label><input type="range" id="input_spX" min="5" max="100" value="33"></div>
             <div class="slider-group"><label>Altura Linhas (spY): <span id="val_spY">51</span>px</label><input type="range" id="input_spY" min="5" max="150" value="51"></div>
 
-            <h4>📝 Gabarito Oficial Padrão:</h4>
+            <h4 style="text-align:left; margin-top:20px;">📝 Configurar Gabarito Oficial Correto</h4>
             <div class="grid-gabarito" id="containerGabaritoCalib"></div>
 
-            <button class="btn-action" onclick="salvarCalibracaoCookie()">💾 SALVAR NO COOKIE</button>
+            <button class="btn-action" onclick="salvarCalibracaoCookie()">💾 SALVAR AJUSTES NO COOKIE</button>
         </div>
     </div>
 
@@ -150,22 +158,24 @@
         onRuntimeInitialized: function() {
             cvReady = true;
             const statusEl = document.getElementById('statusCv');
-            statusEl.innerText = "✅ Motor de visão computacional pronto!";
-            statusEl.style.background = "#d4edda"; statusEl.style.color = "#155724";
-            setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
-            document.getElementById('btnCapturarModelo').disabled = false;
+            if (statusEl) {
+                statusEl.innerText = "✅ Motor de visão computacional pronto!";
+                statusEl.style.background = "#d4edda"; statusEl.style.color = "#155724";
+                setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
+            }
+            const btnCap = document.getElementById('btnCapturarModelo');
+            if (btnCap) btnCap.disabled = false;
         }
     };
 </script>
 <script async src="https://docs.opencv.org/4.9.0/opencv.js"></script>
-<!-- Substitua o bloco <script> final do seu index.html por este: -->
+
 <script>
     // ================= 1. CONSTANTES E VARIÁVEIS GLOBAIS =================
-    // (Devem ser declaradas no topo para que todas as funções possam acessá-las)
     const LETRAS = ["A", "B", "C", "D", "E"];
     const defaultGabarito = ['B','D','C','B','C','D','C','B','A','B'];
     const sliders = ['x1', 'y1', 'x2', 'y2', 'spX', 'spY'];
-
+    
     // Cole aqui o seu objeto DADOS_ALUNOS completo:
     const DADOS_ALUNOS = {
   "Ensino Fundamental": {
@@ -1108,13 +1118,12 @@
     ]
   }
 };
-    // Variáveis Globais de Estado
-    let alunoAtualParaCaptura = null;
+   let alunoAtualParaCaptura = null;
     let bancoNotasLocais = JSON.parse(localStorage.getItem('corrigePro_notas_alunos')) || {};
     let streamVideoGlobal = null;
     let imagemBaseWarpedCanvas = document.createElement('canvas');
 
-    // ================= 2. FUNÇÕES DE COOKIES =================
+    // ================= 2. COOKIES E CALIBRAGEM =================
     function setCookie(name, value, days) {
         let expires = "";
         if (days) {
@@ -1131,7 +1140,9 @@
         for (let i = 0; i < ca.length; i++) {
             let c = ca[i];
             while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) return JSON.parse(c.substring(nameEQ.length, c.length));
+            if (c.indexOf(nameEQ) == 0) {
+                try { return JSON.parse(c.substring(nameEQ.length, c.length)); } catch(e){}
+            }
         }
         return null;
     }
@@ -1141,7 +1152,6 @@
         return cookie || { x1: 100, y1: 104, x2: 356, y2: 105, spX: 33, spY: 51, gabarito: defaultGabarito };
     }
 
-    // Carrega a configuração dos cookies de forma segura
     let configCalib = carregarCalibracaoCookie();
 
     function salvarCalibracaoCookie() {
@@ -1151,7 +1161,44 @@
         
         setCookie('corrigePro_calib_v1', config, 365);
         configCalib = config;
-        alert("✅ Calibragem salva com sucesso nos Cookies do navegador!");
+        alert("✅ Calibragem e Gabarito salvos com sucesso nos Cookies!");
+    }
+
+    // Desenha as miras vermelhas em tempo real sobre o canvas de calibragem
+    function desenharPreviewAjuste() {
+        if (!imagemBaseWarpedCanvas.width) return;
+
+        const canvas = document.getElementById('canvasCalibPreview');
+        if (!canvas) return;
+
+        canvas.width = 600; canvas.height = 450;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imagemBaseWarpedCanvas, 0, 0);
+
+        const v_x1 = parseInt(document.getElementById('input_x1').value);
+        const v_y1 = parseInt(document.getElementById('input_y1').value);
+        const v_x2 = parseInt(document.getElementById('input_x2').value);
+        const v_y2 = parseInt(document.getElementById('input_y2').value);
+        const v_spX = parseInt(document.getElementById('input_spX').value);
+        const v_spY = parseInt(document.getElementById('input_spY').value);
+
+        ctx.strokeStyle = "#ff0000";
+        ctx.lineWidth = 2;
+
+        for (let q = 0; q < 10; q++) {
+            let isCol2 = q >= 5;
+            let colBaseX = isCol2 ? v_x2 : v_x1;
+            let colBaseY = isCol2 ? v_y2 : v_y1;
+            let linhaIdx = isCol2 ? (q - 5) : q;
+            let yPonto = colBaseY + (linhaIdx * v_spY);
+
+            for (let i = 0; i < 5; i++) {
+                let xPonto = colBaseX + (i * v_spX);
+                ctx.beginPath();
+                ctx.arc(xPonto, yPonto, 10, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+        }
     }
 
     // ================= 3. NAVEGAÇÃO E DROPDOWNS =================
@@ -1233,7 +1280,7 @@
                     const videoEl = document.getElementById(elementId);
                     if (videoEl) videoEl.srcObject = stream;
                 })
-                .catch(err => console.log("Acesso à câmera bloqueado ou indisponível:", err));
+                .catch(err => console.log("Acesso à câmera bloqueado:", err));
         }
     }
 
@@ -1249,7 +1296,38 @@
         if (streamVideoGlobal) streamVideoGlobal.getTracks().forEach(track => track.stop());
     }
 
-    // ================= 5. PROCESSAMENTO OPENCV =================
+    // Capture Modelo na Calibragem
+    document.getElementById('btnCapturarModelo')?.addEventListener('click', () => {
+        if (!cvReady) return;
+
+        const video = document.getElementById('webcamCalib');
+        const canvasHidden = document.getElementById('canvasHidden');
+        canvasHidden.width = video.videoWidth; canvasHidden.height = video.videoHeight;
+        canvasHidden.getContext('2d').drawImage(video, 0, 0);
+
+        let src = cv.imread(canvasHidden);
+        let res = processarPerspectivaCompleta(src);
+        src.delete();
+
+        if (res) {
+            // Exibe a foto original com marcadores verdes
+            const canvasOrig = document.getElementById('canvasFotoOriginalAjuste');
+            if (canvasOrig) cv.imshow(canvasOrig, res.srcComPontos);
+            res.srcComPontos.delete();
+
+            // Salva a folha desentortada limpa no canvas de memória
+            imagemBaseWarpedCanvas.width = 600; imagemBaseWarpedCanvas.height = 450;
+            cv.imshow(imagemBaseWarpedCanvas, res.warped);
+            res.warped.delete();
+
+            document.getElementById('painelSliders').style.display = 'block';
+            desenharPreviewAjuste();
+        } else {
+            alert("⚠️ Os 4 cantos do gabarito não foram identificados. Tente posicionar a folha inteira no quadro.");
+        }
+    });
+
+    // ================= 5. PROCESSAMENTO OPENCV DA PROVA DO ALUNO =================
     document.getElementById('btnEscanearAluno')?.addEventListener('click', () => {
         if (!cvReady || !alunoAtualParaCaptura) return;
 
@@ -1263,7 +1341,7 @@
         src.delete();
 
         if (!res) {
-            alert("⚠️ Os 4 cantos do gabarito não foram identificados. Tente melhorar o enquadramento.");
+            alert("⚠️ Os 4 cantos do gabarito não foram identificados. Enquadre melhor a folha.");
             return;
         }
 
@@ -1447,37 +1525,38 @@
     }
 
     // ================= 7. INICIALIZAÇÃO DA PÁGINA =================
-    // O evento DOMContentLoaded garante que os elementos HTML já existem na tela antes de executar
     document.addEventListener('DOMContentLoaded', () => {
-        // Inicializa a interface da calibragem
+        // Inicializa o seletor do Gabarito Oficial na Calibragem
         const containerGabCalib = document.getElementById('containerGabaritoCalib');
         if (containerGabCalib) {
             containerGabCalib.innerHTML = "";
             for (let i = 0; i < 10; i++) {
-                containerGabCalib.innerHTML += `<label>Q${(i+1).toString().padStart(2, '0')}: </label>
+                let gabVal = configCalib.gabarito?.[i] || defaultGabarito[i];
+                containerGabCalib.innerHTML += `<div><label>Q${(i+1).toString().padStart(2, '0')}: </label>
                     <select id="qc_${i}">
-                        ${LETRAS.map(l => `<option value="${l}" ${l === (configCalib.gabarito?.[i] || defaultGabarito[i]) ? 'selected' : ''}>${l}</option>`).join('')}
-                    </select>`;
+                        ${LETRAS.map(l => `<option value="${l}" ${l === gabVal ? 'selected' : ''}>${l}</option>`).join('')}
+                    </select></div>`;
             }
         }
 
+        // Conecta sliders e redesenho instantâneo
         sliders.forEach(s => {
             const el = document.getElementById(`input_${s}`);
             if (el) {
-                if (configCalib[s]) el.value = configCalib[s];
+                if (configCalib[s] !== undefined) el.value = configCalib[s];
                 const valEl = document.getElementById(`val_${s}`);
                 if (valEl) valEl.innerText = el.value;
+                
                 el.addEventListener('input', (e) => {
                     if (valEl) valEl.innerText = e.target.value;
+                    desenharPreviewAjuste(); // <--- Redesenha os círculos em tempo real!
                 });
             }
         });
 
-        // Carrega as etapas e turmas na tela
         inicializarSelects();
     });
 </script>
-
 
 </body>
 </html>
