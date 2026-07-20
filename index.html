@@ -34,18 +34,19 @@
         .nota-badge { font-weight: bold; padding: 4px 10px; border-radius: 12px; background: #e2e3e5; color: #383d41; }
         .nota-badge.tem-nota { background: #d4edda; color: #155724; }
 
-        /* Modal da Câmera */
+        /* Modal da Câmera e Resultado */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; max-width: 600px; width: 90%; text-align: center; position: relative; }
         video, canvas { width: 100%; border-radius: 8px; background: #111; }
         .btn-close-modal { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #888; }
+        
+        #notaBannerModal { display: none; font-size: 22px; font-weight: bold; color: #155724; background: #d4edda; border: 1px solid #c3e6cb; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
 
         /* Aba Calibragem */
         .slider-group { margin: 12px 0; text-align: left; }
         .slider-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 3px; }
         .slider-group input { width: 100%; }
         
-        /* Grid do Gabarito: 1 a 5 na coluna 1 e 6 a 10 na coluna 2 */
         .grid-gabarito { 
             display: grid; 
             grid-template-rows: repeat(5, auto); 
@@ -142,7 +143,6 @@
             </div>
 
             <h4 style="text-align:left; margin-top:15px;">📝 Configurar Gabarito Oficial Correto</h4>
-            <!-- Grid formatado: Q1-Q5 na Coluna 1 e Q6-Q10 na Coluna 2 -->
             <div class="grid-gabarito" id="containerGabaritoCalib"></div>
 
             <button class="btn-action" onclick="salvarCalibracaoCookie()">💾 SALVAR AJUSTES NO COOKIE</button>
@@ -165,7 +165,16 @@
     <div class="modal-content">
         <button class="btn-close-modal" onclick="fecharModalCamera()">&times;</button>
         <h3 id="nomeAlunoModal">Lendo Prova...</h3>
+        
+        <!-- Banner para exibir a nota corrigida -->
+        <div id="notaBannerModal"></div>
+        
+        <!-- Câmera ao vivo -->
         <video id="webcamScan" autoplay playsinline></video>
+        
+        <!-- Foto recortada e corrigida com marcas Verdes/Vermelhas -->
+        <canvas id="canvasScanResult" style="display:none;"></canvas>
+        
         <button class="btn-action" id="btnEscanearAluno">📸 ESCANEAR E SALVAR NOTA</button>
     </div>
 </div>
@@ -1138,10 +1147,12 @@
     ]
   }
 };
-    let alunoAtualParaCaptura = null;
+
+ let alunoAtualParaCaptura = null;
     let bancoNotasLocais = JSON.parse(localStorage.getItem('corrigePro_notas_alunos')) || {};
     let streamVideoGlobal = null;
     let imagemBaseWarpedCanvas = document.createElement('canvas');
+    let jaDigitalizado = false;
 
     // ================= 2. COOKIES E CALIBRAGEM =================
     function setCookie(name, value, days) {
@@ -1189,7 +1200,6 @@
         alert("✅ Calibragem e Gabarito salvos com sucesso nos Cookies!");
     }
 
-    // Renderiza a lista de seletores do Gabarito Oficial (A-D ou A-E)
     function renderizarGridGabarito() {
         const container = document.getElementById('containerGabaritoCalib');
         if (!container) return;
@@ -1211,7 +1221,6 @@
         }
     }
 
-    // Desenha os alvos vermelhos em tempo real sobre o canvas de calibragem
     function desenharPreviewAjuste() {
         if (!imagemBaseWarpedCanvas.width) return;
 
@@ -1334,7 +1343,17 @@
 
     function abrirModalScan(aluno, turma) {
         alunoAtualParaCaptura = { nome: aluno, turma: turma };
+        jaDigitalizado = false;
+
         document.getElementById('nomeAlunoModal').innerText = `Provas de: ${aluno}`;
+        document.getElementById('webcamScan').style.display = 'block';
+        document.getElementById('canvasScanResult').style.display = 'none';
+        document.getElementById('notaBannerModal').style.display = 'none';
+        
+        const btnEsc = document.getElementById('btnEscanearAluno');
+        btnEsc.innerText = "📸 ESCANEAR E SALVAR NOTA";
+        btnEsc.style.background = "var(--success)";
+
         document.getElementById('modalCamera').style.display = 'flex';
         iniciarCamera('webcamScan');
     }
@@ -1342,6 +1361,7 @@
     function fecharModalCamera() {
         document.getElementById('modalCamera').style.display = 'none';
         if (streamVideoGlobal) streamVideoGlobal.getTracks().forEach(track => track.stop());
+        carregarAlunos(); // Atualiza a tabela na tela
     }
 
     // Captura Modelo na Calibragem
@@ -1373,8 +1393,14 @@
         }
     });
 
-    // ================= 5. PROCESSAMENTO OPENCV DA PROVA DO ALUNO =================
+    // ================= 5. ESCANEAR E DESENHAR RESULTADO NA TELA =================
     document.getElementById('btnEscanearAluno')?.addEventListener('click', () => {
+        // Se já foi digitalizado, o botão serve como "CONCLUÍDO (FECHAR)"
+        if (jaDigitalizado) {
+            fecharModalCamera();
+            return;
+        }
+
         if (!cvReady || !alunoAtualParaCaptura) return;
 
         const video = document.getElementById('webcamScan');
@@ -1404,6 +1430,12 @@
         let stringGabarito = configCalib.gabarito.join('');
         let numOpcoes = configCalib.numOpcoes || 5;
         let acertos = 0;
+        let respostasLidas = [];
+
+        const LIMIAR_MINIMO_TINTA = 120;
+        let greenColor = new cv.Scalar(0, 255, 0, 255);
+        let redColor = new cv.Scalar(255, 0, 0, 255);
+        let grayColor = new cv.Scalar(200, 200, 200, 255);
 
         for (let q = 0; q < 10; q++) {
             let isCol2 = q >= 5;
@@ -1413,8 +1445,12 @@
             let yPonto = colBaseY + (linhaIdx * configCalib.spY);
 
             let valoresAlternativas = [];
+            let coords = [];
+
             for (let i = 0; i < numOpcoes; i++) {
                 let xPonto = colBaseX + (i * configCalib.spX);
+                coords.push({ x: xPonto, y: yPonto });
+
                 let totalPixels = 0;
                 if (yPonto >= 12 && yPonto < 450 - 12 && xPonto >= 12 && xPonto < 600 - 12) {
                     let roi = warpedThresh.roi(new cv.Rect(xPonto - 12, yPonto - 12, 24, 24));
@@ -1424,33 +1460,74 @@
                 valoresAlternativas.push(totalPixels);
             }
 
-            let maxPixels = Math.max(...valoresAlternativas);
-            let idxMarcado = valoresAlternativas.indexOf(maxPixels);
-            let outras = valoresAlternativas.filter((_, idx) => idx !== idxMarcado);
-            let mediaOutras = outras.reduce((a, b) => a + b, 0) / (outras.length || 1);
+            let ordenados = [...valoresAlternativas].sort((a, b) => b - a);
+            let maior = ordenados[0];
+            let segundaMaior = ordenados[1];
 
+            let idxMarcado = valoresAlternativas.indexOf(maior);
             let respostaAluno = "-";
-            if (maxPixels > 120 && maxPixels > (mediaOutras * 1.8)) {
-                respostaAluno = LETRAS_TODAS[idxMarcado];
+
+            if (maior > LIMIAR_MINIMO_TINTA) {
+                if (segundaMaior > LIMIAR_MINIMO_TINTA && segundaMaior > (maior * 0.60)) {
+                    respostaAluno = "*"; // Dupla marcação
+                } else {
+                    let outras = valoresAlternativas.filter((_, idx) => idx !== idxMarcado);
+                    let mediaOutras = outras.reduce((a, b) => a + b, 0) / (outras.length || 1);
+                    if (maior > (mediaOutras * 1.8)) {
+                        respostaAluno = LETRAS_TODAS[idxMarcado];
+                    }
+                }
             }
 
-            if (respostaAluno === stringGabarito[q]) acertos++;
+            respostasLidas.push(respostaAluno);
+            let acertou = (respostaAluno === stringGabarito[q]);
+            if (acertou) acertos++;
+
+            // 🔥 DESENHA O FEEDBACK VISUAL NA FOTO CORRIGIDA
+            coords.forEach((c, idx) => {
+                let center = new cv.Point(c.x, c.y);
+                if (idx === idxMarcado && respostaAluno !== "-") {
+                    let color = acertou ? greenColor : redColor;
+                    cv.circle(warped, center, 8, color, -1);
+                } else if (respostaAluno === "*" && valoresAlternativas[idx] > LIMIAR_MINIMO_TINTA) {
+                    cv.circle(warped, center, 8, redColor, -1);
+                } else {
+                    cv.circle(warped, center, 3, grayColor, -1);
+                }
+            });
         }
 
         let notaFinal = (acertos / 10.0) * 10.0;
         
+        // Salva a Nota Localmente
         const chaveNota = `${alunoAtualParaCaptura.turma}_${alunoAtualParaCaptura.nome}`;
         bancoNotasLocais[chaveNota] = notaFinal;
         localStorage.setItem('corrigePro_notas_alunos', JSON.stringify(bancoNotasLocais));
 
+        // 🖼️ SUBSTUITI A CÂMERA PELA FOTO CORRIGIDA + BANNER DA NOTA
+        cv.imshow('canvasScanResult', warped);
+        document.getElementById('webcamScan').style.display = 'none';
+        document.getElementById('canvasScanResult').style.display = 'block';
+
+        const banner = document.getElementById('notaBannerModal');
+        banner.innerText = `NOTA: ${notaFinal.toFixed(1)} / 10.0 (${acertos} acertos)`;
+        banner.style.display = 'block';
+
+        // Atualiza o botão para fechar
+        const btnEsc = document.getElementById('btnEscanearAluno');
+        btnEsc.innerText = "✅ CONCLUÍDO (FECHAR)";
+        btnEsc.style.background = "#007bff";
+        jaDigitalizado = true;
+
+        // Bip Sonoro
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = audioCtx.createOscillator();
             osc.connect(audioCtx.destination); osc.frequency.value = 800; osc.start(); osc.stop(audioCtx.currentTime + 0.15);
         } catch(e) {}
 
-        fecharModalCamera();
-        carregarAlunos();
+        // Para a câmera do fundo
+        if (streamVideoGlobal) streamVideoGlobal.getTracks().forEach(track => track.stop());
 
         warped.delete(); warpedGray.delete(); warpedBlur.delete(); warpedThresh.delete();
     });
@@ -1604,4 +1681,4 @@
 </script>
 
 </body>
-</html>
+</html>   
