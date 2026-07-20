@@ -8,6 +8,7 @@
         :root {
             --primary: #007bff;
             --success: #28a745;
+            --danger: #dc3545;
             --dark: #343a40;
             --light: #f8f9fa;
         }
@@ -60,8 +61,11 @@
         .preview-title { font-size: 14px; font-weight: bold; color: #495057; margin-top: 15px; margin-bottom: 5px; text-align: left; }
 
         /* Botões Gerais */
-        .btn-action { background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
+        .btn-action { background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; transition: 0.2s; }
         .btn-action:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger) !important; }
+
+        .btn-group-export { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
 
         #statusCv { padding: 10px; background: #fff3cd; color: #856404; border-radius: 6px; text-align: center; margin-bottom: 15px; font-size: 14px; }
     </style>
@@ -149,14 +153,17 @@
         </div>
     </div>
 
-    <!-- ================= ABA 3: EXPORTAÇÃO CSV ================= -->
+    <!-- ================= ABA 3: EXPORTAÇÃO E GERENCIAMENTO ================= -->
     <div id="abaExportar" class="tab-content" style="display:none;">
         <h3>📊 Resumo das Turmas Alteradas</h3>
         <p>Abaixo estão apenas as turmas que possuem alunos com notas corrigidas no sistema:</p>
         
         <ul id="listaTurmasAlteradas" style="text-align: left; margin: 20px 0;"></ul>
 
-        <button class="btn-action" onclick="exportarCSV()">📥 BAIXAR NOTAS EM CSV</button>
+        <div class="btn-group-export">
+            <button class="btn-action" onclick="exportarCSV()">📥 BAIXAR NOTAS EM CSV</button>
+            <button class="btn-action btn-danger" onclick="limparTodasNotas()">🗑️ LIMPAR TODAS AS NOTAS</button>
+        </div>
     </div>
 </div>
 
@@ -166,7 +173,7 @@
         <button class="btn-close-modal" onclick="fecharModalCamera()">&times;</button>
         <h3 id="nomeAlunoModal">Lendo Prova...</h3>
         
-        <!-- Banner para exibir a nota corrigida -->
+        <!-- Banner de Nota Corrigida -->
         <div id="notaBannerModal"></div>
         
         <!-- Câmera ao vivo -->
@@ -1148,7 +1155,7 @@
   }
 };
 
- let alunoAtualParaCaptura = null;
+let alunoAtualParaCaptura = null;
     let bancoNotasLocais = JSON.parse(localStorage.getItem('corrigePro_notas_alunos')) || {};
     let streamVideoGlobal = null;
     let imagemBaseWarpedCanvas = document.createElement('canvas');
@@ -1361,7 +1368,7 @@
     function fecharModalCamera() {
         document.getElementById('modalCamera').style.display = 'none';
         if (streamVideoGlobal) streamVideoGlobal.getTracks().forEach(track => track.stop());
-        carregarAlunos(); // Atualiza a tabela na tela
+        carregarAlunos();
     }
 
     // Captura Modelo na Calibragem
@@ -1395,7 +1402,6 @@
 
     // ================= 5. ESCANEAR E DESENHAR RESULTADO NA TELA =================
     document.getElementById('btnEscanearAluno')?.addEventListener('click', () => {
-        // Se já foi digitalizado, o botão serve como "CONCLUÍDO (FECHAR)"
         if (jaDigitalizado) {
             fecharModalCamera();
             return;
@@ -1469,7 +1475,7 @@
 
             if (maior > LIMIAR_MINIMO_TINTA) {
                 if (segundaMaior > LIMIAR_MINIMO_TINTA && segundaMaior > (maior * 0.60)) {
-                    respostaAluno = "*"; // Dupla marcação
+                    respostaAluno = "*";
                 } else {
                     let outras = valoresAlternativas.filter((_, idx) => idx !== idxMarcado);
                     let mediaOutras = outras.reduce((a, b) => a + b, 0) / (outras.length || 1);
@@ -1483,7 +1489,6 @@
             let acertou = (respostaAluno === stringGabarito[q]);
             if (acertou) acertos++;
 
-            // 🔥 DESENHA O FEEDBACK VISUAL NA FOTO CORRIGIDA
             coords.forEach((c, idx) => {
                 let center = new cv.Point(c.x, c.y);
                 if (idx === idxMarcado && respostaAluno !== "-") {
@@ -1499,12 +1504,10 @@
 
         let notaFinal = (acertos / 10.0) * 10.0;
         
-        // Salva a Nota Localmente
         const chaveNota = `${alunoAtualParaCaptura.turma}_${alunoAtualParaCaptura.nome}`;
         bancoNotasLocais[chaveNota] = notaFinal;
         localStorage.setItem('corrigePro_notas_alunos', JSON.stringify(bancoNotasLocais));
 
-        // 🖼️ SUBSTUITI A CÂMERA PELA FOTO CORRIGIDA + BANNER DA NOTA
         cv.imshow('canvasScanResult', warped);
         document.getElementById('webcamScan').style.display = 'none';
         document.getElementById('canvasScanResult').style.display = 'block';
@@ -1513,20 +1516,17 @@
         banner.innerText = `NOTA: ${notaFinal.toFixed(1)} / 10.0 (${acertos} acertos)`;
         banner.style.display = 'block';
 
-        // Atualiza o botão para fechar
         const btnEsc = document.getElementById('btnEscanearAluno');
         btnEsc.innerText = "✅ CONCLUÍDO (FECHAR)";
         btnEsc.style.background = "#007bff";
         jaDigitalizado = true;
 
-        // Bip Sonoro
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = audioCtx.createOscillator();
             osc.connect(audioCtx.destination); osc.frequency.value = 800; osc.start(); osc.stop(audioCtx.currentTime + 0.15);
         } catch(e) {}
 
-        // Para a câmera do fundo
         if (streamVideoGlobal) streamVideoGlobal.getTracks().forEach(track => track.stop());
 
         warped.delete(); warpedGray.delete(); warpedBlur.delete(); warpedThresh.delete();
@@ -1590,7 +1590,7 @@
         }
     }
 
-    // ================= 6. EXPORTAÇÃO CSV =================
+    // ================= 6. EXPORTAÇÃO E RESETE DE NOTAS =================
     function atualizarListaTurmasAlteradas() {
         const ul = document.getElementById('listaTurmasAlteradas');
         if (!ul) return;
@@ -1648,6 +1648,19 @@
         document.body.removeChild(link);
     }
 
+    function limparTodasNotas() {
+        const confirmacao = confirm("⚠️ Tem certeza que deseja apagar TODAS as notas salvas até agora?\n\nEsta ação não poderá ser desfeita.");
+        if (!confirmacao) return;
+
+        localStorage.removeItem('corrigePro_notas_alunos');
+        bancoNotasLocais = {};
+        
+        carregarAlunos();
+        atualizarListaTurmasAlteradas();
+
+        alert("🗑️ Todas as notas foram apagadas com sucesso!");
+    }
+
     // ================= 7. INICIALIZAÇÃO DA PÁGINA =================
     document.addEventListener('DOMContentLoaded', () => {
         const selectNumOpcoes = document.getElementById('selectNumOpcoes');
@@ -1681,4 +1694,4 @@
 </script>
 
 </body>
-</html>   
+</html>
