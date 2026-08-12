@@ -20,563 +20,311 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-
-        /* =========================================================
-           ESTILO GERAL
-        ========================================================= */
-
         * {
-            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-                BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        .hidden-screen {
-            display: none !important;
+        .modal-fade {
+            animation: modalFade .2s ease-out;
         }
 
-        /* =========================================================
-           FUNDO
-        ========================================================= */
-
-        .background-premium {
-            background:
-                radial-gradient(circle at 10% 10%, rgba(59, 130, 246, .15), transparent 25%),
-                radial-gradient(circle at 90% 10%, rgba(14, 165, 233, .12), transparent 25%),
-                radial-gradient(circle at 50% 100%, rgba(30, 64, 175, .10), transparent 30%),
-                #f4f7fb;
-        }
-
-        /* =========================================================
-           CARDS
-        ========================================================= */
-
-        .premium-card {
-            background: rgba(255, 255, 255, .95);
-            border: 1px solid rgba(226, 232, 240, .9);
-            box-shadow:
-                0 10px 30px rgba(15, 23, 42, .06),
-                0 2px 8px rgba(15, 23, 42, .03);
-            transition: all .25s ease;
-        }
-
-        .premium-card:hover {
-            transform: translateY(-3px);
-            box-shadow:
-                0 18px 40px rgba(15, 23, 42, .10),
-                0 4px 12px rgba(15, 23, 42, .04);
-        }
-
-        /* =========================================================
-           HEADER
-        ========================================================= */
-
-        .header-premium {
-            background:
-                linear-gradient(135deg, #0f2d66 0%, #123d85 50%, #1556a6 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header-premium::before {
-            content: "";
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, .05);
-            right: -100px;
-            top: -200px;
-        }
-
-        .header-premium::after {
-            content: "";
-            position: absolute;
-            width: 250px;
-            height: 250px;
-            border-radius: 50%;
-            background: rgba(96, 165, 250, .08);
-            left: -100px;
-            bottom: -170px;
-        }
-
-        /* =========================================================
-           AVATAR
-        ========================================================= */
-
-        .student-photo {
-            transition: all .3s ease;
-            cursor: pointer;
-        }
-
-        .student-photo:hover {
-            transform: scale(1.05);
-            filter: brightness(.92);
-        }
-
-        .photo-ring {
-            box-shadow:
-                0 0 0 4px white,
-                0 0 0 6px rgba(37, 99, 235, .25),
-                0 12px 25px rgba(15, 23, 42, .12);
-        }
-
-        /* =========================================================
-           BOTÕES
-        ========================================================= */
-
-        .action-button {
-            transition: all .2s ease;
-        }
-
-        .action-button:hover {
-            transform: translateY(-2px);
-        }
-
-        .action-button:active {
-            transform: scale(.95);
-        }
-
-        /* =========================================================
-           MODAIS
-        ========================================================= */
-
-        .modal-backdrop {
-            backdrop-filter: blur(7px);
-            -webkit-backdrop-filter: blur(7px);
-        }
-
-        .modal-content {
-            animation: modalEntrada .2s ease-out;
-        }
-
-        @keyframes modalEntrada {
+        @keyframes modalFade {
             from {
                 opacity: 0;
-                transform: translateY(12px) scale(.97);
+                transform: scale(.97);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0) scale(1);
+                transform: scale(1);
             }
         }
 
-        /* =========================================================
-           LOADING
-        ========================================================= */
-
-        .loader {
-            width: 42px;
-            height: 42px;
-            border: 4px solid #dbeafe;
-            border-top-color: #2563eb;
-            border-radius: 50%;
-            animation: girar .8s linear infinite;
+        .card-aluno {
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease,
+                border-color .2s ease;
         }
 
-        @keyframes girar {
-            to {
-                transform: rotate(360deg);
-            }
+        .card-aluno:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(15, 23, 42, .10);
+            border-color: #dbeafe;
         }
 
-        /* =========================================================
-           BARRA DE PROGRESSO
-        ========================================================= */
+        .foto-aluno {
+            transition: transform .25s ease;
+        }
 
-        .progress-track {
-            height: 10px;
-            background: #e5e7eb;
-            border-radius: 999px;
-            overflow: hidden;
+        .foto-aluno:hover {
+            transform: scale(1.04);
         }
 
         .progress-bar {
-            height: 100%;
-            border-radius: 999px;
-            background:
-                linear-gradient(90deg, #16a34a, #22c55e, #4ade80);
-            box-shadow: 0 2px 8px rgba(34, 197, 94, .35);
-            transition: width .6s ease;
+            transition: width .5s ease;
         }
 
-        /* =========================================================
-           SCROLLBAR
-        ========================================================= */
-
-        ::-webkit-scrollbar {
-            width: 8px;
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 7px;
         }
 
-        ::-webkit-scrollbar-track {
+        .scrollbar-custom::-webkit-scrollbar-track {
             background: #f1f5f9;
+            border-radius: 10px;
         }
 
-        ::-webkit-scrollbar-thumb {
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
-            border-radius: 20px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
+        @media (max-width: 640px) {
+            .card-aluno:hover {
+                transform: none;
+                box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
+            }
+
+            .mobile-stat {
+                min-height: 78px;
+            }
         }
-
-        /* =========================================================
-           FOTO MODAL
-        ========================================================= */
-
-        .photo-modal-image {
-            max-height: 82vh;
-            max-width: 92vw;
-            object-fit: contain;
-            border-radius: 18px;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, .45);
-        }
-
-        /* =========================================================
-           BADGE
-        ========================================================= */
-
-        .status-badge {
-            font-size: 10px;
-            letter-spacing: .05em;
-        }
-
-        /* =========================================================
-           INPUTS
-        ========================================================= */
-
-        .premium-input {
-            transition: all .2s ease;
-        }
-
-        .premium-input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, .10);
-        }
-
     </style>
 </head>
 
-
-<body class="background-premium min-h-screen text-gray-800">
-
+<body class="bg-slate-100 min-h-screen text-slate-800">
 
     <!-- =========================================================
-         LOGIN
+         TELA DE LOGIN
     ========================================================== -->
 
     <div id="tela-login"
-        class="hidden min-h-screen flex items-center justify-center p-4 bg-slate-950">
+        class="hidden min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
 
-        <div class="w-full max-w-md">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
 
-            <div class="premium-card rounded-3xl p-8 bg-white">
+            <div class="flex justify-center mb-6">
+                <div class="relative">
+                    <div class="absolute inset-0 bg-blue-500/20 blur-xl rounded-full"></div>
 
-                <div class="flex justify-center mb-6">
-
-                    <div class="relative">
-
-                        <div
-                            class="absolute inset-0 rounded-full bg-blue-500 blur-xl opacity-20">
-                        </div>
-
-                        <img
-                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEu6XYfBX6dLECkxfarfPyb2WfE9KQSWr1B8WeCshx2w&s"
-                            class="relative h-24 w-24 rounded-full border-4 border-white shadow-xl object-cover"
-                            alt="Logo">
-
-                    </div>
-
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEu6XYfBX6dLECkxfarfPyb2WfE9KQSWr1B8WeCshx2w&s"
+                        class="relative h-20 w-20 rounded-full border-4 border-white shadow-lg"
+                        alt="Logo">
                 </div>
-
-                <h2 class="text-3xl font-black text-center text-blue-950">
-                    Carômetro
-                </h2>
-
-                <p class="text-center text-gray-500 mt-1 mb-8">
-                    E.E. Firmo de Mattos
-                </p>
-
-
-                <form id="form-login"
-                    onsubmit="efetuarLogin(event)"
-                    class="space-y-5">
-
-                    <div>
-
-                        <label
-                            class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-                            Usuário / Escola
-                        </label>
-
-                        <div class="relative">
-
-                            <i
-                                class="fa-solid fa-school absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                            </i>
-
-                            <input
-                                type="text"
-                                id="login-username"
-                                value="E.E FIRMO DE MATOS"
-                                readonly
-                                class="w-full pl-11 pr-4 py-3.5 border border-gray-200 bg-gray-50 rounded-xl font-semibold text-gray-700 outline-none">
-
-                        </div>
-
-                    </div>
-
-
-                    <div>
-
-                        <label
-                            class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-                            Senha de Acesso
-                        </label>
-
-                        <div class="relative">
-
-                            <i
-                                class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                            </i>
-
-                            <input
-                                type="password"
-                                id="login-password"
-                                placeholder="Digite sua senha"
-                                required
-                                class="premium-input w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl outline-none">
-
-                        </div>
-
-                    </div>
-
-
-                    <button
-                        type="submit"
-                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition">
-
-                        Entrar
-
-                        <i class="fa-solid fa-arrow-right-to-bracket ml-2"></i>
-
-                    </button>
-
-                </form>
-
             </div>
 
-        </div>
+            <h2 class="text-2xl font-bold text-center text-blue-950 mb-2">
+                Acesso ao Carômetro
+            </h2>
 
+            <p class="text-sm text-center text-slate-500 mb-7">
+                Insira os dados da escola para prosseguir
+            </p>
+
+            <form id="form-login" onsubmit="efetuarLogin(event)" class="space-y-4">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">
+                        Usuário / Escola
+                    </label>
+
+                    <input type="text"
+                        id="login-username"
+                        name="username"
+                        value="E.E FIRMO DE MATOS"
+                        readonly
+                        autocomplete="username"
+                        class="w-full p-3 border border-slate-200 bg-slate-100 rounded-xl font-semibold text-slate-700 cursor-not-allowed outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">
+                        Senha de Acesso
+                    </label>
+
+                    <input type="password"
+                        id="login-password"
+                        name="password"
+                        placeholder="Digite a senha"
+                        required
+                        autocomplete="current-password"
+                        class="w-full p-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-blue-600/20">
+                    Entrar
+                    <i class="fa-solid fa-right-to-bracket ml-1"></i>
+                </button>
+
+            </form>
+        </div>
     </div>
 
 
-
     <!-- =========================================================
-         SELEÇÃO DE TURMA
+         TELA DE SELEÇÃO
     ========================================================== -->
 
     <div id="tela-selecao"
-        class="hidden min-h-screen flex items-center justify-center p-4">
+        class="hidden min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-100 to-blue-50">
 
-        <div class="w-full max-w-xl">
+        <div class="bg-white p-7 sm:p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
 
-            <div class="premium-card rounded-3xl p-7 md:p-9">
+            <div class="flex justify-between items-center mb-7">
 
-                <div class="flex justify-between items-start mb-8">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[.2em] font-bold text-blue-500">
+                        Carômetro
+                    </p>
 
-                    <div>
-
-                        <div
-                            class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 mb-4">
-
-                            <i class="fa-solid fa-users text-xl"></i>
-
-                        </div>
-
-                        <h2 class="text-3xl font-black text-blue-950">
-                            Carômetro
-                        </h2>
-
-                        <p class="text-gray-500 mt-1">
-                            Selecione a turma para continuar
-                        </p>
-
-                    </div>
-
-
-                    <button
-                        onclick="efetuarLogout()"
-                        class="text-sm font-semibold text-red-600 hover:text-red-800">
-
-                        <i class="fa-solid fa-power-off mr-1"></i>
-
-                        Sair
-
-                    </button>
-
+                    <h2 class="text-2xl font-bold text-blue-950">
+                        Configuração
+                    </h2>
                 </div>
 
-
-                <div class="space-y-6">
-
-                    <div>
-
-                        <label
-                            class="block text-sm font-bold text-gray-700 mb-2">
-
-                            1º Passo — Etapa de Ensino
-
-                        </label>
-
-                        <select
-                            id="select-etapa"
-                            onchange="filtrarTurmasPorEtapa()"
-                            class="premium-input w-full p-3.5 border border-gray-200 rounded-xl bg-white outline-none font-medium">
-
-                            <option value="">
-                                -- Selecione a Etapa --
-                            </option>
-
-                            <option value="1 REG">
-                                1º Ano Regular
-                            </option>
-
-                            <option value="1 ADM">
-                                1º Ano Administração
-                            </option>
-
-                            <option value="2 REG">
-                                2º Ano Regular
-                            </option>
-
-                            <option value="3 REG">
-                                3º Ano Regular
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div>
-
-                        <label
-                            class="block text-sm font-bold text-gray-700 mb-2">
-
-                            2º Passo — Turma
-
-                        </label>
-
-                        <select
-                            id="select-turmas"
-                            disabled
-                            class="premium-input w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 outline-none font-medium cursor-not-allowed">
-
-                            <option>
-                                Selecione uma etapa primeiro...
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <button
-                        onclick="entrarNaTurma()"
-                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/20 transition">
-
-                        Acessar Carômetro
-
-                        <i class="fa-solid fa-arrow-right ml-2"></i>
-
-                    </button>
-
-                </div>
-
+                <button onclick="efetuarLogout()"
+                    class="text-xs font-semibold text-red-600 hover:text-red-800 transition">
+                    <i class="fa-solid fa-power-off mr-1"></i>
+                    Sair
+                </button>
             </div>
 
-        </div>
 
+            <!-- ETAPA -->
+
+            <div class="mb-5">
+
+                <label class="block text-sm font-semibold mb-2 text-slate-700">
+                    1º Passo: Escolha a Etapa de Ensino
+                </label>
+
+                <select id="select-etapa"
+                    onchange="filtrarTurmasPorEtapa()"
+                    class="w-full p-3.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium bg-white">
+
+                    <option value="">
+                        -- Selecione a Etapa --
+                    </option>
+
+                    <option value="1 REG">
+                        1º Ano Regular (1 REG)
+                    </option>
+
+                    <option value="1 ADM">
+                        1º Ano Administração (TEC ADM)
+                    </option>
+
+                    <option value="2 REG">
+                        2º Ano Regular (2 REG)
+                    </option>
+
+                    <option value="3 REG">
+                        3º Ano Regular (3 REG)
+                    </option>
+
+                </select>
+            </div>
+
+
+            <!-- TURMA -->
+
+            <div class="mb-6">
+
+                <label class="block text-sm font-semibold mb-2 text-slate-700">
+                    2º Passo: Escolha a Turma
+                </label>
+
+                <select id="select-turmas"
+                    disabled
+                    class="w-full p-3.5 border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-not-allowed">
+
+                    <option value="">
+                        Selecione uma etapa primeiro...
+                    </option>
+
+                </select>
+            </div>
+
+
+            <button onclick="entrarNaTurma()"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-blue-600/20">
+
+                Acessar Carômetro
+
+                <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+
+        </div>
     </div>
 
 
-
     <!-- =========================================================
-         CARÔMETRO
+         TELA DO CARÔMETRO
     ========================================================== -->
 
     <div id="tela-carometro" class="hidden min-h-screen">
 
         <!-- HEADER -->
 
-        <header class="header-premium text-white shadow-xl">
+        <header class="bg-gradient-to-r from-blue-950 via-blue-900 to-slate-900 text-white shadow-xl">
 
-            <div
-                class="max-w-7xl mx-auto px-4 md:px-6 py-5 relative z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5">
 
-                <div
-                    class="flex flex-col lg:flex-row justify-between items-center gap-5">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
 
-                    <div class="flex items-center gap-4">
+                    <div class="w-full md:w-auto">
 
-                        <div
-                            class="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
-
-                            <i class="fa-solid fa-id-card text-2xl"></i>
-
-                        </div>
-
-                        <div>
+                        <div class="flex items-center gap-3">
 
                             <div
-                                class="text-xs font-bold uppercase tracking-widest text-blue-200 mb-1">
+                                class="w-11 h-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center backdrop-blur">
 
-                                E.E. Firmo de Mattos
+                                <i class="fa-solid fa-users text-blue-200"></i>
 
                             </div>
 
-                            <h1
-                                id="titulo-turma"
-                                class="text-2xl md:text-3xl font-black">
+                            <div>
 
-                                Carômetro
+                                <p class="text-[10px] uppercase tracking-[.2em] text-blue-300 font-bold">
+                                    Carômetro Escolar
+                                </p>
 
-                            </h1>
+                                <h1 id="titulo-turma"
+                                    class="text-xl sm:text-2xl font-bold">
+                                    Carômetro
+                                </h1>
 
-                            <p class="text-sm text-blue-200 mt-1">
-                                Gerenciamento dos alunos
-                            </p>
+                            </div>
 
                         </div>
 
                     </div>
 
 
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 w-full md:w-auto">
 
-                        <button
-                            onclick="voltarParaSelecao()"
-                            class="bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2.5 rounded-xl transition font-semibold text-sm">
+                        <button onclick="voltarParaSelecao()"
+                            class="flex-1 md:flex-none bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2.5 rounded-xl shadow transition font-semibold text-sm">
 
                             <i class="fa-solid fa-arrow-left mr-2"></i>
-
                             Voltar
 
                         </button>
 
 
-                        <button
-                            onclick="efetuarLogout()"
-                            class="bg-red-600/90 hover:bg-red-700 px-4 py-2.5 rounded-xl transition font-semibold text-sm">
+                        <button onclick="efetuarLogout()"
+                            class="flex-1 md:flex-none bg-red-600/90 hover:bg-red-700 px-4 py-2.5 rounded-xl shadow transition font-semibold text-sm">
 
                             <i class="fa-solid fa-power-off mr-1"></i>
-
                             Sair
 
                         </button>
@@ -590,600 +338,349 @@
         </header>
 
 
-
         <!-- CONTEÚDO -->
 
         <main class="max-w-7xl mx-auto p-4 md:p-6">
 
 
-            <!-- TOPO / BOTÃO ADICIONAR -->
+            <!-- =================================================
+                 INDICADORES
+            ================================================== -->
+
+            <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-5 sm:mb-6">
+
+
+                <!-- TOTAL -->
+
+                <div
+                    class="mobile-stat bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200">
+
+                    <div class="flex items-center justify-between gap-2">
+
+                        <div>
+
+                            <p class="text-[8px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                Total
+                            </p>
+
+                            <p id="meta-total"
+                                class="text-2xl sm:text-3xl font-bold text-blue-950 leading-tight">
+                                0
+                            </p>
+
+                            <p class="hidden sm:block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Alunos
+                            </p>
+
+                        </div>
+
+                        <div
+                            class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+
+                            <i class="fa-solid fa-users text-blue-600 text-xs sm:text-base"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- COM FOTO -->
+
+                <div
+                    class="mobile-stat bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200">
+
+                    <div class="flex items-center justify-between gap-2">
+
+                        <div>
+
+                            <p class="text-[8px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                Com Foto
+                            </p>
+
+                            <p id="meta-com-foto"
+                                class="text-2xl sm:text-3xl font-bold text-emerald-600 leading-tight">
+                                0
+                            </p>
+
+                            <p class="hidden sm:block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Com Foto
+                            </p>
+
+                        </div>
+
+                        <div
+                            class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+
+                            <i class="fa-solid fa-camera text-emerald-600 text-xs sm:text-base"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SEM FOTO -->
+
+                <div
+                    class="mobile-stat bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200">
+
+                    <div class="flex items-center justify-between gap-2">
+
+                        <div>
+
+                            <p class="text-[8px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                Sem Foto
+                            </p>
+
+                            <p id="meta-sem-foto"
+                                class="text-2xl sm:text-3xl font-bold text-amber-500 leading-tight">
+                                0
+                            </p>
+
+                            <p class="hidden sm:block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Sem Foto
+                            </p>
+
+                        </div>
+
+                        <div
+                            class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+
+                            <i class="fa-solid fa-image text-amber-500 text-xs sm:text-base"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 BARRA DE PROGRESSO
+            ================================================== -->
 
             <div
-                class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 mb-6">
+
+                <div class="flex items-center justify-between mb-2">
+
+                    <div class="flex items-center gap-2">
+
+                        <div
+                            class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+
+                            <i class="fa-solid fa-camera text-emerald-600 text-sm"></i>
+
+                        </div>
+
+                        <div>
+
+                            <p class="text-sm font-bold text-slate-700">
+                                Progresso das Fotos
+                            </p>
+
+                            <p id="texto-progresso"
+                                class="text-[11px] text-slate-400">
+                                0 de 0 alunos com foto
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <span id="percentual-progresso"
+                        class="text-sm font-bold text-emerald-600">
+                        0%
+                    </span>
+
+                </div>
+
+
+                <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+
+                    <div id="barra-progresso"
+                        class="progress-bar h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full"
+                        style="width: 0%">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 CABEÇALHO DA LISTA
+            ================================================== -->
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
 
                 <div>
 
-                    <h2 class="text-xl font-black text-slate-800">
+                    <h2 class="text-lg font-bold text-slate-800">
                         Alunos da turma
                     </h2>
 
-                    <p class="text-sm text-gray-500">
-                        Gerencie alunos, fotos e informações da turma.
+                    <p class="text-xs text-slate-500">
+                        Gerencie alunos, fotos e informações
                     </p>
 
                 </div>
 
 
-                <button
-                    onclick="abrirModalAdicionarAluno()"
-                    class="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-5 py-3 rounded-xl font-bold shadow-lg shadow-green-600/20 transition">
+                <button onclick="abrirModalAdicionar()"
+                    class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-600/20 transition">
 
                     <i class="fa-solid fa-user-plus mr-2"></i>
-
-                    Adicionar aluno
+                    Adicionar Aluno
 
                 </button>
 
             </div>
 
 
-
-            <!-- MÉTRICAS -->
-
-            <div
-                class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-
-
-                <div class="premium-card rounded-2xl p-5">
-
-                    <div class="flex items-center justify-between">
-
-                        <div>
-
-                            <p
-                                class="text-xs font-bold text-gray-500 uppercase tracking-wider">
-
-                                Total de Alunos
-
-                            </p>
-
-                            <p
-                                id="meta-total"
-                                class="text-3xl font-black text-blue-950 mt-1">
-
-                                0
-
-                            </p>
-
-                        </div>
-
-
-                        <div
-                            class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-
-                            <i class="fa-solid fa-users"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
-                <div class="premium-card rounded-2xl p-5">
-
-                    <div class="flex items-center justify-between">
-
-                        <div>
-
-                            <p
-                                class="text-xs font-bold text-gray-500 uppercase tracking-wider">
-
-                                Com Foto
-
-                            </p>
-
-                            <p
-                                id="meta-com-foto"
-                                class="text-3xl font-black text-green-600 mt-1">
-
-                                0
-
-                            </p>
-
-                        </div>
-
-
-                        <div
-                            class="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
-
-                            <i class="fa-solid fa-camera"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
-                <div class="premium-card rounded-2xl p-5">
-
-                    <div class="flex items-center justify-between">
-
-                        <div>
-
-                            <p
-                                class="text-xs font-bold text-gray-500 uppercase tracking-wider">
-
-                                Sem Foto
-
-                            </p>
-
-                            <p
-                                id="meta-sem-foto"
-                                class="text-3xl font-black text-amber-500 mt-1">
-
-                                0
-
-                            </p>
-
-                        </div>
-
-
-                        <div
-                            class="w-12 h-12 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center">
-
-                            <i class="fa-solid fa-image"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- =====================================================
-                 BARRA DE PROGRESSO
-            ====================================================== -->
-
-            <div
-                class="premium-card rounded-2xl p-5 mb-7">
-
-                <div
-                    class="flex flex-col sm:flex-row justify-between gap-2 mb-3">
-
-                    <div>
-
-                        <p class="font-bold text-slate-800">
-                            Progresso das fotos
-                        </p>
-
-                        <p class="text-xs text-gray-500 mt-1">
-                            Acompanhe quantos alunos já possuem foto.
-                        </p>
-
-                    </div>
-
-
-                    <div class="text-right">
-
-                        <span
-                            id="texto-progresso"
-                            class="text-sm font-black text-green-600">
-
-                            0%
-
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="progress-track">
-
-                    <div
-                        id="barra-progresso"
-                        class="progress-bar"
-                        style="width: 0%">
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="flex justify-between text-xs text-gray-400 mt-2">
-
-                    <span id="progresso-com-foto">
-                        0 alunos com foto
-                    </span>
-
-                    <span id="progresso-sem-foto">
-                        0 alunos sem foto
-                    </span>
-
-                </div>
-
-            </div>
-
-
-
             <!-- GRID -->
 
-            <div
-                id="grid-alunos"
-                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-
+            <div id="grid-alunos"
+                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
             </div>
-
 
         </main>
 
     </div>
 
 
-
     <!-- =========================================================
          INPUTS DE FOTO
     ========================================================== -->
 
-    <input
-        type="file"
+    <input type="file"
         id="input-camera"
         accept="image/*"
         capture="environment"
         class="hidden">
 
-    <input
-        type="file"
+    <input type="file"
         id="input-galeria"
         accept="image/*"
         class="hidden">
 
 
-
     <!-- =========================================================
-         MODAL FOTO
+         MODAL DE FOTO
     ========================================================== -->
 
-    <div
-        id="modal-foto"
-        onclick="fecharModalFoto(event)"
-        class="hidden fixed inset-0 bg-black/85 modal-backdrop z-[100] items-center justify-center p-4">
+    <div id="modal-foto"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[100]">
 
-        <button
-            onclick="fecharModalFoto()"
-            class="absolute right-5 top-5 z-[110] w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xl transition">
+        <div class="relative max-w-3xl w-full flex justify-center modal-fade">
 
-            <i class="fa-solid fa-xmark"></i>
+            <button onclick="fecharModalFoto()"
+                class="absolute -top-3 -right-3 sm:top-2 sm:right-2 z-10 w-10 h-10 rounded-full bg-white text-slate-800 shadow-xl hover:bg-slate-100 transition flex items-center justify-center">
 
-        </button>
+                <i class="fa-solid fa-xmark text-lg"></i>
 
+            </button>
 
-        <div
-            class="flex flex-col items-center"
-            onclick="event.stopPropagation()">
-
-            <img
-                id="imagem-modal-foto"
+            <img id="foto-modal"
                 src=""
-                class="photo-modal-image">
-
-            <p
-                id="nome-modal-foto"
-                class="text-white font-bold mt-4 text-lg text-center">
-            </p>
+                alt="Foto do aluno"
+                class="max-h-[85vh] max-w-full rounded-2xl shadow-2xl object-contain border-4 border-white/10">
 
         </div>
 
     </div>
-
-
-
-    <!-- =========================================================
-         MODAL EDITAR ALUNO
-    ========================================================== -->
-
-    <div
-        id="modal-edicao"
-        class="hidden fixed inset-0 bg-black/50 modal-backdrop items-center justify-center p-4 z-50">
-
-        <div
-            class="modal-content bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
-
-
-            <!-- Cabeçalho -->
-
-            <div
-                class="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-6">
-
-                <div class="flex justify-between items-start">
-
-                    <div>
-
-                        <div
-                            class="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center mb-3">
-
-                            <i class="fa-solid fa-user-pen"></i>
-
-                        </div>
-
-                        <h3 class="text-xl font-black">
-                            Editar Aluno
-                        </h3>
-
-                        <p class="text-sm text-blue-200 mt-1">
-                            Altere os dados ou remova o aluno.
-                        </p>
-
-                    </div>
-
-
-                    <button
-                        onclick="fecharModal()"
-                        class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition">
-
-                        <i class="fa-solid fa-xmark"></i>
-
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <!-- Corpo -->
-
-            <div class="p-6">
-
-                <input
-                    type="hidden"
-                    id="edit-aluno-id">
-
-
-                <div class="space-y-5">
-
-                    <div>
-
-                        <label
-                            class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-
-                            Nome do Aluno
-
-                        </label>
-
-                        <div class="relative">
-
-                            <i
-                                class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                            </i>
-
-                            <input
-                                type="text"
-                                id="edit-nome"
-                                class="premium-input w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl outline-none">
-
-                        </div>
-
-                    </div>
-
-
-                    <div>
-
-                        <label
-                            class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-
-                            Nome da Turma
-
-                        </label>
-
-                        <div class="relative">
-
-                            <i
-                                class="fa-solid fa-people-group absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                            </i>
-
-                            <input
-                                type="text"
-                                id="edit-turma"
-                                class="premium-input w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl outline-none">
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- Botões -->
-
-                <div class="mt-7 space-y-3">
-
-                    <button
-                        onclick="salvarEdicaoAluno()"
-                        class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition">
-
-                        <i class="fa-solid fa-check mr-2"></i>
-
-                        Salvar Alterações
-
-                    </button>
-
-
-                    <button
-                        onclick="excluirAluno()"
-                        class="w-full py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold transition">
-
-                        <i class="fa-solid fa-trash-can mr-2"></i>
-
-                        Excluir Aluno
-
-                    </button>
-
-
-                    <button
-                        onclick="fecharModal()"
-                        class="w-full py-2.5 text-gray-500 hover:text-gray-700 font-semibold transition">
-
-                        Cancelar
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
 
 
     <!-- =========================================================
          MODAL ADICIONAR ALUNO
     ========================================================== -->
 
-    <div
-        id="modal-adicionar"
-        class="hidden fixed inset-0 bg-black/50 modal-backdrop items-center justify-center p-4 z-50">
+    <div id="modal-adicionar"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
 
-        <div
-            class="modal-content bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 modal-fade">
 
+            <div class="flex items-start justify-between mb-5">
 
-            <div
-                class="bg-gradient-to-r from-emerald-700 to-green-600 text-white p-6">
+                <div>
 
-                <div class="flex justify-between items-start">
+                    <p class="text-[10px] uppercase tracking-[.2em] font-bold text-blue-500">
+                        Novo cadastro
+                    </p>
 
-                    <div>
+                    <h3 class="text-xl font-bold text-slate-900">
+                        Adicionar Aluno
+                    </h3>
 
-                        <div
-                            class="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center mb-3">
+                </div>
 
-                            <i class="fa-solid fa-user-plus"></i>
+                <button onclick="fecharModalAdicionar()"
+                    class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 transition">
 
-                        </div>
+                    <i class="fa-solid fa-xmark"></i>
 
-                        <h3 class="text-xl font-black">
-                            Adicionar Aluno
-                        </h3>
+                </button>
 
-                        <p class="text-sm text-green-100 mt-1">
-                            Cadastre um novo aluno na turma.
-                        </p>
-
-                    </div>
+            </div>
 
 
-                    <button
-                        onclick="fecharModalAdicionarAluno()"
-                        class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition">
+            <div class="space-y-4">
 
-                        <i class="fa-solid fa-xmark"></i>
+                <div>
 
-                    </button>
+                    <label class="block text-sm font-semibold mb-1 text-slate-700">
+                        Nome do Aluno
+                    </label>
+
+                    <input type="text"
+                        id="novo-nome"
+                        placeholder="Digite o nome completo"
+                        class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+
+                </div>
+
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1 text-slate-700">
+                        Turma
+                    </label>
+
+                    <select id="novo-turma"
+                        class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+
+                    </select>
+
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Selecione uma turma existente.
+                    </p>
 
                 </div>
 
             </div>
 
 
-            <div class="p-6">
+            <div class="flex justify-end gap-3 mt-6">
 
-                <div class="space-y-5">
+                <button onclick="fecharModalAdicionar()"
+                    class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-semibold transition">
 
+                    Cancelar
 
-                    <div>
+                </button>
 
-                        <label
-                            class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                <button onclick="salvarNovoAluno()"
+                    class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition shadow-lg shadow-blue-600/20">
 
-                            Nome do Aluno
+                    <i class="fa-solid fa-plus mr-1"></i>
+                    Adicionar
 
-                        </label>
-
-                        <div class="relative">
-
-                            <i
-                                class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                            </i>
-
-                            <input
-                                type="text"
-                                id="novo-aluno-nome"
-                                placeholder="Digite o nome completo"
-                                class="premium-input w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl outline-none">
-
-                        </div>
-
-                    </div>
-
-
-                    <div>
-
-                        <label
-                            class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-
-                            Turma
-
-                        </label>
-
-                        <div class="relative">
-
-                            <i
-                                class="fa-solid fa-people-group absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                            </i>
-
-                            <input
-                                type="text"
-                                id="novo-aluno-turma"
-                                class="premium-input w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl outline-none">
-
-                        </div>
-
-                    </div>
-
-
-                    <div
-                        class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700">
-
-                        <i class="fa-solid fa-circle-info mr-1"></i>
-
-                        O aluno será criado sem foto. Você poderá adicionar a foto depois.
-
-                    </div>
-
-                </div>
-
-
-                <div class="mt-7 flex gap-3">
-
-                    <button
-                        onclick="fecharModalAdicionarAluno()"
-                        class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition">
-
-                        Cancelar
-
-                    </button>
-
-
-                    <button
-                        onclick="adicionarAluno()"
-                        class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-bold transition">
-
-                        <i class="fa-solid fa-plus mr-1"></i>
-
-                        Adicionar
-
-                    </button>
-
-                </div>
+                </button>
 
             </div>
 
@@ -1192,43 +689,125 @@
     </div>
 
 
-
     <!-- =========================================================
-         LOADING
+         MODAL DE EDIÇÃO
     ========================================================== -->
 
-    <div
-        id="loading"
-        class="hidden fixed inset-0 bg-slate-950/50 modal-backdrop z-[200] items-center justify-center">
+    <div id="modal-edicao"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
 
-        <div
-            class="bg-white rounded-2xl p-7 shadow-2xl flex flex-col items-center">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 modal-fade">
 
-            <div class="loader mb-4"></div>
+            <div class="flex items-start justify-between mb-5">
 
-            <p
-                id="loading-texto"
-                class="font-bold text-slate-700">
+                <div>
 
-                Carregando...
+                    <p class="text-[10px] uppercase tracking-[.2em] font-bold text-cyan-500">
+                        Gerenciar cadastro
+                    </p>
 
-            </p>
+                    <h3 class="text-xl font-bold text-slate-900">
+                        Editar Aluno
+                    </h3>
+
+                </div>
+
+                <button onclick="fecharModal()"
+                    class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 transition">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <input type="hidden" id="edit-aluno-id">
+
+
+            <div class="space-y-4">
+
+                <!-- NOME -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1 text-slate-700">
+                        Nome do Aluno
+                    </label>
+
+                    <input type="text"
+                        id="edit-nome"
+                        class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+
+                </div>
+
+
+                <!-- TURMA - AGORA É SELECT -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1 text-slate-700">
+                        Turma
+                    </label>
+
+                    <select id="edit-turma"
+                        class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+
+                    </select>
+
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Escolha uma das turmas cadastradas para evitar erros de enturmação.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="flex flex-col gap-3 mt-6">
+
+                <div class="flex justify-between gap-3">
+
+                    <button onclick="excluirAluno()"
+                        class="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-semibold transition">
+
+                        <i class="fa-solid fa-trash mr-1"></i>
+                        Excluir Aluno
+
+                    </button>
+
+                    <div class="flex gap-2">
+
+                        <button onclick="fecharModal()"
+                            class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-semibold transition">
+
+                            Cancelar
+
+                        </button>
+
+                        <button onclick="salvarEdicaoAluno()"
+                            class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition shadow-lg shadow-blue-600/20">
+
+                            Salvar
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
 
         </div>
 
     </div>
 
 
-
     <!-- =========================================================
-         SUPABASE + JAVASCRIPT
+         CONEXÃO SUPABASE
     ========================================================== -->
 
     <script>
-
-        /* =========================================================
-           CONFIGURAÇÃO SUPABASE
-        ========================================================== */
 
         const SUPABASE_URL =
             "https://vydnefdeqljazqaisslq.supabase.co";
@@ -1243,10 +822,6 @@
             );
 
 
-        /* =========================================================
-           VARIÁVEIS
-        ========================================================== */
-
         let todasAsTurmas = [];
 
         let alunoSelecionadoParaUpload = null;
@@ -1255,27 +830,24 @@
             "carometro_sessao_expiracao";
 
 
-        /* =========================================================
-           DOM READY
-        ========================================================== */
+        /* =====================================================
+           INICIALIZAÇÃO
+        ====================================================== */
 
-        document.addEventListener(
-            "DOMContentLoaded",
-            async () => {
+        document.addEventListener("DOMContentLoaded", async () => {
 
-                verificarSessao();
+            verificarSessao();
 
-                configurarInputsDeArquivo();
+            configurarInputsDeArquivo();
 
-                configurarTeclas();
+            configurarFechamentoModais();
 
-            }
-        );
+        });
 
 
-        /* =========================================================
+        /* =====================================================
            SESSÃO
-        ========================================================== */
+        ====================================================== */
 
         function verificarSessao() {
 
@@ -1321,9 +893,7 @@
                 document
                     .getElementById("tela-carometro")
                     .classList.add("hidden");
-
             }
-
         }
 
 
@@ -1332,9 +902,7 @@
             event.preventDefault();
 
             const senhaDigitada =
-                document.getElementById(
-                    "login-password"
-                ).value;
+                document.getElementById("login-password").value;
 
 
             if (senhaDigitada === "8737") {
@@ -1363,67 +931,30 @@
                 document
                     .getElementById("login-password")
                     .focus();
-
             }
-
         }
 
 
         function efetuarLogout() {
 
             if (
-                !confirm(
+                confirm(
                     "Tem certeza que deseja sair do sistema?"
                 )
-            ) return;
+            ) {
 
+                localStorage.removeItem(
+                    CHAVE_EXPIRACAO
+                );
 
-            localStorage.removeItem(
-                CHAVE_EXPIRACAO
-            );
-
-            verificarSessao();
-
+                verificarSessao();
+            }
         }
 
 
-        /* =========================================================
-           LOADING
-        ========================================================== */
-
-        function mostrarLoading(texto = "Carregando...") {
-
-            document.getElementById(
-                "loading-texto"
-            ).innerText = texto;
-
-            document
-                .getElementById("loading")
-                .classList.remove("hidden");
-
-            document
-                .getElementById("loading")
-                .classList.add("flex");
-
-        }
-
-
-        function esconderLoading() {
-
-            document
-                .getElementById("loading")
-                .classList.add("hidden");
-
-            document
-                .getElementById("loading")
-                .classList.remove("flex");
-
-        }
-
-
-        /* =========================================================
-           TURMAS
-        ========================================================== */
+        /* =====================================================
+           CARREGAR TURMAS
+        ====================================================== */
 
         async function carregarTurmas() {
 
@@ -1437,28 +968,27 @@
 
             if (error) {
 
-                return alert(
+                alert(
                     "Erro ao carregar turmas do servidor: " +
                     error.message
                 );
 
+                return;
             }
 
 
-            todasAsTurmas =
-                [
-                    ...new Set(
-                        data
-                            .map(item => item.class_name)
-                    )
-                ]
-                .filter(Boolean)
-                .sort();
-
-
-            document.getElementById(
-                "select-etapa"
-            ).value = "";
+            todasAsTurmas = [
+                ...new Set(
+                    data
+                        .map(item => item.class_name)
+                        .filter(Boolean)
+                        .map(turma => turma.trim())
+                )
+            ].sort((a, b) =>
+                a.localeCompare(b, "pt-BR", {
+                    numeric: true
+                })
+            );
 
 
             const selectTurmas =
@@ -1467,21 +997,26 @@
                 );
 
 
-            selectTurmas.innerHTML =
-                `<option value="">
-                    Selecione uma etapa primeiro...
-                </option>`;
+            document.getElementById(
+                "select-etapa"
+            ).value = "";
 
+
+            selectTurmas.innerHTML =
+                '<option value="">Selecione uma etapa primeiro...</option>';
 
             selectTurmas.disabled = true;
 
             selectTurmas.classList.add(
-                "bg-gray-50",
+                "bg-slate-50",
                 "cursor-not-allowed"
             );
-
         }
 
+
+        /* =====================================================
+           FILTRAR TURMAS
+        ====================================================== */
 
         function filtrarTurmasPorEtapa() {
 
@@ -1500,14 +1035,12 @@
             if (!etapaSelecionada) {
 
                 selectTurmas.innerHTML =
-                    `<option value="">
-                        Selecione uma etapa primeiro...
-                    </option>`;
+                    '<option value="">Selecione uma etapa primeiro...</option>';
 
                 selectTurmas.disabled = true;
 
                 selectTurmas.classList.add(
-                    "bg-gray-50",
+                    "bg-slate-50",
                     "cursor-not-allowed"
                 );
 
@@ -1528,10 +1061,7 @@
                                 .startsWith("1 REG")
                     );
 
-            }
-
-
-            else if (etapaSelecionada === "1 ADM") {
+            } else if (etapaSelecionada === "1 ADM") {
 
                 turmasFiltradas =
                     todasAsTurmas.filter(
@@ -1541,10 +1071,7 @@
                                 .includes("ADM")
                     );
 
-            }
-
-
-            else if (etapaSelecionada === "2 REG") {
+            } else if (etapaSelecionada === "2 REG") {
 
                 turmasFiltradas =
                     todasAsTurmas.filter(
@@ -1554,10 +1081,7 @@
                                 .startsWith("2 REG")
                     );
 
-            }
-
-
-            else if (etapaSelecionada === "3 REG") {
+            } else if (etapaSelecionada === "3 REG") {
 
                 turmasFiltradas =
                     todasAsTurmas.filter(
@@ -1566,55 +1090,45 @@
                                 .toUpperCase()
                                 .startsWith("3 REG")
                     );
-
             }
 
 
             selectTurmas.innerHTML =
-                `<option value="">
-                    -- Escolha uma Turma --
-                </option>`;
+                '<option value="">-- Escolha uma Turma --</option>';
 
 
-            turmasFiltradas.forEach(
-                turma => {
+            turmasFiltradas.forEach(turma => {
 
-                    selectTurmas.innerHTML +=
-                        `
-                        <option value="${escapeHtml(turma)}">
-                            ${escapeHtml(turma)}
-                        </option>
-                        `;
+                const option =
+                    document.createElement("option");
 
-                }
-            );
+                option.value = turma;
+
+                option.textContent = turma;
+
+                selectTurmas.appendChild(option);
+            });
 
 
             if (!turmasFiltradas.length) {
 
                 selectTurmas.innerHTML =
-                    `
-                    <option value="">
-                        Nenhuma turma encontrada
-                    </option>
-                    `;
-
+                    '<option value="">Nenhuma turma encontrada nesta etapa</option>';
             }
 
 
             selectTurmas.disabled = false;
 
             selectTurmas.classList.remove(
-                "bg-gray-50",
+                "bg-slate-50",
                 "cursor-not-allowed"
             );
-
         }
 
 
-        /* =========================================================
+        /* =====================================================
            ENTRAR NA TURMA
-        ========================================================== */
+        ====================================================== */
 
         function entrarNaTurma() {
 
@@ -1626,10 +1140,11 @@
 
             if (!nomeTurma) {
 
-                return alert(
+                alert(
                     "Selecione uma turma para prosseguir!"
                 );
 
+                return;
             }
 
 
@@ -1650,7 +1165,6 @@
 
 
             carregarAlunos(nomeTurma);
-
         }
 
 
@@ -1667,20 +1181,14 @@
 
 
             carregarTurmas();
-
         }
 
 
-        /* =========================================================
+        /* =====================================================
            CARREGAR ALUNOS
-        ========================================================== */
+        ====================================================== */
 
         async function carregarAlunos(nomeTurma) {
-
-            mostrarLoading(
-                "Carregando alunos..."
-            );
-
 
             const {
                 data: alunos,
@@ -1692,51 +1200,44 @@
                 .order("student_name");
 
 
-            esconderLoading();
-
-
             if (error) {
 
-                return alert(
+                alert(
                     "Erro ao carregar alunos: " +
                     error.message
                 );
 
+                return;
             }
 
 
-            const total =
-                alunos.length;
+            const total = alunos.length;
 
             const comFoto =
                 alunos.filter(
-                    aluno => !!aluno.photo_url
+                    aluno => aluno.photo_url
                 ).length;
 
             const semFoto =
                 total - comFoto;
 
 
-            /* MÉTRICAS */
+            /* INDICADORES */
 
             document.getElementById(
                 "meta-total"
             ).innerText = total;
 
-
             document.getElementById(
                 "meta-com-foto"
             ).innerText = comFoto;
-
 
             document.getElementById(
                 "meta-sem-foto"
             ).innerText = semFoto;
 
 
-            /* =====================================================
-               BARRA DE PROGRESSO
-            ====================================================== */
+            /* PROGRESSO */
 
             const percentual =
                 total > 0
@@ -1753,26 +1254,18 @@
 
 
             document.getElementById(
-                "texto-progresso"
+                "percentual-progresso"
             ).innerText =
                 `${percentual}%`;
 
 
             document.getElementById(
-                "progresso-com-foto"
+                "texto-progresso"
             ).innerText =
-                `${comFoto} ${comFoto === 1 ? "aluno" : "alunos"} com foto`;
+                `${comFoto} de ${total} alunos com foto`;
 
 
-            document.getElementById(
-                "progresso-sem-foto"
-            ).innerText =
-                `${semFoto} ${semFoto === 1 ? "aluno" : "alunos"} sem foto`;
-
-
-            /* =====================================================
-               GRID
-            ====================================================== */
+            /* GRID */
 
             const grid =
                 document.getElementById(
@@ -1785,250 +1278,199 @@
 
             if (!alunos.length) {
 
-                grid.innerHTML =
-                    `
-                    <div class="col-span-full">
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center">
 
-                        <div class="premium-card rounded-3xl p-12 text-center">
-
-                            <div class="w-20 h-20 mx-auto rounded-3xl bg-blue-50 text-blue-500 flex items-center justify-center mb-5">
-
-                                <i class="fa-solid fa-user-plus text-3xl"></i>
-
-                            </div>
-
-                            <h3 class="text-xl font-black text-slate-800">
-                                Nenhum aluno nesta turma
-                            </h3>
-
-                            <p class="text-gray-500 mt-2 mb-6">
-                                Comece adicionando o primeiro aluno.
-                            </p>
-
-                            <button
-                                onclick="abrirModalAdicionarAluno()"
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold">
-
-                                <i class="fa-solid fa-plus mr-2"></i>
-
-                                Adicionar primeiro aluno
-
-                            </button>
-
+                        <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-users-slash text-2xl text-slate-400"></i>
                         </div>
 
+                        <h3 class="font-bold text-slate-700">
+                            Nenhum aluno cadastrado
+                        </h3>
+
+                        <p class="text-sm text-slate-400 mt-1">
+                            Adicione o primeiro aluno desta turma.
+                        </p>
+
                     </div>
-                    `;
+                `;
 
                 return;
-
             }
 
 
-            alunos.forEach(
-                aluno => criarCardAluno(
-                    aluno,
-                    grid
-                )
-            );
+            alunos.forEach(aluno => {
 
-        }
+                const card =
+                    document.createElement("div");
 
 
-        /* =========================================================
-           CRIAR CARD
-        ========================================================== */
-
-        function criarCardAluno(aluno, grid) {
-
-            const card =
-                document.createElement("div");
+                card.className =
+                    "card-aluno bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center justify-between text-center min-h-[280px]";
 
 
-            card.className =
-                "premium-card rounded-2xl p-5 flex flex-col items-center text-center min-h-[315px]";
+                /* FOTO */
 
+                let areaFoto = `
 
-            let areaFoto = "";
+                    <div class="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200 overflow-hidden mb-3">
 
-
-            if (aluno.photo_url) {
-
-                areaFoto =
-                    `
-                    <div
-                        class="relative mb-4">
-
-                        <div
-                            onclick="abrirModalFoto('${encodeURIComponent(aluno.photo_url)}', '${encodeURIComponent(aluno.student_name)}')"
-                            class="w-28 h-28 rounded-full overflow-hidden photo-ring student-photo">
-
-                            <img
-                                src="${escapeHtml(aluno.photo_url)}"
-                                class="w-full h-full object-cover"
-                                alt="Foto de ${escapeHtml(aluno.student_name)}">
-
-                        </div>
-
-                        <div
-                            class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-green-500 border-4 border-white text-white flex items-center justify-center text-xs">
-
-                            <i class="fa-solid fa-check"></i>
-
-                        </div>
+                        <i class="fa-solid fa-user text-4xl text-slate-300"></i>
 
                     </div>
-                    `;
-
-            } else {
-
-                areaFoto =
-                    `
-                    <div class="relative mb-4">
-
-                        <div
-                            class="w-28 h-28 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border-4 border-white shadow-lg flex items-center justify-center">
-
-                            <i class="fa-solid fa-user text-5xl text-slate-400"></i>
-
-                        </div>
-
-                        <div
-                            class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-amber-500 border-4 border-white text-white flex items-center justify-center text-xs">
-
-                            <i class="fa-solid fa-camera"></i>
-
-                        </div>
-
-                    </div>
-                    `;
-
-            }
-
-
-            let botoesAcao = "";
-
-
-            if (aluno.photo_url) {
-
-                botoesAcao =
-                    `
-                    <button
-                        onclick="abrirModalFoto('${encodeURIComponent(aluno.photo_url)}', '${encodeURIComponent(aluno.student_name)}')"
-                        class="action-button w-9 h-9 rounded-xl bg-green-100 hover:bg-green-200 text-green-700 text-xs"
-                        title="Visualizar foto">
-
-                        <i class="fa-solid fa-expand"></i>
-
-                    </button>
-
-                    <button
-                        onclick="removerFoto('${aluno.id}')"
-                        class="action-button w-9 h-9 rounded-xl bg-red-100 hover:bg-red-200 text-red-600 text-xs"
-                        title="Excluir foto">
-
-                        <i class="fa-solid fa-trash"></i>
-
-                    </button>
-                    `;
-
-            } else {
-
-                botoesAcao =
-                    `
-                    <button
-                        onclick="dispararUpload('${aluno.id}', 'camera')"
-                        class="action-button w-9 h-9 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs"
-                        title="Tirar foto">
-
-                        <i class="fa-solid fa-camera"></i>
-
-                    </button>
-
-                    <button
-                        onclick="dispararUpload('${aluno.id}', 'galeria')"
-                        class="action-button w-9 h-9 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs"
-                        title="Escolher foto">
-
-                        <i class="fa-solid fa-image"></i>
-
-                    </button>
-                    `;
-
-            }
-
-
-            card.innerHTML =
-                `
-                <div class="flex flex-col items-center w-full flex-1">
-
-                    ${areaFoto}
-
-                    <span
-                        class="status-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold ${
-                            aluno.photo_url
-                                ? "bg-green-50 text-green-600"
-                                : "bg-amber-50 text-amber-600"
-                        }">
-
-                        <i class="fa-solid ${
-                            aluno.photo_url
-                                ? "fa-circle-check"
-                                : "fa-circle-exclamation"
-                        }"></i>
-
-                        ${
-                            aluno.photo_url
-                                ? "FOTO CADASTRADA"
-                                : "SEM FOTO"
-                        }
-
-                    </span>
-
-
-                    <h4
-                        class="font-black text-sm text-blue-950 uppercase tracking-tight line-clamp-2 px-1 mt-3">
-
-                        ${escapeHtml(aluno.student_name)}
-
-                    </h4>
-
-
-                    <p class="text-xs text-gray-400 mt-1">
-
-                        ${escapeHtml(aluno.class_name)}
-
-                    </p>
-
-                </div>
-
-
-                <div
-                    class="flex items-center justify-center gap-2 mt-5 w-full pt-4 border-t border-gray-100">
-
-                    ${botoesAcao}
-
-                    <button
-                        onclick="abrirModalEdicao('${aluno.id}', '${encodeURIComponent(aluno.student_name)}', '${encodeURIComponent(aluno.class_name)}')"
-                        class="action-button w-9 h-9 rounded-xl bg-cyan-100 hover:bg-cyan-200 text-cyan-700 text-xs"
-                        title="Editar aluno">
-
-                        <i class="fa-solid fa-pen"></i>
-
-                    </button>
-
-                </div>
                 `;
 
 
-            grid.appendChild(card);
+                if (aluno.photo_url) {
+
+                    areaFoto = `
+
+                        <button
+                            onclick="abrirFoto('${escaparJS(aluno.photo_url)}')"
+                            class="w-24 h-24 rounded-full border-2 border-blue-500 overflow-hidden mb-3 shadow-md hover:shadow-lg transition">
+
+                            <img
+                                src="${escaparHTML(aluno.photo_url)}"
+                                class="foto-aluno w-full h-full object-cover"
+                                alt="Foto de ${escaparHTML(aluno.student_name)}">
+
+                        </button>
+                    `;
+                }
+
+
+                /* BOTÕES */
+
+                let botoesAcao = "";
+
+
+                if (aluno.photo_url) {
+
+                    botoesAcao = `
+
+                        <button
+                            onclick="abrirFoto('${escaparJS(aluno.photo_url)}')"
+                            class="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs shadow-sm transition"
+                            title="Ver foto">
+
+                            <i class="fa-solid fa-magnifying-glass"></i>
+
+                        </button>
+
+
+                        <button
+                            onclick="removerFoto('${escaparJS(aluno.id)}')"
+                            class="w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs shadow-sm transition"
+                            title="Excluir foto">
+
+                            <i class="fa-solid fa-trash"></i>
+
+                        </button>
+                    `;
+
+                } else {
+
+                    botoesAcao = `
+
+                        <button
+                            onclick="dispararUpload('${escaparJS(aluno.id)}', 'camera')"
+                            class="w-9 h-9 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 text-xs shadow-sm transition"
+                            title="Tirar Foto">
+
+                            <i class="fa-solid fa-camera"></i>
+
+                        </button>
+
+
+                        <button
+                            onclick="dispararUpload('${escaparJS(aluno.id)}', 'galeria')"
+                            class="w-9 h-9 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs shadow-sm transition"
+                            title="Escolher da Galeria">
+
+                            <i class="fa-solid fa-image"></i>
+
+                        </button>
+                    `;
+                }
+
+
+                card.innerHTML = `
+
+                    <div class="flex flex-col items-center w-full">
+
+                        ${areaFoto}
+
+                        <h4
+                            class="font-bold text-sm text-blue-950 uppercase tracking-tight line-clamp-2 px-1 mb-1">
+
+                            ${escaparHTML(aluno.student_name)}
+
+                        </h4>
+
+                        <span
+                            class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+
+                            ${escaparHTML(aluno.class_name)}
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="flex items-center justify-center gap-2 mt-4 w-full">
+
+                        ${botoesAcao}
+
+
+                        <button
+                            onclick="abrirModalEdicao('${escaparJS(aluno.id)}', '${escaparJS(aluno.student_name)}', '${escaparJS(aluno.class_name)}')"
+                            class="w-9 h-9 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-xs shadow-sm transition"
+                            title="Editar dados">
+
+                            <i class="fa-solid fa-pen"></i>
+
+                        </button>
+
+                    </div>
+                `;
+
+
+                grid.appendChild(card);
+
+            });
 
         }
 
 
-        /* =========================================================
+        /* =====================================================
+           FUNÇÕES DE SEGURANÇA PARA HTML
+        ====================================================== */
+
+        function escaparHTML(valor) {
+
+            return String(valor ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+
+        function escaparJS(valor) {
+
+            return String(valor ?? "")
+                .replace(/\\/g, "\\\\")
+                .replace(/'/g, "\\'")
+                .replace(/\n/g, "\\n")
+                .replace(/\r/g, "\\r");
+        }
+
+
+        /* =====================================================
            UPLOAD
-        ========================================================== */
+        ====================================================== */
 
         function dispararUpload(
             alunoId,
@@ -2045,17 +1487,12 @@
                     .getElementById("input-camera")
                     .click();
 
-            }
-
-
-            if (origem === "galeria") {
+            } else if (origem === "galeria") {
 
                 document
                     .getElementById("input-galeria")
                     .click();
-
             }
-
         }
 
 
@@ -2071,159 +1508,118 @@
                     if (
                         !file ||
                         !alunoSelecionadoParaUpload
-                    ) return;
+                    ) {
+                        return;
+                    }
 
 
-                    mostrarLoading(
-                        "Preparando foto..."
-                    );
+                    new Compressor(file, {
+
+                        quality: 0.6,
+
+                        maxWidth: 800,
+
+                        maxHeight: 800,
+
+                        convertSize: 1000000,
 
 
-                    new Compressor(
-                        file,
-                        {
+                        success: async resultadoCompactado => {
 
-                            quality: 0.6,
-
-                            maxWidth: 800,
-
-                            maxHeight: 800,
-
-                            convertSize: 1000000,
+                            const fileExt =
+                                resultadoCompactado.name
+                                    ? resultadoCompactado.name
+                                        .split(".")
+                                        .pop()
+                                    : "jpg";
 
 
-                            success:
-                                async resultadoCompactado => {
-
-                                    try {
-
-                                        const fileExt =
-                                            resultadoCompactado.name
-                                                ? resultadoCompactado.name
-                                                    .split(".")
-                                                    .pop()
-                                                : "jpg";
+                            const caminhoArquivo =
+                                `public/${alunoSelecionadoParaUpload}-${Date.now()}.${fileExt}`;
 
 
-                                        const caminhoArquivo =
-                                            `public/${alunoSelecionadoParaUpload}-${Date.now()}.${fileExt}`;
+                            const {
+                                error: storageError
+                            } =
+                                await supabaseClient.storage
+                                    .from("fotos-alunos")
+                                    .upload(
+                                        caminhoArquivo,
+                                        resultadoCompactado
+                                    );
 
 
-                                        mostrarLoading(
-                                            "Enviando foto..."
-                                        );
-
-
-                                        const {
-                                            error: storageError
-                                        } =
-                                            await supabaseClient
-                                                .storage
-                                                .from("fotos-alunos")
-                                                .upload(
-                                                    caminhoArquivo,
-                                                    resultadoCompactado
-                                                );
-
-
-                                        if (
-                                            storageError
-                                        ) {
-
-                                            esconderLoading();
-
-                                            return alert(
-                                                "Erro no upload: " +
-                                                storageError.message
-                                            );
-
-                                        }
-
-
-                                        const {
-                                            data: {
-                                                publicUrl
-                                            }
-                                        } =
-                                            supabaseClient
-                                                .storage
-                                                .from("fotos-alunos")
-                                                .getPublicUrl(
-                                                    caminhoArquivo
-                                                );
-
-
-                                        const {
-                                            error: dbError
-                                        } =
-                                            await supabaseClient
-                                                .from("carometro")
-                                                .update({
-                                                    photo_url:
-                                                        publicUrl
-                                                })
-                                                .eq(
-                                                    "id",
-                                                    alunoSelecionadoParaUpload
-                                                );
-
-
-                                        esconderLoading();
-
-
-                                        if (dbError) {
-
-                                            return alert(
-                                                "Erro ao vincular imagem: " +
-                                                dbError.message
-                                            );
-
-                                        }
-
-
-                                        evento.target.value = "";
-
-
-                                        const turmaAtual =
-                                            document
-                                                .getElementById(
-                                                    "select-turmas"
-                                                )
-                                                .value;
-
-
-                                        await carregarAlunos(
-                                            turmaAtual
-                                        );
-
-
-                                    } catch (erro) {
-
-                                        esconderLoading();
-
-                                        alert(
-                                            "Erro ao processar imagem: " +
-                                            erro.message
-                                        );
-
-                                    }
-
-                                },
-
-
-                            error(err) {
-
-                                esconderLoading();
+                            if (storageError) {
 
                                 alert(
-                                    "Erro ao compactar imagem: " +
-                                    err.message
+                                    "Erro no upload do storage: " +
+                                    storageError.message
                                 );
 
+                                return;
                             }
 
+
+                            const {
+                                data: {
+                                    publicUrl
+                                }
+                            } =
+                                supabaseClient.storage
+                                    .from("fotos-alunos")
+                                    .getPublicUrl(
+                                        caminhoArquivo
+                                    );
+
+
+                            const {
+                                error: dbError
+                            } =
+                                await supabaseClient
+                                    .from("carometro")
+                                    .update({
+                                        photo_url: publicUrl
+                                    })
+                                    .eq(
+                                        "id",
+                                        alunoSelecionadoParaUpload
+                                    );
+
+
+                            if (dbError) {
+
+                                alert(
+                                    "Erro ao vincular imagem: " +
+                                    dbError.message
+                                );
+
+                                return;
+                            }
+
+
+                            evento.target.value = "";
+
+                            const turmaAtual =
+                                document.getElementById(
+                                    "select-turmas"
+                                ).value;
+
+
+                            await carregarAlunos(
+                                turmaAtual
+                            );
+                        },
+
+
+                        error(err) {
+
+                            alert(
+                                "Erro ao compactar a imagem: " +
+                                err.message
+                            );
                         }
-                    );
+
+                    });
 
                 };
 
@@ -2242,13 +1638,12 @@
                     "change",
                     processarArquivo
                 );
-
         }
 
 
-        /* =========================================================
+        /* =====================================================
            REMOVER FOTO
-        ========================================================== */
+        ====================================================== */
 
         async function removerFoto(alunoId) {
 
@@ -2256,12 +1651,9 @@
                 !confirm(
                     "Tem certeza que deseja remover a foto deste aluno?"
                 )
-            ) return;
-
-
-            mostrarLoading(
-                "Removendo foto..."
-            );
+            ) {
+                return;
+            }
 
 
             const {
@@ -2277,13 +1669,12 @@
 
             if (fetchError) {
 
-                esconderLoading();
-
-                return alert(
-                    "Erro ao buscar foto: " +
+                alert(
+                    "Erro ao buscar dados do aluno: " +
                     fetchError.message
                 );
 
+                return;
             }
 
 
@@ -2309,8 +1700,7 @@
                         const {
                             error: storageError
                         } =
-                            await supabaseClient
-                                .storage
+                            await supabaseClient.storage
                                 .from("fotos-alunos")
                                 .remove([
                                     caminhoArquivo
@@ -2319,24 +1709,20 @@
 
                         if (storageError) {
 
-                            console.warn(
-                                "Não foi possível remover arquivo:",
+                            console.error(
+                                "Não foi possível deletar o arquivo:",
                                 storageError.message
                             );
-
                         }
-
                     }
 
-                } catch (erro) {
+                } catch (err) {
 
-                    console.warn(
-                        "Erro ao excluir arquivo:",
-                        erro
+                    console.error(
+                        "Erro ao processar caminho:",
+                        err
                     );
-
                 }
-
             }
 
 
@@ -2351,53 +1737,224 @@
                     .eq("id", alunoId);
 
 
-            esconderLoading();
-
-
             if (dbError) {
 
-                return alert(
-                    "Erro ao remover foto: " +
+                alert(
+                    "Erro ao remover a foto: " +
                     dbError.message
                 );
 
+                return;
             }
 
 
             const turmaAtual =
-                document
-                    .getElementById("select-turmas")
-                    .value;
+                document.getElementById(
+                    "select-turmas"
+                ).value;
 
 
-            carregarAlunos(
-                turmaAtual
-            );
-
+            carregarAlunos(turmaAtual);
         }
 
 
-        /* =========================================================
-           MODAL EDITAR
-        ========================================================== */
+        /* =====================================================
+           POPUP DA FOTO
+        ====================================================== */
 
-        function abrirModalEdicao(
-            id,
-            nomeCodificado,
-            turmaCodificada
-        ) {
+        function abrirFoto(url) {
+
+            const modal =
+                document.getElementById(
+                    "modal-foto"
+                );
+
+            document.getElementById(
+                "foto-modal"
+            ).src = url;
+
+
+            modal.classList.remove("hidden");
+
+            modal.classList.add("flex");
+
+            document.body.classList.add(
+                "overflow-hidden"
+            );
+        }
+
+
+        function fecharModalFoto() {
+
+            const modal =
+                document.getElementById(
+                    "modal-foto"
+                );
+
+
+            modal.classList.add("hidden");
+
+            modal.classList.remove("flex");
+
+            document.getElementById(
+                "foto-modal"
+            ).src = "";
+
+
+            document.body.classList.remove(
+                "overflow-hidden"
+            );
+        }
+
+
+        /* =====================================================
+           MODAL ADICIONAR ALUNO
+        ====================================================== */
+
+        function abrirModalAdicionar() {
+
+            const select =
+                document.getElementById(
+                    "novo-turma"
+                );
+
+
+            preencherListaDeTurmas(
+                select,
+                document.getElementById(
+                    "select-turmas"
+                ).value
+            );
+
+
+            document.getElementById(
+                "novo-nome"
+            ).value = "";
+
+
+            const modal =
+                document.getElementById(
+                    "modal-adicionar"
+                );
+
+
+            modal.classList.remove("hidden");
+
+            modal.classList.add("flex");
+
+
+            setTimeout(() => {
+
+                document
+                    .getElementById("novo-nome")
+                    .focus();
+
+            }, 100);
+        }
+
+
+        function fecharModalAdicionar() {
+
+            const modal =
+                document.getElementById(
+                    "modal-adicionar"
+                );
+
+
+            modal.classList.add("hidden");
+
+            modal.classList.remove("flex");
+        }
+
+
+        async function salvarNovoAluno() {
 
             const nome =
-                decodeURIComponent(
-                    nomeCodificado
-                );
+                document.getElementById(
+                    "novo-nome"
+                ).value.trim();
 
 
             const turma =
-                decodeURIComponent(
-                    turmaCodificada
+                document.getElementById(
+                    "novo-turma"
+                ).value;
+
+
+            if (!nome) {
+
+                alert(
+                    "Digite o nome do aluno."
                 );
 
+                return;
+            }
+
+
+            if (!turma) {
+
+                alert(
+                    "Selecione uma turma."
+                );
+
+                return;
+            }
+
+
+            const {
+                error
+            } =
+                await supabaseClient
+                    .from("carometro")
+                    .insert({
+
+                        student_name: nome,
+
+                        class_name: turma,
+
+                        photo_url: null
+
+                    });
+
+
+            if (error) {
+
+                alert(
+                    "Erro ao adicionar aluno: " +
+                    error.message
+                );
+
+                return;
+            }
+
+
+            fecharModalAdicionar();
+
+
+            await carregarTurmas();
+
+
+            const turmaAtual =
+                document.getElementById(
+                    "select-turmas"
+                ).value;
+
+
+            await carregarAlunos(
+                turmaAtual
+            );
+        }
+
+
+        /* =====================================================
+           EDITAR ALUNO
+        ====================================================== */
+
+        function abrirModalEdicao(
+            id,
+            nome,
+            turma
+        ) {
 
             document.getElementById(
                 "edit-aluno-id"
@@ -2409,9 +1966,24 @@
             ).value = nome;
 
 
-            document.getElementById(
-                "edit-turma"
-            ).value = turma;
+            const selectTurma =
+                document.getElementById(
+                    "edit-turma"
+                );
+
+
+            /*
+             * AQUI ESTÁ A ALTERAÇÃO PRINCIPAL:
+             *
+             * A turma NÃO é mais um input de texto.
+             * Ela é preenchida exclusivamente com
+             * as turmas existentes no banco.
+             */
+
+            preencherListaDeTurmas(
+                selectTurma,
+                turma
+            );
 
 
             const modal =
@@ -2420,25 +1992,74 @@
                 );
 
 
-            modal.classList.remove(
-                "hidden"
-            );
+            modal.classList.remove("hidden");
 
-            modal.classList.add(
-                "flex"
-            );
+            modal.classList.add("flex");
 
 
-            setTimeout(
-                () =>
-                    document
-                        .getElementById(
-                            "edit-nome"
-                        )
-                        .focus(),
-                100
-            );
+            setTimeout(() => {
 
+                document
+                    .getElementById("edit-nome")
+                    .focus();
+
+            }, 100);
+        }
+
+
+        /*
+         * Preenche qualquer select com as turmas
+         * existentes no Supabase.
+         */
+
+        function preencherListaDeTurmas(
+            select,
+            turmaSelecionada = ""
+        ) {
+
+            select.innerHTML = "";
+
+
+            if (!todasAsTurmas.length) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value = "";
+
+                option.textContent =
+                    "Nenhuma turma cadastrada";
+
+                select.appendChild(option);
+
+                return;
+            }
+
+
+            todasAsTurmas.forEach(turma => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value = turma;
+
+                option.textContent = turma;
+
+
+                if (
+                    turma === turmaSelecionada
+                ) {
+
+                    option.selected = true;
+                }
+
+
+                select.appendChild(option);
+            });
         }
 
 
@@ -2450,64 +2071,50 @@
                 );
 
 
-            modal.classList.add(
-                "hidden"
-            );
+            modal.classList.add("hidden");
 
-            modal.classList.remove(
-                "flex"
-            );
-
+            modal.classList.remove("flex");
         }
 
-
-        /* =========================================================
-           SALVAR EDIÇÃO
-        ========================================================== */
 
         async function salvarEdicaoAluno() {
 
             const id =
-                document
-                    .getElementById(
-                        "edit-aluno-id"
-                    )
-                    .value;
+                document.getElementById(
+                    "edit-aluno-id"
+                ).value;
 
 
             const novoNome =
-                document
-                    .getElementById(
-                        "edit-nome"
-                    )
-                    .value
-                    .trim();
+                document.getElementById(
+                    "edit-nome"
+                ).value.trim();
 
 
             const novaTurma =
-                document
-                    .getElementById(
-                        "edit-turma"
-                    )
-                    .value
-                    .trim();
+                document.getElementById(
+                    "edit-turma"
+                ).value;
 
 
-            if (
-                !novoNome ||
-                !novaTurma
-            ) {
+            if (!novoNome) {
 
-                return alert(
-                    "Nome e turma não podem ficar vazios!"
+                alert(
+                    "O nome do aluno não pode ficar vazio!"
                 );
 
+                return;
             }
 
 
-            mostrarLoading(
-                "Salvando alterações..."
-            );
+            if (!novaTurma) {
+
+                alert(
+                    "Selecione uma turma válida!"
+                );
+
+                return;
+            }
 
 
             const {
@@ -2516,95 +2123,155 @@
                 await supabaseClient
                     .from("carometro")
                     .update({
+
                         student_name: novoNome,
+
                         class_name: novaTurma
+
                     })
                     .eq("id", id);
 
 
-            esconderLoading();
-
-
             if (error) {
 
-                return alert(
-                    "Erro ao atualizar aluno: " +
+                alert(
+                    "Erro ao atualizar dados: " +
                     error.message
                 );
 
+                return;
             }
 
 
             fecharModal();
 
 
-            await carregarTurmas();
-
-
-            const turmaAtual =
-                document
-                    .getElementById(
-                        "select-turmas"
-                    )
-                    .value;
-
-
             /*
              * Se o aluno foi transferido para outra turma,
-             * ele simplesmente deixa de aparecer na turma atual.
+             * ele desaparece automaticamente da turma atual.
              */
+
+            const turmaAtual =
+                document.getElementById(
+                    "select-turmas"
+                ).value;
+
+
+            await carregarTurmas();
+
+            /*
+             * Restauramos a turma atual no select,
+             * pois carregarTurmas limpa os filtros.
+             */
+
+            const etapaAtual =
+                descobrirEtapaDaTurma(
+                    turmaAtual
+                );
+
+
+            if (etapaAtual) {
+
+                document.getElementById(
+                    "select-etapa"
+                ).value = etapaAtual;
+
+
+                filtrarTurmasPorEtapa();
+
+
+                document.getElementById(
+                    "select-turmas"
+                ).value = turmaAtual;
+            }
+
 
             await carregarAlunos(
                 turmaAtual
             );
-
         }
 
 
-        /* =========================================================
+        /* =====================================================
+           DESCOBRIR ETAPA
+        ====================================================== */
+
+        function descobrirEtapaDaTurma(
+            turma
+        ) {
+
+            if (!turma) return "";
+
+
+            const turmaUpper =
+                turma.toUpperCase();
+
+
+            if (
+                turmaUpper.startsWith("1 REG")
+            ) {
+                return "1 REG";
+            }
+
+
+            if (
+                turmaUpper.includes("ADM")
+            ) {
+                return "1 ADM";
+            }
+
+
+            if (
+                turmaUpper.startsWith("2 REG")
+            ) {
+                return "2 REG";
+            }
+
+
+            if (
+                turmaUpper.startsWith("3 REG")
+            ) {
+                return "3 REG";
+            }
+
+
+            return "";
+        }
+
+
+        /* =====================================================
            EXCLUIR ALUNO
-        ========================================================== */
+        ====================================================== */
 
         async function excluirAluno() {
 
             const id =
-                document
-                    .getElementById(
-                        "edit-aluno-id"
-                    )
-                    .value;
+                document.getElementById(
+                    "edit-aluno-id"
+                ).value;
 
 
-            if (!id) {
-
-                return alert(
-                    "Aluno não identificado."
-                );
-
-            }
+            if (!id) return;
 
 
             const confirmar =
                 confirm(
                     "ATENÇÃO!\n\n" +
-                    "Você está prestes a excluir este aluno permanentemente.\n\n" +
-                    "O aluno será removido da turma e do banco de dados.\n" +
-                    "Se ele possuir uma foto, ela também será excluída.\n\n" +
-                    "Deseja realmente continuar?"
+                    "Você está prestes a excluir este aluno definitivamente.\n\n" +
+                    "O cadastro será removido da turma e do banco de dados.\n\n" +
+                    "Essa ação não poderá ser desfeita.\n\n" +
+                    "Deseja realmente excluir?"
                 );
 
 
-            if (!confirmar) return;
-
-
-            mostrarLoading(
-                "Excluindo aluno..."
-            );
+            if (!confirmar) {
+                return;
+            }
 
 
             /*
-             * Primeiro buscamos a foto para poder
-             * removê-la do Storage.
+             * Busca a foto antes de excluir
+             * para remover também o arquivo do Storage.
              */
 
             const {
@@ -2620,18 +2287,17 @@
 
             if (fetchError) {
 
-                esconderLoading();
-
-                return alert(
+                alert(
                     "Erro ao localizar aluno: " +
                     fetchError.message
                 );
 
+                return;
             }
 
 
             /*
-             * Excluir foto do Storage
+             * Remove foto do Storage
              */
 
             if (
@@ -2656,8 +2322,7 @@
                         const {
                             error: storageError
                         } =
-                            await supabaseClient
-                                .storage
+                            await supabaseClient.storage
                                 .from("fotos-alunos")
                                 .remove([
                                     caminhoArquivo
@@ -2667,28 +2332,24 @@
                         if (storageError) {
 
                             console.warn(
-                                "Não foi possível excluir a foto do Storage:",
+                                "Não foi possível remover a foto do Storage:",
                                 storageError.message
                             );
-
                         }
-
                     }
 
                 } catch (erro) {
 
                     console.warn(
-                        "Erro ao excluir foto:",
+                        "Erro ao remover foto:",
                         erro
                     );
-
                 }
-
             }
 
 
             /*
-             * EXCLUIR ALUNO DO BANCO
+             * Remove o aluno do banco
              */
 
             const {
@@ -2700,16 +2361,14 @@
                     .eq("id", id);
 
 
-            esconderLoading();
-
-
             if (deleteError) {
 
-                return alert(
-                    "Erro ao excluir aluno do banco de dados: " +
+                alert(
+                    "Erro ao excluir aluno: " +
                     deleteError.message
                 );
 
+                return;
             }
 
 
@@ -2721,294 +2380,69 @@
             );
 
 
-            /*
-             * Atualiza turma e carômetro
-             */
+            const turmaAtual =
+                document.getElementById(
+                    "select-turmas"
+                ).value;
+
 
             await carregarTurmas();
 
 
-            const turmaAtual =
-                document
-                    .getElementById(
-                        "select-turmas"
-                    )
-                    .value;
+            /*
+             * Reconstitui a seleção atual
+             */
+
+            const etapaAtual =
+                descobrirEtapaDaTurma(
+                    turmaAtual
+                );
+
+
+            if (etapaAtual) {
+
+                document.getElementById(
+                    "select-etapa"
+                ).value = etapaAtual;
+
+
+                filtrarTurmasPorEtapa();
+
+
+                document.getElementById(
+                    "select-turmas"
+                ).value = turmaAtual;
+            }
 
 
             await carregarAlunos(
                 turmaAtual
             );
-
         }
 
 
-        /* =========================================================
-           ADICIONAR ALUNO
-        ========================================================== */
+        /* =====================================================
+           FECHAMENTO DOS MODAIS
+        ====================================================== */
 
-        function abrirModalAdicionarAluno() {
+        function configurarFechamentoModais() {
 
-            const turmaAtual =
-                document
-                    .getElementById(
-                        "select-turmas"
-                    )
-                    .value;
+            document
+                .getElementById("modal-foto")
+                .addEventListener(
+                    "click",
+                    event => {
 
+                        if (
+                            event.target.id ===
+                            "modal-foto"
+                        ) {
 
-            document.getElementById(
-                "novo-aluno-nome"
-            ).value = "";
-
-
-            document.getElementById(
-                "novo-aluno-turma"
-            ).value = turmaAtual;
-
-
-            const modal =
-                document.getElementById(
-                    "modal-adicionar"
-                );
-
-
-            modal.classList.remove(
-                "hidden"
-            );
-
-            modal.classList.add(
-                "flex"
-            );
-
-
-            setTimeout(
-                () =>
-                    document
-                        .getElementById(
-                            "novo-aluno-nome"
-                        )
-                        .focus(),
-                100
-            );
-
-        }
-
-
-        function fecharModalAdicionarAluno() {
-
-            const modal =
-                document.getElementById(
-                    "modal-adicionar"
-                );
-
-
-            modal.classList.add(
-                "hidden"
-            );
-
-            modal.classList.remove(
-                "flex"
-            );
-
-        }
-
-
-        async function adicionarAluno() {
-
-            const nome =
-                document
-                    .getElementById(
-                        "novo-aluno-nome"
-                    )
-                    .value
-                    .trim();
-
-
-            const turma =
-                document
-                    .getElementById(
-                        "novo-aluno-turma"
-                    )
-                    .value
-                    .trim();
-
-
-            if (!nome) {
-
-                return alert(
-                    "Digite o nome do aluno."
-                );
-
-            }
-
-
-            if (!turma) {
-
-                return alert(
-                    "Digite a turma do aluno."
-                );
-
-            }
-
-
-            mostrarLoading(
-                "Adicionando aluno..."
-            );
-
-
-            const {
-                error
-            } =
-                await supabaseClient
-                    .from("carometro")
-                    .insert([
-                        {
-                            student_name: nome,
-                            class_name: turma,
-                            photo_url: null
+                            fecharModalFoto();
                         }
-                    ]);
-
-
-            esconderLoading();
-
-
-            if (error) {
-
-                return alert(
-                    "Erro ao adicionar aluno: " +
-                    error.message
+                    }
                 );
 
-            }
-
-
-            fecharModalAdicionarAluno();
-
-
-            /*
-             * Atualiza turmas
-             */
-
-            await carregarTurmas();
-
-
-            const turmaAtual =
-                document
-                    .getElementById(
-                        "select-turmas"
-                    )
-                    .value;
-
-
-            /*
-             * Se o aluno foi adicionado
-             * à turma atualmente aberta,
-             * atualiza imediatamente.
-             */
-
-            if (turma === turmaAtual) {
-
-                await carregarAlunos(
-                    turmaAtual
-                );
-
-            }
-
-
-            alert(
-                "Aluno adicionado com sucesso!"
-            );
-
-        }
-
-
-        /* =========================================================
-           MODAL DA FOTO
-        ========================================================== */
-
-        function abrirModalFoto(
-            urlCodificada,
-            nomeCodificado
-        ) {
-
-            const url =
-                decodeURIComponent(
-                    urlCodificada
-                );
-
-
-            const nome =
-                decodeURIComponent(
-                    nomeCodificado
-                );
-
-
-            document.getElementById(
-                "imagem-modal-foto"
-            ).src = url;
-
-
-            document.getElementById(
-                "nome-modal-foto"
-            ).innerText = nome;
-
-
-            const modal =
-                document.getElementById(
-                    "modal-foto"
-                );
-
-
-            modal.classList.remove(
-                "hidden"
-            );
-
-            modal.classList.add(
-                "flex"
-            );
-
-        }
-
-
-        function fecharModalFoto(event) {
-
-            if (
-                event &&
-                event.target !== event.currentTarget
-            ) {
-                return;
-            }
-
-
-            const modal =
-                document.getElementById(
-                    "modal-foto"
-                );
-
-
-            modal.classList.add(
-                "hidden"
-            );
-
-            modal.classList.remove(
-                "flex"
-            );
-
-
-            document.getElementById(
-                "imagem-modal-foto"
-            ).src = "";
-
-        }
-
-
-        /* =========================================================
-           TECLADO
-        ========================================================== */
-
-        function configurarTeclas() {
 
             document.addEventListener(
                 "keydown",
@@ -3018,38 +2452,14 @@
                         event.key === "Escape"
                     ) {
 
-                        fecharModal();
-
-                        fecharModalAdicionarAluno();
-
                         fecharModalFoto();
 
-                    }
+                        fecharModal();
 
+                        fecharModalAdicionar();
+                    }
                 }
             );
-
-        }
-
-
-        /* =========================================================
-           SEGURANÇA HTML
-        ========================================================== */
-
-        function escapeHtml(valor) {
-
-            if (valor === null || valor === undefined) {
-                return "";
-            }
-
-
-            return String(valor)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-
         }
 
     </script>
