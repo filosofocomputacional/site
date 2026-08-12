@@ -1,0 +1,3092 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEu6XYfBX6dLECkxfarfPyb2WfE9KQSWr1B8WeCshx2w&s"
+    >
+
+    <title>Carômetro Firmo de Mattos</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        /* =========================
+           FUNDO PRINCIPAL
+        ========================= */
+
+        .background-premium {
+            background:
+                radial-gradient(circle at 10% 10%, rgba(37, 99, 235, .10), transparent 30%),
+                radial-gradient(circle at 90% 20%, rgba(14, 165, 233, .08), transparent 30%),
+                linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+        }
+
+        /* =========================
+           GLASS
+        ========================= */
+
+        .glass {
+            background: rgba(255, 255, 255, .82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, .8);
+        }
+
+        /* =========================
+           CARD DO ALUNO
+        ========================= */
+
+        .student-card {
+            transition:
+                transform .25s ease,
+                box-shadow .25s ease,
+                border-color .25s ease;
+        }
+
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow:
+                0 18px 40px rgba(15, 23, 42, .12);
+            border-color: rgba(59, 130, 246, .30);
+        }
+
+        /* =========================
+           FOTO
+        ========================= */
+
+        .student-photo {
+            transition:
+                transform .3s ease,
+                filter .3s ease;
+        }
+
+        .photo-container:hover .student-photo {
+            transform: scale(1.08);
+            filter: brightness(.92);
+        }
+
+        .photo-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .photo-overlay {
+            opacity: 0;
+            transition: opacity .25s ease;
+        }
+
+        .photo-container:hover .photo-overlay {
+            opacity: 1;
+        }
+
+        /* =========================
+           BOTÕES
+        ========================= */
+
+        .action-button {
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* =========================
+           SCROLL
+        ========================= */
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 7px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 20px;
+        }
+
+        /* =========================
+           ANIMAÇÃO
+        ========================= */
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade {
+            animation: fadeIn .35s ease forwards;
+        }
+
+        /* =========================
+           LOADING
+        ========================= */
+
+        .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(255, 255, 255, .35);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================
+           MODAL
+        ========================= */
+
+        .modal-backdrop {
+            animation: modalFade .2s ease;
+        }
+
+        .modal-content {
+            animation: modalUp .25s ease;
+        }
+
+        @keyframes modalFade {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes modalUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* =========================
+           FOTO GRANDE
+        ========================= */
+
+        .photo-viewer {
+            animation: viewerFade .25s ease;
+        }
+
+        @keyframes viewerFade {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* =========================
+           LOGIN
+        ========================= */
+
+        .login-background {
+            background:
+                radial-gradient(circle at 15% 20%, rgba(59, 130, 246, .25), transparent 30%),
+                radial-gradient(circle at 85% 80%, rgba(14, 165, 233, .18), transparent 30%),
+                linear-gradient(135deg, #020617, #0f172a 50%, #172554);
+        }
+
+        .logo-glow {
+            box-shadow:
+                0 0 0 8px rgba(255, 255, 255, .05),
+                0 20px 60px rgba(37, 99, 235, .35);
+        }
+
+    </style>
+</head>
+
+
+<body class="min-h-screen text-slate-800 background-premium">
+
+
+<!-- =========================================================
+     LOGIN
+========================================================= -->
+
+<div id="tela-login"
+     class="hidden min-h-screen login-background flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md">
+
+        <div class="glass rounded-3xl shadow-2xl p-8 border border-white/20">
+
+            <div class="flex justify-center mb-7">
+
+                <div class="relative">
+
+                    <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-30 rounded-full"></div>
+
+                    <img
+                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEu6XYfBX6dLECkxfarfPyb2WfE9KQSWr1B8WeCshx2w&s"
+                        class="relative h-24 w-24 rounded-full border-4 border-white shadow-xl logo-glow object-cover"
+                        alt="Logo"
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="text-center mb-8">
+
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight">
+                    Carômetro
+                </h1>
+
+                <p class="text-blue-700 font-bold mt-1">
+                    E.E. Firmo de Mattos
+                </p>
+
+                <p class="text-sm text-slate-500 mt-2">
+                    Sistema de gerenciamento de alunos
+                </p>
+
+            </div>
+
+
+            <form
+                id="form-login"
+                onsubmit="efetuarLogin(event)"
+                class="space-y-5"
+            >
+
+                <div>
+
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+                        Usuário / Escola
+                    </label>
+
+                    <div class="relative">
+
+                        <i class="fa-solid fa-school absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                        <input
+                            type="text"
+                            id="login-username"
+                            value="E.E FIRMO DE MATOS"
+                            readonly
+                            autocomplete="username"
+                            class="w-full pl-11 pr-4 py-3.5 border border-slate-200 bg-slate-100 rounded-xl font-semibold text-slate-600 outline-none"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+                        Senha de Acesso
+                    </label>
+
+                    <div class="relative">
+
+                        <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                        <input
+                            type="password"
+                            id="login-password"
+                            placeholder="Digite sua senha"
+                            required
+                            autocomplete="current-password"
+                            class="w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-blue-600/20"
+                >
+
+                    Entrar
+
+                    <i class="fa-solid fa-arrow-right ml-2"></i>
+
+                </button>
+
+            </form>
+
+
+            <div class="text-center mt-7">
+
+                <p class="text-xs text-slate-400">
+                    Sistema interno • E.E. Firmo de Mattos
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     SELEÇÃO DE TURMA
+========================================================= -->
+
+<div id="tela-selecao"
+     class="hidden min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-lg">
+
+        <div class="glass rounded-3xl shadow-2xl p-7 md:p-9">
+
+            <div class="flex items-start justify-between mb-8">
+
+                <div>
+
+                    <div class="flex items-center gap-3 mb-2">
+
+                        <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+
+                            <i class="fa-solid fa-graduation-cap"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h2 class="text-2xl font-black text-slate-900">
+                                Carômetro
+                            </h2>
+
+                            <p class="text-sm text-slate-500">
+                                E.E. Firmo de Mattos
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    onclick="efetuarLogout()"
+                    class="text-xs font-bold text-red-500 hover:text-red-700 transition px-3 py-2 rounded-lg hover:bg-red-50"
+                >
+
+                    <i class="fa-solid fa-power-off mr-1"></i>
+
+                    Sair
+
+                </button>
+
+            </div>
+
+
+            <!-- ETAPA -->
+
+            <div class="mb-5">
+
+                <label class="block text-sm font-bold text-slate-700 mb-2">
+                    1º Passo — Etapa de Ensino
+                </label>
+
+                <div class="relative">
+
+                    <i class="fa-solid fa-layer-group absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
+
+                    <select
+                        id="select-etapa"
+                        onchange="filtrarTurmasPorEtapa()"
+                        class="w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium appearance-none"
+                    >
+
+                        <option value="">
+                            -- Selecione a Etapa --
+                        </option>
+
+                        <option value="1 REG">
+                            1º Ano Regular (1 REG)
+                        </option>
+
+                        <option value="1 ADM">
+                            1º Ano Administração (TEC ADM)
+                        </option>
+
+                        <option value="2 REG">
+                            2º Ano Regular (2 REG)
+                        </option>
+
+                        <option value="3 REG">
+                            3º Ano Regular (3 REG)
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <!-- TURMA -->
+
+            <div class="mb-7">
+
+                <label class="block text-sm font-bold text-slate-700 mb-2">
+                    2º Passo — Turma
+                </label>
+
+                <div class="relative">
+
+                    <i class="fa-solid fa-users absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
+
+                    <select
+                        id="select-turmas"
+                        disabled
+                        class="w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-not-allowed appearance-none"
+                    >
+
+                        <option value="">
+                            Selecione uma etapa primeiro...
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <button
+                onclick="entrarNaTurma()"
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-4 px-4 rounded-xl transition shadow-lg shadow-blue-600/20"
+            >
+
+                <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
+
+                Acessar Carômetro
+
+            </button>
+
+
+            <div class="mt-6 flex items-center justify-center gap-2 text-xs text-slate-400">
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+                Ambiente protegido
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     CARÔMETRO
+========================================================= -->
+
+<div id="tela-carometro" class="hidden min-h-screen">
+
+
+    <!-- HEADER -->
+
+    <header class="bg-gradient-to-r from-slate-950 via-blue-950 to-blue-900 text-white shadow-xl">
+
+        <div class="max-w-7xl mx-auto px-4 md:px-6 py-5">
+
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-5">
+
+
+                <div class="flex items-center gap-4 w-full lg:w-auto">
+
+                    <div class="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 backdrop-blur flex items-center justify-center">
+
+                        <i class="fa-solid fa-users text-2xl text-blue-300"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <p class="text-xs uppercase tracking-[.2em] text-blue-300 font-bold mb-1">
+                            Carômetro Escolar
+                        </p>
+
+                        <h1
+                            id="titulo-turma"
+                            class="text-2xl md:text-3xl font-black tracking-tight"
+                        >
+                            Carômetro
+                        </h1>
+
+                        <p class="text-sm text-blue-200 mt-1">
+                            Gerenciamento de alunos e fotografias
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="flex gap-2 w-full lg:w-auto">
+
+                    <button
+                        onclick="voltarParaSelecao()"
+                        class="flex-1 lg:flex-none bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2.5 rounded-xl transition font-bold text-sm"
+                    >
+
+                        <i class="fa-solid fa-arrow-left mr-2"></i>
+
+                        Turmas
+
+                    </button>
+
+
+                    <button
+                        onclick="efetuarLogout()"
+                        class="flex-1 lg:flex-none bg-red-500/90 hover:bg-red-600 px-4 py-2.5 rounded-xl transition font-bold text-sm"
+                    >
+
+                        <i class="fa-solid fa-power-off mr-2"></i>
+
+                        Sair
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- CONTEÚDO -->
+
+    <main class="max-w-7xl mx-auto px-4 md:px-6 py-7">
+
+
+        <!-- TOOLBAR -->
+
+        <div class="glass rounded-2xl shadow-sm p-4 mb-6">
+
+            <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+
+
+                <!-- BUSCA -->
+
+                <div class="relative flex-1">
+
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                    <input
+                        type="text"
+                        id="campo-pesquisa"
+                        oninput="filtrarAlunos()"
+                        placeholder="Pesquisar aluno..."
+                        class="w-full pl-11 pr-4 py-3 border border-slate-200 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+
+                </div>
+
+
+                <!-- ADICIONAR -->
+
+                <button
+                    onclick="abrirModalAdicionarAluno()"
+                    class="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold px-5 py-3 rounded-xl shadow-lg shadow-green-600/20 transition"
+                >
+
+                    <i class="fa-solid fa-user-plus mr-2"></i>
+
+                    Adicionar Aluno
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- MÉTRICAS -->
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
+
+
+            <!-- TOTAL -->
+
+            <div class="glass rounded-2xl p-5 shadow-sm border border-white/70">
+
+                <div class="flex items-center justify-between">
+
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wider font-bold text-slate-500">
+                            Total de Alunos
+                        </p>
+
+                        <p
+                            id="meta-total"
+                            class="text-4xl font-black text-slate-900 mt-2"
+                        >
+                            0
+                        </p>
+
+                    </div>
+
+
+                    <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+
+                        <i class="fa-solid fa-users"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- COM FOTO -->
+
+            <div class="glass rounded-2xl p-5 shadow-sm border border-white/70">
+
+                <div class="flex items-center justify-between">
+
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wider font-bold text-slate-500">
+                            Com Foto
+                        </p>
+
+                        <p
+                            id="meta-com-foto"
+                            class="text-4xl font-black text-emerald-600 mt-2"
+                        >
+                            0
+                        </p>
+
+                    </div>
+
+
+                    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+
+                        <i class="fa-solid fa-camera"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- SEM FOTO -->
+
+            <div class="glass rounded-2xl p-5 shadow-sm border border-white/70">
+
+                <div class="flex items-center justify-between">
+
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wider font-bold text-slate-500">
+                            Sem Foto
+                        </p>
+
+                        <p
+                            id="meta-sem-foto"
+                            class="text-4xl font-black text-amber-500 mt-2"
+                        >
+                            0
+                        </p>
+
+                    </div>
+
+
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+
+                        <i class="fa-solid fa-image"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- PROGRESSO -->
+
+        <div class="glass rounded-2xl p-4 mb-7 shadow-sm">
+
+            <div class="flex justify-between items-center mb-2">
+
+                <span class="text-sm font-bold text-slate-700">
+                    Fotos cadastradas
+                </span>
+
+                <span
+                    id="percentual-fotos"
+                    class="text-sm font-black text-blue-600"
+                >
+                    0%
+                </span>
+
+            </div>
+
+            <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+
+                <div
+                    id="barra-progresso"
+                    class="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-500"
+                    style="width: 0%"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- GRID -->
+
+        <div
+            id="grid-alunos"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5"
+        >
+        </div>
+
+
+        <!-- SEM RESULTADO -->
+
+        <div
+            id="sem-resultados"
+            class="hidden text-center py-16"
+        >
+
+            <div class="w-20 h-20 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-3xl mb-4">
+
+                <i class="fa-solid fa-user-slash"></i>
+
+            </div>
+
+            <h3 class="font-bold text-lg text-slate-700">
+                Nenhum aluno encontrado
+            </h3>
+
+            <p class="text-sm text-slate-400 mt-1">
+                Tente alterar o termo da pesquisa.
+            </p>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+
+<!-- =========================================================
+     INPUTS DE FOTO
+========================================================= -->
+
+<input
+    type="file"
+    id="input-camera"
+    accept="image/*"
+    capture="environment"
+    class="hidden"
+>
+
+<input
+    type="file"
+    id="input-galeria"
+    accept="image/*"
+    class="hidden"
+>
+
+
+
+<!-- =========================================================
+     MODAL ADICIONAR
+========================================================= -->
+
+<div
+    id="modal-adicionar"
+    class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 modal-backdrop"
+>
+
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 md:p-7 modal-content">
+
+        <div class="flex justify-between items-center mb-6">
+
+            <div class="flex items-center gap-3">
+
+                <div class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+
+                    <i class="fa-solid fa-user-plus"></i>
+
+                </div>
+
+                <div>
+
+                    <h3 class="text-xl font-black text-slate-900">
+                        Adicionar Aluno
+                    </h3>
+
+                    <p class="text-xs text-slate-400">
+                        Cadastre um novo aluno
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                onclick="fecharModalAdicionar()"
+                class="w-9 h-9 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-600 transition"
+            >
+
+                <i class="fa-solid fa-xmark text-lg"></i>
+
+            </button>
+
+        </div>
+
+
+        <div class="space-y-5">
+
+            <div>
+
+                <label class="block text-sm font-bold text-slate-700 mb-2">
+                    Nome do Aluno
+                </label>
+
+                <div class="relative">
+
+                    <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                    <input
+                        type="text"
+                        id="novo-aluno-nome"
+                        placeholder="Nome completo do aluno"
+                        class="w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-sm font-bold text-slate-700 mb-2">
+                    Turma
+                </label>
+
+                <div class="relative">
+
+                    <i class="fa-solid fa-users absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                    <input
+                        type="text"
+                        id="novo-aluno-turma"
+                        class="w-full pl-11 pr-4 py-3.5 border border-slate-200 bg-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="flex gap-3 mt-7">
+
+            <button
+                onclick="fecharModalAdicionar()"
+                class="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition"
+            >
+                Cancelar
+            </button>
+
+            <button
+                id="btn-adicionar-aluno"
+                onclick="adicionarAluno()"
+                class="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-bold transition shadow-lg shadow-green-600/20"
+            >
+
+                <i class="fa-solid fa-user-plus mr-1"></i>
+
+                Adicionar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     MODAL EDITAR
+========================================================= -->
+
+<div
+    id="modal-edicao"
+    class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 modal-backdrop"
+>
+
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 md:p-7 modal-content">
+
+        <div class="flex justify-between items-center mb-6">
+
+            <div class="flex items-center gap-3">
+
+                <div class="w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+
+                    <i class="fa-solid fa-pen"></i>
+
+                </div>
+
+                <div>
+
+                    <h3 class="text-xl font-black text-slate-900">
+                        Editar Aluno
+                    </h3>
+
+                    <p class="text-xs text-slate-400">
+                        Altere os dados cadastrais
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                onclick="fecharModal()"
+                class="w-9 h-9 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-600 transition"
+            >
+
+                <i class="fa-solid fa-xmark text-lg"></i>
+
+            </button>
+
+        </div>
+
+
+        <input
+            type="hidden"
+            id="edit-aluno-id"
+        >
+
+
+        <div class="space-y-5">
+
+            <div>
+
+                <label class="block text-sm font-bold text-slate-700 mb-2">
+                    Nome do Aluno
+                </label>
+
+                <div class="relative">
+
+                    <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                    <input
+                        type="text"
+                        id="edit-nome"
+                        class="w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-sm font-bold text-slate-700 mb-2">
+                    Turma
+                </label>
+
+                <div class="relative">
+
+                    <i class="fa-solid fa-users absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                    <input
+                        type="text"
+                        id="edit-turma"
+                        class="w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="flex gap-3 mt-7">
+
+            <button
+                onclick="fecharModal()"
+                class="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700 transition"
+            >
+                Cancelar
+            </button>
+
+            <button
+                onclick="salvarEdicaoAluno()"
+                class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white rounded-xl font-bold transition shadow-lg shadow-blue-600/20"
+            >
+
+                <i class="fa-solid fa-check mr-1"></i>
+
+                Salvar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     MODAL DA FOTO
+========================================================= -->
+
+<div
+    id="modal-foto"
+    class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-[70] photo-viewer"
+    onclick="fecharModalFoto(event)"
+>
+
+    <!-- BOTÃO X -->
+
+    <button
+        onclick="fecharModalFoto()"
+        class="absolute top-5 right-5 md:top-7 md:right-7 w-12 h-12 rounded-full bg-white/10 hover:bg-red-600 border border-white/20 text-white flex items-center justify-center transition z-10"
+        title="Fechar"
+    >
+
+        <i class="fa-solid fa-xmark text-2xl"></i>
+
+    </button>
+
+
+    <!-- FOTO -->
+
+    <div
+        class="relative max-w-6xl max-h-[90vh]"
+        onclick="event.stopPropagation()"
+    >
+
+        <img
+            id="foto-modal"
+            src=""
+            alt="Foto do aluno"
+            class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain"
+        >
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<div
+    id="toast"
+    class="fixed bottom-5 right-5 hidden z-[100]"
+>
+
+    <div
+        id="toast-content"
+        class="flex items-center gap-3 bg-slate-900 text-white px-5 py-4 rounded-2xl shadow-2xl"
+    >
+
+        <div
+            id="toast-icon"
+            class="w-9 h-9 rounded-full flex items-center justify-center"
+        ></div>
+
+        <div>
+
+            <p
+                id="toast-title"
+                class="font-bold text-sm"
+            ></p>
+
+            <p
+                id="toast-message"
+                class="text-xs text-slate-300 mt-0.5"
+            ></p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+    /* =====================================================
+       SUPABASE
+    ===================================================== */
+
+    const SUPABASE_URL =
+        "https://vydnefdeqljazqaisslq.supabase.co";
+
+    const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
+
+    const supabaseClient =
+        supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+        );
+
+
+    /* =====================================================
+       VARIÁVEIS
+    ===================================================== */
+
+    let todasAsTurmas = [];
+
+    let alunosDaTurmaAtual = [];
+
+    let alunoSelecionadoParaUpload = null;
+
+    const CHAVE_EXPIRACAO =
+        "carometro_sessao_expiracao";
+
+
+    /* =====================================================
+       INICIALIZAÇÃO
+    ===================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        async () => {
+
+            verificarSessao();
+
+            configurarInputsDeArquivo();
+
+            configurarTeclasDeAtalho();
+
+        }
+    );
+
+
+    /* =====================================================
+       TOAST
+    ===================================================== */
+
+    function mostrarToast(
+        titulo,
+        mensagem,
+        tipo = "sucesso"
+    ) {
+
+        const toast =
+            document.getElementById("toast");
+
+        const icon =
+            document.getElementById("toast-icon");
+
+        document.getElementById(
+            "toast-title"
+        ).innerText = titulo;
+
+        document.getElementById(
+            "toast-message"
+        ).innerText = mensagem;
+
+
+        if (tipo === "sucesso") {
+
+            icon.className =
+                "w-9 h-9 rounded-full flex items-center justify-center bg-emerald-500";
+
+            icon.innerHTML =
+                '<i class="fa-solid fa-check"></i>';
+
+        } else {
+
+            icon.className =
+                "w-9 h-9 rounded-full flex items-center justify-center bg-red-500";
+
+            icon.innerHTML =
+                '<i class="fa-solid fa-xmark"></i>';
+
+        }
+
+
+        toast.classList.remove("hidden");
+
+        setTimeout(
+            () => {
+                toast.classList.add("hidden");
+            },
+            3500
+        );
+    }
+
+
+    /* =====================================================
+       SESSÃO
+    ===================================================== */
+
+    function verificarSessao() {
+
+        const expiracao =
+            localStorage.getItem(
+                CHAVE_EXPIRACAO
+            );
+
+        const agora =
+            Date.now();
+
+
+        if (
+            expiracao &&
+            agora < parseInt(expiracao)
+        ) {
+
+            document
+                .getElementById("tela-login")
+                .classList.add("hidden");
+
+            document
+                .getElementById("tela-selecao")
+                .classList.remove("hidden");
+
+            document
+                .getElementById("tela-carometro")
+                .classList.add("hidden");
+
+            carregarTurmas();
+
+        } else {
+
+            localStorage.removeItem(
+                CHAVE_EXPIRACAO
+            );
+
+            document
+                .getElementById("tela-login")
+                .classList.remove("hidden");
+
+            document
+                .getElementById("tela-selecao")
+                .classList.add("hidden");
+
+            document
+                .getElementById("tela-carometro")
+                .classList.add("hidden");
+        }
+    }
+
+
+    /* =====================================================
+       LOGIN
+    ===================================================== */
+
+    function efetuarLogin(event) {
+
+        event.preventDefault();
+
+        const senha =
+            document
+                .getElementById("login-password")
+                .value;
+
+
+        if (senha === "8737") {
+
+            const tempoExpiracao =
+                Date.now() +
+                (24 * 60 * 60 * 1000);
+
+
+            localStorage.setItem(
+                CHAVE_EXPIRACAO,
+                tempoExpiracao.toString()
+            );
+
+
+            document
+                .getElementById("login-password")
+                .value = "";
+
+
+            verificarSessao();
+
+        } else {
+
+            mostrarToast(
+                "Acesso negado",
+                "Senha inválida.",
+                "erro"
+            );
+
+            document
+                .getElementById("login-password")
+                .focus();
+        }
+    }
+
+
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
+
+    function efetuarLogout() {
+
+        if (
+            !confirm(
+                "Tem certeza que deseja sair do sistema?"
+            )
+        ) {
+            return;
+        }
+
+
+        localStorage.removeItem(
+            CHAVE_EXPIRACAO
+        );
+
+
+        verificarSessao();
+    }
+
+
+    /* =====================================================
+       CARREGAR TURMAS
+    ===================================================== */
+
+    async function carregarTurmas() {
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("carometro")
+            .select("class_name");
+
+
+        if (error) {
+
+            mostrarToast(
+                "Erro",
+                "Não foi possível carregar as turmas.",
+                "erro"
+            );
+
+            console.error(error);
+
+            return;
+        }
+
+
+        todasAsTurmas =
+            [
+                ...new Set(
+                    data
+                        .map(item => item.class_name)
+                        .filter(Boolean)
+                )
+            ]
+            .sort(
+                (a, b) =>
+                    a.localeCompare(
+                        b,
+                        "pt-BR",
+                        {
+                            numeric: true
+                        }
+                    )
+            );
+
+
+        document
+            .getElementById("select-etapa")
+            .value = "";
+
+
+        const selectTurmas =
+            document.getElementById(
+                "select-turmas"
+            );
+
+
+        selectTurmas.innerHTML =
+            `
+            <option value="">
+                Selecione uma etapa primeiro...
+            </option>
+            `;
+
+
+        selectTurmas.disabled = true;
+
+        selectTurmas.classList.add(
+            "bg-slate-100",
+            "cursor-not-allowed"
+        );
+    }
+
+
+    /* =====================================================
+       FILTRAR TURMAS
+    ===================================================== */
+
+    function filtrarTurmasPorEtapa() {
+
+        const etapa =
+            document
+                .getElementById("select-etapa")
+                .value;
+
+
+        const selectTurmas =
+            document.getElementById(
+                "select-turmas"
+            );
+
+
+        if (!etapa) {
+
+            selectTurmas.innerHTML =
+                `
+                <option value="">
+                    Selecione uma etapa primeiro...
+                </option>
+                `;
+
+            selectTurmas.disabled = true;
+
+            return;
+        }
+
+
+        let turmas = [];
+
+
+        if (etapa === "1 REG") {
+
+            turmas =
+                todasAsTurmas.filter(
+                    turma =>
+                        turma
+                            .toUpperCase()
+                            .startsWith("1 REG")
+                );
+
+        }
+
+
+        else if (etapa === "1 ADM") {
+
+            turmas =
+                todasAsTurmas.filter(
+                    turma =>
+                        turma
+                            .toUpperCase()
+                            .includes("ADM")
+                );
+
+        }
+
+
+        else if (etapa === "2 REG") {
+
+            turmas =
+                todasAsTurmas.filter(
+                    turma =>
+                        turma
+                            .toUpperCase()
+                            .startsWith("2 REG")
+                );
+
+        }
+
+
+        else if (etapa === "3 REG") {
+
+            turmas =
+                todasAsTurmas.filter(
+                    turma =>
+                        turma
+                            .toUpperCase()
+                            .startsWith("3 REG")
+                );
+        }
+
+
+        selectTurmas.innerHTML =
+            `
+            <option value="">
+                -- Escolha uma Turma --
+            </option>
+            `;
+
+
+        turmas.forEach(
+            turma => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value = turma;
+
+                option.textContent = turma;
+
+                selectTurmas.appendChild(
+                    option
+                );
+            }
+        );
+
+
+        if (!turmas.length) {
+
+            selectTurmas.innerHTML =
+                `
+                <option value="">
+                    Nenhuma turma encontrada
+                </option>
+                `;
+        }
+
+
+        selectTurmas.disabled = false;
+
+        selectTurmas.classList.remove(
+            "bg-slate-100",
+            "cursor-not-allowed"
+        );
+    }
+
+
+    /* =====================================================
+       ENTRAR NA TURMA
+    ===================================================== */
+
+    function entrarNaTurma() {
+
+        const turma =
+            document
+                .getElementById("select-turmas")
+                .value;
+
+
+        if (!turma) {
+
+            mostrarToast(
+                "Atenção",
+                "Selecione uma turma primeiro.",
+                "erro"
+            );
+
+            return;
+        }
+
+
+        document
+            .getElementById("titulo-turma")
+            .innerText =
+            `Carômetro — ${turma}`;
+
+
+        document
+            .getElementById("tela-selecao")
+            .classList.add("hidden");
+
+
+        document
+            .getElementById("tela-carometro")
+            .classList.remove("hidden");
+
+
+        document
+            .getElementById("campo-pesquisa")
+            .value = "";
+
+
+        carregarAlunos(turma);
+    }
+
+
+    /* =====================================================
+       VOLTAR
+    ===================================================== */
+
+    function voltarParaSelecao() {
+
+        document
+            .getElementById("tela-carometro")
+            .classList.add("hidden");
+
+
+        document
+            .getElementById("tela-selecao")
+            .classList.remove("hidden");
+
+
+        carregarTurmas();
+    }
+
+
+    /* =====================================================
+       CARREGAR ALUNOS
+    ===================================================== */
+
+    async function carregarAlunos(
+        nomeTurma
+    ) {
+
+        const grid =
+            document.getElementById(
+                "grid-alunos"
+            );
+
+
+        grid.innerHTML = `
+
+            <div class="col-span-full flex justify-center py-16">
+
+                <div class="flex flex-col items-center gap-3">
+
+                    <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+
+                    <p class="text-sm font-semibold text-slate-500">
+                        Carregando alunos...
+                    </p>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        const {
+            data: alunos,
+            error
+        } = await supabaseClient
+            .from("carometro")
+            .select("*")
+            .eq("class_name", nomeTurma)
+            .order("student_name");
+
+
+        if (error) {
+
+            mostrarToast(
+                "Erro",
+                "Não foi possível carregar os alunos.",
+                "erro"
+            );
+
+            console.error(error);
+
+            return;
+        }
+
+
+        alunosDaTurmaAtual =
+            alunos || [];
+
+
+        atualizarMetricas(
+            alunosDaTurmaAtual
+        );
+
+
+        renderizarAlunos(
+            alunosDaTurmaAtual
+        );
+    }
+
+
+    /* =====================================================
+       MÉTRICAS
+    ===================================================== */
+
+    function atualizarMetricas(
+        alunos
+    ) {
+
+        const total =
+            alunos.length;
+
+
+        const comFoto =
+            alunos.filter(
+                aluno =>
+                    !!aluno.photo_url
+            ).length;
+
+
+        const semFoto =
+            total - comFoto;
+
+
+        const percentual =
+            total > 0
+                ? Math.round(
+                    (comFoto / total) * 100
+                )
+                : 0;
+
+
+        document
+            .getElementById("meta-total")
+            .innerText = total;
+
+
+        document
+            .getElementById("meta-com-foto")
+            .innerText = comFoto;
+
+
+        document
+            .getElementById("meta-sem-foto")
+            .innerText = semFoto;
+
+
+        document
+            .getElementById("percentual-fotos")
+            .innerText =
+            `${percentual}%`;
+
+
+        document
+            .getElementById("barra-progresso")
+            .style.width =
+            `${percentual}%`;
+    }
+
+
+    /* =====================================================
+       RENDERIZAR ALUNOS
+    ===================================================== */
+
+    function renderizarAlunos(
+        alunos
+    ) {
+
+        const grid =
+            document.getElementById(
+                "grid-alunos"
+            );
+
+
+        const semResultados =
+            document.getElementById(
+                "sem-resultados"
+            );
+
+
+        grid.innerHTML = "";
+
+
+        if (!alunos.length) {
+
+            semResultados.classList.remove(
+                "hidden"
+            );
+
+            return;
+        }
+
+
+        semResultados.classList.add(
+            "hidden"
+        );
+
+
+        alunos.forEach(
+            (aluno, index) => {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                card.className =
+                    `
+                    student-card
+                    animate-fade
+                    bg-white
+                    rounded-2xl
+                    shadow-sm
+                    border
+                    border-slate-200/80
+                    p-4
+                    flex
+                    flex-col
+                    items-center
+                    min-h-[285px]
+                    relative
+                    `;
+
+
+                card.style.animationDelay =
+                    `${index * 25}ms`;
+
+
+                let areaFoto = "";
+
+
+                if (aluno.photo_url) {
+
+                    areaFoto =
+                        `
+                        <div
+                            class="photo-container w-28 h-28 rounded-full border-4 border-white shadow-lg ring-2 ring-blue-100 cursor-pointer mb-4"
+                            onclick="abrirFotoModal(${JSON.stringify(aluno.photo_url)})"
+                            title="Clique para ampliar"
+                        >
+
+                            <img
+                                src="${aluno.photo_url}"
+                                class="student-photo w-full h-full object-cover"
+                                alt="${escapeHtml(aluno.student_name)}"
+                            >
+
+                            <div class="photo-overlay absolute inset-0 bg-black/40 flex items-center justify-center text-white">
+
+                                <i class="fa-solid fa-expand text-xl"></i>
+
+                            </div>
+
+                        </div>
+                        `;
+
+                } else {
+
+                    areaFoto =
+                        `
+                        <div
+                            class="w-28 h-28 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border-4 border-white shadow ring-2 ring-slate-200 flex items-center justify-center mb-4"
+                        >
+
+                            <i class="fa-solid fa-user text-5xl text-slate-400"></i>
+
+                        </div>
+                        `;
+                }
+
+
+                let botoesFoto = "";
+
+
+                if (aluno.photo_url) {
+
+                    botoesFoto =
+                        `
+
+                        <button
+                            onclick="abrirFotoModal(${JSON.stringify(aluno.photo_url)})"
+                            class="action-button w-9 h-9 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white shadow-sm"
+                            title="Visualizar foto"
+                        >
+
+                            <i class="fa-solid fa-eye text-sm"></i>
+
+                        </button>
+
+
+                        <button
+                            onclick="removerFoto(${JSON.stringify(aluno.id)})"
+                            class="action-button w-9 h-9 rounded-xl bg-red-50 hover:bg-red-600 text-red-500 hover:text-white shadow-sm"
+                            title="Excluir foto"
+                        >
+
+                            <i class="fa-solid fa-trash text-sm"></i>
+
+                        </button>
+
+                        `;
+
+                } else {
+
+                    botoesFoto =
+                        `
+
+                        <button
+                            onclick="dispararUpload(${JSON.stringify(aluno.id)}, 'camera')"
+                            class="action-button w-9 h-9 rounded-xl bg-purple-50 hover:bg-purple-600 text-purple-600 hover:text-white shadow-sm"
+                            title="Tirar foto"
+                        >
+
+                            <i class="fa-solid fa-camera text-sm"></i>
+
+                        </button>
+
+
+                        <button
+                            onclick="dispararUpload(${JSON.stringify(aluno.id)}, 'galeria')"
+                            class="action-button w-9 h-9 rounded-xl bg-sky-50 hover:bg-sky-600 text-sky-600 hover:text-white shadow-sm"
+                            title="Escolher foto"
+                        >
+
+                            <i class="fa-solid fa-image text-sm"></i>
+
+                        </button>
+
+                        `;
+                }
+
+
+                card.innerHTML =
+                    `
+
+                    <div class="absolute top-3 right-3">
+
+                        ${
+                            aluno.photo_url
+
+                            ?
+
+                            `
+                            <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-full">
+
+                                <i class="fa-solid fa-check"></i>
+
+                                FOTO
+
+                            </span>
+                            `
+
+                            :
+
+                            `
+                            <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-600 text-[10px] font-bold px-2 py-1 rounded-full">
+
+                                <i class="fa-solid fa-camera"></i>
+
+                                SEM FOTO
+
+                            </span>
+                            `
+                        }
+
+                    </div>
+
+
+                    <div class="flex flex-col items-center w-full mt-5">
+
+                        ${areaFoto}
+
+
+                        <h4
+                            class="font-black text-sm text-slate-800 uppercase tracking-tight text-center line-clamp-2 px-2 min-h-[40px]"
+                        >
+                            ${escapeHtml(aluno.student_name)}
+                        </h4>
+
+
+                        <p class="text-[11px] font-semibold text-blue-600 mt-1">
+                            ${escapeHtml(aluno.class_name)}
+                        </p>
+
+                    </div>
+
+
+                    <div class="mt-auto pt-4 flex items-center justify-center gap-2 w-full border-t border-slate-100">
+
+                        ${botoesFoto}
+
+
+                        <button
+                            onclick='abrirModalEdicao(
+                                ${JSON.stringify(aluno.id)},
+                                ${JSON.stringify(aluno.student_name)},
+                                ${JSON.stringify(aluno.class_name)}
+                            )'
+                            class="action-button w-9 h-9 rounded-xl bg-cyan-50 hover:bg-cyan-600 text-cyan-600 hover:text-white shadow-sm"
+                            title="Editar aluno"
+                        >
+
+                            <i class="fa-solid fa-pen text-sm"></i>
+
+                        </button>
+
+                    </div>
+
+                    `;
+
+
+                grid.appendChild(
+                    card
+                );
+
+            }
+        );
+    }
+
+
+    /* =====================================================
+       PESQUISA
+    ===================================================== */
+
+    function filtrarAlunos() {
+
+        const termo =
+            document
+                .getElementById("campo-pesquisa")
+                .value
+                .toLowerCase()
+                .trim();
+
+
+        if (!termo) {
+
+            renderizarAlunos(
+                alunosDaTurmaAtual
+            );
+
+            return;
+        }
+
+
+        const filtrados =
+            alunosDaTurmaAtual.filter(
+                aluno =>
+                    aluno.student_name
+                        .toLowerCase()
+                        .includes(termo)
+            );
+
+
+        renderizarAlunos(
+            filtrados
+        );
+    }
+
+
+    /* =====================================================
+       ESCAPE HTML
+    ===================================================== */
+
+    function escapeHtml(text) {
+
+        const div =
+            document.createElement("div");
+
+        div.textContent =
+            text ?? "";
+
+        return div.innerHTML;
+    }
+
+
+    /* =====================================================
+       ADICIONAR ALUNO
+    ===================================================== */
+
+    function abrirModalAdicionarAluno() {
+
+        const turmaAtual =
+            document
+                .getElementById("select-turmas")
+                .value;
+
+
+        document
+            .getElementById("novo-aluno-nome")
+            .value = "";
+
+
+        document
+            .getElementById("novo-aluno-turma")
+            .value = turmaAtual;
+
+
+        const modal =
+            document.getElementById(
+                "modal-adicionar"
+            );
+
+
+        modal.classList.remove(
+            "hidden"
+        );
+
+        modal.classList.add(
+            "flex"
+        );
+
+
+        setTimeout(
+            () => {
+
+                document
+                    .getElementById(
+                        "novo-aluno-nome"
+                    )
+                    .focus();
+
+            },
+            100
+        );
+    }
+
+
+    function fecharModalAdicionar() {
+
+        const modal =
+            document.getElementById(
+                "modal-adicionar"
+            );
+
+
+        modal.classList.add(
+            "hidden"
+        );
+
+        modal.classList.remove(
+            "flex"
+        );
+    }
+
+
+    async function adicionarAluno() {
+
+        const nome =
+            document
+                .getElementById(
+                    "novo-aluno-nome"
+                )
+                .value
+                .trim();
+
+
+        const turma =
+            document
+                .getElementById(
+                    "novo-aluno-turma"
+                )
+                .value
+                .trim();
+
+
+        if (!nome) {
+
+            mostrarToast(
+                "Atenção",
+                "Digite o nome do aluno.",
+                "erro"
+            );
+
+            return;
+        }
+
+
+        if (!turma) {
+
+            mostrarToast(
+                "Atenção",
+                "Informe a turma.",
+                "erro"
+            );
+
+            return;
+        }
+
+
+        const botao =
+            document.getElementById(
+                "btn-adicionar-aluno"
+            );
+
+
+        botao.disabled = true;
+
+        botao.innerHTML =
+            `
+            <div class="flex items-center justify-center gap-2">
+
+                <div class="spinner"></div>
+
+                Salvando...
+
+            </div>
+            `;
+
+
+        const {
+            error
+        } = await supabaseClient
+            .from("carometro")
+            .insert([
+                {
+                    student_name: nome,
+                    class_name: turma,
+                    photo_url: null
+                }
+            ]);
+
+
+        botao.disabled = false;
+
+        botao.innerHTML =
+            `
+            <i class="fa-solid fa-user-plus mr-1"></i>
+            Adicionar
+            `;
+
+
+        if (error) {
+
+            console.error(error);
+
+            mostrarToast(
+                "Erro ao adicionar",
+                error.message,
+                "erro"
+            );
+
+            return;
+        }
+
+
+        fecharModalAdicionar();
+
+
+        mostrarToast(
+            "Aluno adicionado",
+            `${nome} foi cadastrado com sucesso.`
+        );
+
+
+        const turmaAtual =
+            document
+                .getElementById("select-turmas")
+                .value;
+
+
+        await carregarTurmas();
+
+
+        // Reposiciona o select na turma atual
+        const select =
+            document.getElementById(
+                "select-turmas"
+            );
+
+
+        select.value =
+            turmaAtual;
+
+
+        if (turma === turmaAtual) {
+
+            await carregarAlunos(
+                turmaAtual
+            );
+
+        }
+    }
+
+
+    /* =====================================================
+       EDITAR
+    ===================================================== */
+
+    function abrirModalEdicao(
+        id,
+        nome,
+        turma
+    ) {
+
+        document
+            .getElementById("edit-aluno-id")
+            .value = id;
+
+
+        document
+            .getElementById("edit-nome")
+            .value = nome;
+
+
+        document
+            .getElementById("edit-turma")
+            .value = turma;
+
+
+        const modal =
+            document.getElementById(
+                "modal-edicao"
+            );
+
+
+        modal.classList.remove(
+            "hidden"
+        );
+
+        modal.classList.add(
+            "flex"
+        );
+    }
+
+
+    function fecharModal() {
+
+        const modal =
+            document.getElementById(
+                "modal-edicao"
+            );
+
+
+        modal.classList.add(
+            "hidden"
+        );
+
+        modal.classList.remove(
+            "flex"
+        );
+    }
+
+
+    async function salvarEdicaoAluno() {
+
+        const id =
+            document
+                .getElementById("edit-aluno-id")
+                .value;
+
+
+        const novoNome =
+            document
+                .getElementById("edit-nome")
+                .value
+                .trim();
+
+
+        const novaTurma =
+            document
+                .getElementById("edit-turma")
+                .value
+                .trim();
+
+
+        if (!novoNome || !novaTurma) {
+
+            mostrarToast(
+                "Atenção",
+                "Nome e turma são obrigatórios.",
+                "erro"
+            );
+
+            return;
+        }
+
+
+        const turmaAtual =
+            document
+                .getElementById("select-turmas")
+                .value;
+
+
+        const {
+            error
+        } = await supabaseClient
+            .from("carometro")
+            .update({
+                student_name: novoNome,
+                class_name: novaTurma
+            })
+            .eq("id", id);
+
+
+        if (error) {
+
+            console.error(error);
+
+            mostrarToast(
+                "Erro ao atualizar",
+                error.message,
+                "erro"
+            );
+
+            return;
+        }
+
+
+        fecharModal();
+
+
+        await carregarTurmas();
+
+
+        const select =
+            document.getElementById(
+                "select-turmas"
+            );
+
+
+        select.value =
+            turmaAtual;
+
+
+        await carregarAlunos(
+            turmaAtual
+        );
+
+
+        if (novaTurma !== turmaAtual) {
+
+            mostrarToast(
+                "Aluno transferido",
+                `${novoNome} foi transferido para ${novaTurma}.`
+            );
+
+        } else {
+
+            mostrarToast(
+                "Dados atualizados",
+                "As informações foram salvas."
+            );
+        }
+    }
+
+
+    /* =====================================================
+       UPLOAD
+    ===================================================== */
+
+    function dispararUpload(
+        alunoId,
+        origem
+    ) {
+
+        alunoSelecionadoParaUpload =
+            alunoId;
+
+
+        if (origem === "camera") {
+
+            document
+                .getElementById(
+                    "input-camera"
+                )
+                .click();
+
+        }
+
+
+        if (origem === "galeria") {
+
+            document
+                .getElementById(
+                    "input-galeria"
+                )
+                .click();
+
+        }
+    }
+
+
+    function configurarInputsDeArquivo() {
+
+        const processarArquivo =
+            async (evento) => {
+
+                const file =
+                    evento.target.files[0];
+
+
+                if (
+                    !file ||
+                    !alunoSelecionadoParaUpload
+                ) {
+
+                    return;
+                }
+
+
+                mostrarToast(
+                    "Processando",
+                    "Preparando a fotografia..."
+                );
+
+
+                new Compressor(
+                    file,
+                    {
+
+                        quality: 0.6,
+
+                        maxWidth: 800,
+
+                        maxHeight: 800,
+
+                        convertSize: 1000000,
+
+
+                        success:
+                            async (
+                                resultadoCompactado
+                            ) => {
+
+                                try {
+
+                                    const fileExt =
+                                        resultadoCompactado.name
+                                            ?
+                                            resultadoCompactado.name
+                                                .split(".")
+                                                .pop()
+                                            :
+                                            "jpg";
+
+
+                                    const caminhoArquivo =
+                                        `public/${alunoSelecionadoParaUpload}-${Date.now()}.${fileExt}`;
+
+
+                                    const {
+                                        error: storageError
+                                    } =
+                                        await supabaseClient
+                                            .storage
+                                            .from(
+                                                "fotos-alunos"
+                                            )
+                                            .upload(
+                                                caminhoArquivo,
+                                                resultadoCompactado
+                                            );
+
+
+                                    if (
+                                        storageError
+                                    ) {
+
+                                        throw new Error(
+                                            storageError.message
+                                        );
+                                    }
+
+
+                                    const {
+                                        data: publicData
+                                    } =
+                                        supabaseClient
+                                            .storage
+                                            .from(
+                                                "fotos-alunos"
+                                            )
+                                            .getPublicUrl(
+                                                caminhoArquivo
+                                            );
+
+
+                                    const publicUrl =
+                                        publicData.publicUrl;
+
+
+                                    const {
+                                        error: dbError
+                                    } =
+                                        await supabaseClient
+                                            .from(
+                                                "carometro"
+                                            )
+                                            .update({
+                                                photo_url:
+                                                    publicUrl
+                                            })
+                                            .eq(
+                                                "id",
+                                                alunoSelecionadoParaUpload
+                                            );
+
+
+                                    if (
+                                        dbError
+                                    ) {
+
+                                        throw new Error(
+                                            dbError.message
+                                        );
+                                    }
+
+
+                                    mostrarToast(
+                                        "Foto atualizada",
+                                        "A fotografia foi salva com sucesso."
+                                    );
+
+
+                                    evento.target.value =
+                                        "";
+
+
+                                    const turmaAtual =
+                                        document
+                                            .getElementById(
+                                                "select-turmas"
+                                            )
+                                            .value;
+
+
+                                    await carregarAlunos(
+                                        turmaAtual
+                                    );
+
+
+                                } catch (error) {
+
+                                    console.error(
+                                        error
+                                    );
+
+
+                                    mostrarToast(
+                                        "Erro no upload",
+                                        error.message,
+                                        "erro"
+                                    );
+                                }
+
+                            },
+
+
+                        error:
+                            (err) => {
+
+                                mostrarToast(
+                                    "Erro",
+                                    "Não foi possível processar a imagem.",
+                                    "erro"
+                                );
+
+                                console.error(
+                                    err
+                                );
+                            }
+                    }
+                );
+            };
+
+
+        document
+            .getElementById("input-camera")
+            .addEventListener(
+                "change",
+                processarArquivo
+            );
+
+
+        document
+            .getElementById("input-galeria")
+            .addEventListener(
+                "change",
+                processarArquivo
+            );
+    }
+
+
+    /* =====================================================
+       REMOVER FOTO
+    ===================================================== */
+
+    async function removerFoto(
+        alunoId
+    ) {
+
+        if (
+            !confirm(
+                "Tem certeza que deseja remover a foto deste aluno?"
+            )
+        ) {
+
+            return;
+        }
+
+
+        const {
+            data: aluno,
+            error: fetchError
+        } =
+            await supabaseClient
+                .from("carometro")
+                .select("photo_url")
+                .eq("id", alunoId)
+                .single();
+
+
+        if (fetchError) {
+
+            mostrarToast(
+                "Erro",
+                fetchError.message,
+                "erro"
+            );
+
+            return;
+        }
+
+
+        if (
+            aluno &&
+            aluno.photo_url
+        ) {
+
+            try {
+
+                const partes =
+                    aluno.photo_url.split(
+                        "/fotos-alunos/"
+                    );
+
+
+                const caminhoArquivo =
+                    partes[1];
+
+
+                if (caminhoArquivo) {
+
+                    const {
+                        error: storageError
+                    } =
+                        await supabaseClient
+                            .storage
+                            .from(
+                                "fotos-alunos"
+                            )
+                            .remove([
+                                caminhoArquivo
+                            ]);
+
+
+                    if (storageError) {
+
+                        console.warn(
+                            "Não foi possível remover do Storage:",
+                            storageError.message
+                        );
+                    }
+                }
+
+            } catch (error) {
+
+                console.error(
+                    error
+                );
+            }
+        }
+
+
+        const {
+            error: dbError
+        } =
+            await supabaseClient
+                .from("carometro")
+                .update({
+                    photo_url: null
+                })
+                .eq(
+                    "id",
+                    alunoId
+                );
+
+
+        if (dbError) {
+
+            mostrarToast(
+                "Erro",
+                dbError.message,
+                "erro"
+            );
+
+            return;
+        }
+
+
+        mostrarToast(
+            "Foto removida",
+            "A fotografia foi excluída."
+        );
+
+
+        const turmaAtual =
+            document
+                .getElementById(
+                    "select-turmas"
+                )
+                .value;
+
+
+        carregarAlunos(
+            turmaAtual
+        );
+    }
+
+
+    /* =====================================================
+       MODAL FOTO
+    ===================================================== */
+
+    function abrirFotoModal(
+        url
+    ) {
+
+        const modal =
+            document.getElementById(
+                "modal-foto"
+            );
+
+
+        const imagem =
+            document.getElementById(
+                "foto-modal"
+            );
+
+
+        imagem.src =
+            url;
+
+
+        modal.classList.remove(
+            "hidden"
+        );
+
+        modal.classList.add(
+            "flex"
+        );
+
+
+        document.body.classList.add(
+            "overflow-hidden"
+        );
+    }
+
+
+    function fecharModalFoto(
+        event
+    ) {
+
+        if (
+            event &&
+            event.target &&
+            event.target.id ===
+                "foto-modal"
+        ) {
+
+            return;
+        }
+
+
+        const modal =
+            document.getElementById(
+                "modal-foto"
+            );
+
+
+        const imagem =
+            document.getElementById(
+                "foto-modal"
+            );
+
+
+        modal.classList.add(
+            "hidden"
+        );
+
+        modal.classList.remove(
+            "flex"
+        );
+
+
+        imagem.src =
+            "";
+
+
+        document.body.classList.remove(
+            "overflow-hidden"
+        );
+    }
+
+
+    /* =====================================================
+       TECLAS
+    ===================================================== */
+
+    function configurarTeclasDeAtalho() {
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Escape"
+                ) {
+
+                    const fotoModal =
+                        document.getElementById(
+                            "modal-foto"
+                        );
+
+
+                    const edicao =
+                        document.getElementById(
+                            "modal-edicao"
+                        );
+
+
+                    const adicionar =
+                        document.getElementById(
+                            "modal-adicionar"
+                        );
+
+
+                    if (
+                        !fotoModal.classList.contains(
+                            "hidden"
+                        )
+                    ) {
+
+                        fecharModalFoto();
+
+                    }
+
+
+                    else if (
+                        !edicao.classList.contains(
+                            "hidden"
+                        )
+                    ) {
+
+                        fecharModal();
+
+                    }
+
+
+                    else if (
+                        !adicionar.classList.contains(
+                            "hidden"
+                        )
+                    ) {
+
+                        fecharModalAdicionar();
+
+                    }
+
+                }
+
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    const adicionar =
+                        document.getElementById(
+                            "modal-adicionar"
+                        );
+
+
+                    if (
+                        !adicionar.classList.contains(
+                            "hidden"
+                        ) &&
+                        document.activeElement.id ===
+                            "novo-aluno-nome"
+                    ) {
+
+                        adicionarAluno();
+                    }
+
+                }
+
+            }
+        );
+    }
+
+</script>
+
+</body>
+</html>
