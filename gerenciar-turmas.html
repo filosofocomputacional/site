@@ -1,0 +1,1973 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/x-icon" href="logo.jpg">
+
+    <title>Gerenciador de Turmas - E.M Ivan Diniz</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* ================================
+           AJUSTES GERAIS
+        ================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        /* Scrollbar discreta */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Remove aparência pesada dos selects */
+        select {
+            appearance: auto;
+            -webkit-appearance: auto;
+        }
+
+        /* Animação suave dos cards */
+        .aluno-card {
+            animation: cardEntrada 0.2s ease-out;
+        }
+
+        @keyframes cardEntrada {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loading */
+        .loading-spinner {
+            animation: girar 0.8s linear infinite;
+        }
+
+        @keyframes girar {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Melhor toque no celular */
+        button,
+        select,
+        input {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+
+
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+
+    <!-- =====================================================
+         LOADING OVERLAY
+    ====================================================== -->
+
+    <div
+        id="loading-overlay"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex-col items-center justify-center p-4 z-[9999]"
+    >
+
+        <div
+            class="loading-spinner rounded-full h-12 w-12 sm:h-14 sm:w-14 border-4 border-white/20 border-t-blue-500 mb-4"
+        ></div>
+
+        <p
+            id="loading-text"
+            class="text-white font-semibold text-sm sm:text-base text-center"
+        >
+            Processando...
+        </p>
+
+    </div>
+
+
+    <!-- =====================================================
+         TELA DE LOGIN
+    ====================================================== -->
+
+    <div
+        id="tela-login"
+        class="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-950"
+    >
+
+        <div
+            class="w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
+        >
+
+            <!-- Cabeçalho -->
+            <div class="px-6 sm:px-8 pt-8 pb-5 text-center">
+
+                <div
+                    class="mx-auto mb-4 w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center"
+                >
+                    <i class="fa-solid fa-school text-blue-700 text-xl"></i>
+                </div>
+
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-900">
+                    Gerenciador de Turmas
+                </h1>
+
+                <p class="text-sm text-slate-500 mt-1">
+                    E.M Ivan Diniz
+                </p>
+
+            </div>
+
+
+            <!-- Formulário -->
+            <form
+                id="form-login"
+                onsubmit="efetuarLogin(event)"
+                class="px-6 sm:px-8 pb-8 space-y-5"
+            >
+
+                <div>
+
+                    <label
+                        class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5"
+                    >
+                        Usuário / Escola
+                    </label>
+
+                    <input
+                        type="text"
+                        id="login-username"
+                        name="username"
+                        value="E.M IVAN DINIZ"
+                        readonly
+                        autocomplete="username"
+                        class="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl font-semibold text-slate-600 text-sm outline-none"
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label
+                        class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5"
+                    >
+                        Senha de acesso
+                    </label>
+
+                    <input
+                        type="password"
+                        id="login-password"
+                        name="password"
+                        placeholder="Digite a senha"
+                        required
+                        autocomplete="current-password"
+                        class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2"
+                >
+                    Entrar
+                    <i class="fa-solid fa-arrow-right text-sm"></i>
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TELA DE SELEÇÃO
+    ====================================================== -->
+
+    <div
+        id="tela-selecao"
+        class="hidden min-h-screen flex flex-col items-center justify-center p-4"
+    >
+
+        <div
+            class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+        >
+
+            <!-- Cabeçalho -->
+            <div class="px-5 sm:px-7 pt-6 sm:pt-7">
+
+                <div class="flex items-center justify-between gap-4">
+
+                    <div>
+
+                        <p
+                            class="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-1"
+                        >
+                            E.M Ivan Diniz
+                        </p>
+
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
+                            Configuração
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        onclick="efetuarLogout()"
+                        class="w-9 h-9 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition flex items-center justify-center"
+                        title="Sair"
+                    >
+                        <i class="fa-solid fa-power-off text-sm"></i>
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Formulário de seleção -->
+            <div class="p-5 sm:p-7 space-y-5">
+
+                <!-- Etapa -->
+                <div>
+
+                    <label
+                        class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2"
+                    >
+                        1º passo · Ano / Etapa
+                    </label>
+
+                    <select
+                        id="select-etapa"
+                        onchange="filtrarTurmasPorEtapa()"
+                        class="w-full p-3.5 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium text-sm transition"
+                    >
+
+                        <option value="">
+                            -- Selecione o Ano --
+                        </option>
+
+                        <option value="1">1º Ano</option>
+                        <option value="2">2º Ano</option>
+                        <option value="3">3º Ano</option>
+                        <option value="4">4º Ano</option>
+                        <option value="5">5º Ano</option>
+                        <option value="6">6º Ano</option>
+                        <option value="7">7º Ano</option>
+                        <option value="8">8º Ano</option>
+                        <option value="9">9º Ano</option>
+                        <option value="EJA">EJA</option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Turma -->
+                <div>
+
+                    <label
+                        class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2"
+                    >
+                        2º passo · Turma
+                    </label>
+
+                    <select
+                        id="select-turmas"
+                        disabled
+                        class="w-full p-3.5 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none font-medium text-sm text-slate-400 cursor-not-allowed"
+                    >
+
+                        <option value="">
+                            Selecione o ano primeiro...
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    onclick="entrarNaTurma()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2"
+                >
+
+                    <i class="fa-solid fa-users text-sm"></i>
+
+                    Gerenciar Alunos
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TELA PRINCIPAL
+    ====================================================== -->
+
+    <div id="tela-gerenciador" class="hidden min-h-screen">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <header
+            class="bg-slate-950 text-white border-b border-white/5 sticky top-0 z-40"
+        >
+
+            <div
+                class="max-w-7xl mx-auto px-4 sm:px-6 py-4"
+            >
+
+                <div
+                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+
+                    <!-- Título -->
+                    <div class="min-w-0">
+
+                        <div class="flex items-center gap-2 mb-1">
+
+                            <div
+                                class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0"
+                            >
+                                <i class="fa-solid fa-school text-xs"></i>
+                            </div>
+
+                            <span
+                                class="text-[10px] uppercase tracking-wider font-bold text-blue-300"
+                            >
+                                E.M Ivan Diniz
+                            </span>
+
+                        </div>
+
+
+                        <h1
+                            id="titulo-turma"
+                            class="text-lg sm:text-xl font-bold truncate"
+                        >
+                            Gerenciador de Turmas
+                        </h1>
+
+
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Gerencie os alunos e suas turmas
+                        </p>
+
+                    </div>
+
+
+                    <!-- Ações -->
+                    <div class="flex gap-2 flex-shrink-0">
+
+                        <button
+                            onclick="voltarParaSelecao()"
+                            class="bg-white/10 hover:bg-white/15 active:bg-white/20 px-3.5 py-2.5 rounded-xl transition font-semibold text-xs sm:text-sm flex items-center gap-2"
+                        >
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Voltar</span>
+                        </button>
+
+
+                        <button
+                            onclick="efetuarLogout()"
+                            class="bg-red-600/90 hover:bg-red-600 active:bg-red-700 px-3.5 py-2.5 rounded-xl transition font-semibold text-xs sm:text-sm flex items-center gap-2"
+                        >
+                            <i class="fa-solid fa-power-off"></i>
+                            <span>Sair</span>
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =================================================
+             CONTEÚDO
+        ================================================== -->
+
+        <main
+            class="max-w-7xl mx-auto p-3 sm:p-5 lg:p-6"
+        >
+
+            <div
+                class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6"
+            >
+
+
+                <!-- =================================================
+                     LISTA DE ALUNOS
+                ================================================== -->
+
+                <div class="lg:col-span-2">
+
+                    <div
+                        class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5"
+                    >
+
+                        <!-- Cabeçalho -->
+                        <div
+                            class="flex items-center justify-between gap-3 mb-5"
+                        >
+
+                            <div class="min-w-0">
+
+                                <h2
+                                    class="text-base sm:text-lg font-bold text-slate-800"
+                                >
+                                    Alunos
+                                </h2>
+
+                                <p
+                                    class="text-[11px] sm:text-xs text-slate-400 mt-0.5"
+                                >
+                                    Alunos matriculados nesta turma
+                                </p>
+
+                            </div>
+
+
+                            <span
+                                id="contador-alunos"
+                                class="
+                                    flex-shrink-0
+                                    text-[10px]
+                                    sm:text-xs
+                                    bg-blue-50
+                                    text-blue-700
+                                    border
+                                    border-blue-100
+                                    px-2.5
+                                    py-1
+                                    rounded-full
+                                    font-bold
+                                "
+                            >
+                                0 alunos
+                            </span>
+
+                        </div>
+
+
+                        <!-- Lista -->
+                        <div
+                            id="lista-alunos"
+                            class="space-y-2.5 sm:space-y-3 max-h-[650px] overflow-y-auto pr-0 sm:pr-1"
+                        >
+
+                            <!-- Inserido pelo JavaScript -->
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     CADASTRO
+                ================================================== -->
+
+                <div>
+
+                    <div
+                        class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 lg:sticky lg:top-24"
+                    >
+
+                        <!-- Cabeçalho -->
+                        <div class="flex items-center gap-3 mb-5">
+
+                            <div
+                                class="w-10 h-10 rounded-xl bg-green-50 border border-green-100 flex items-center justify-center flex-shrink-0"
+                            >
+                                <i
+                                    class="fa-solid fa-user-plus text-green-600 text-sm"
+                                ></i>
+                            </div>
+
+                            <div>
+
+                                <h2
+                                    class="text-base sm:text-lg font-bold text-slate-800"
+                                >
+                                    Cadastrar aluno
+                                </h2>
+
+                                <p class="text-[11px] text-slate-400">
+                                    Adicione um novo registro
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Form -->
+                        <form
+                            id="form-novo-aluno"
+                            onsubmit="adicionarAluno(event)"
+                            class="space-y-4"
+                        >
+
+                            <!-- Nome -->
+                            <div>
+
+                                <label
+                                    class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5"
+                                >
+                                    Nome completo
+                                    <span class="text-red-500">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="novo-nome"
+                                    placeholder="Digite o nome do aluno"
+                                    required
+                                    class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-medium text-sm transition"
+                                >
+
+                            </div>
+
+
+                            <!-- Turma -->
+                            <div>
+
+                                <label
+                                    class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5"
+                                >
+                                    Turma destino
+                                    <span class="text-red-500">*</span>
+                                </label>
+
+                                <select
+                                    id="novo-turma-select"
+                                    onchange="toggleNovaTurmaInput()"
+                                    required
+                                    class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-medium text-sm bg-white transition"
+                                >
+
+                                    <option value="">
+                                        -- Selecione a Turma --
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- Nova turma -->
+                            <div
+                                id="campo-nova-turma"
+                                class="hidden"
+                            >
+
+                                <label
+                                    class="block text-[10px] sm:text-xs font-bold text-amber-700 uppercase tracking-wide mb-1.5"
+                                >
+                                    Nome da nova turma
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="novo-turma-manual"
+                                    placeholder="Ex: 1º ANO A, EJA 1"
+                                    class="w-full p-3 border border-amber-200 bg-amber-50 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none font-medium text-sm uppercase transition"
+                                >
+
+                            </div>
+
+
+                            <!-- Salvar -->
+                            <button
+                                type="submit"
+                                class="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-sm text-sm flex items-center justify-center gap-2"
+                            >
+
+                                <i class="fa-solid fa-check"></i>
+
+                                Salvar registro
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script>
+
+        /* =====================================================
+           CONFIGURAÇÃO SUPABASE
+        ====================================================== */
+
+        const SUPABASE_URL =
+            "https://mzktaliyfwshlgqweyin.supabase.co";
+
+        const SUPABASE_ANON_KEY =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16a3RhbGl5ZndzaGxncXdleWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTYyOTcsImV4cCI6MjA5OTE5MjI5N30.ALLgFwlyMJVkEwaMxjWhXLbOakweL6xlXzUOEalpzDM";
+
+        const supabaseClient =
+            supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_ANON_KEY
+            );
+
+
+        let todasAsTurmas = [];
+
+        const CHAVE_EXPIRACAO =
+            "carometro_ivan_diniz_sessao_expiracao";
+
+
+        /* =====================================================
+           INICIALIZAÇÃO
+        ====================================================== */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            async () => {
+                verificarSessao();
+            }
+        );
+
+
+        /* =====================================================
+           LOADING
+        ====================================================== */
+
+        function mostrarLoading(mensagem) {
+
+            document.getElementById("loading-text").innerText =
+                mensagem || "Processando...";
+
+            const overlay =
+                document.getElementById("loading-overlay");
+
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+        }
+
+
+        function esconderLoading() {
+
+            const overlay =
+                document.getElementById("loading-overlay");
+
+            overlay.classList.add("hidden");
+            overlay.classList.remove("flex");
+        }
+
+
+        /* =====================================================
+           SESSÃO
+        ====================================================== */
+
+        function verificarSessao() {
+
+            const expiracao =
+                localStorage.getItem(CHAVE_EXPIRACAO);
+
+            const agora = Date.now();
+
+
+            if (
+                expiracao &&
+                agora < parseInt(expiracao)
+            ) {
+
+                document
+                    .getElementById("tela-login")
+                    .classList.add("hidden");
+
+                document
+                    .getElementById("tela-selecao")
+                    .classList.remove("hidden");
+
+                document
+                    .getElementById("tela-gerenciador")
+                    .classList.add("hidden");
+
+                carregarTurmas();
+
+            } else {
+
+                localStorage.removeItem(
+                    CHAVE_EXPIRACAO
+                );
+
+                document
+                    .getElementById("tela-login")
+                    .classList.remove("hidden");
+
+                document
+                    .getElementById("tela-selecao")
+                    .classList.add("hidden");
+
+                document
+                    .getElementById("tela-gerenciador")
+                    .classList.add("hidden");
+            }
+        }
+
+
+        /* =====================================================
+           LOGIN
+        ====================================================== */
+
+        function efetuarLogin(event) {
+
+            event.preventDefault();
+
+            const senhaDigitada =
+                document.getElementById("login-password").value;
+
+
+            if (senhaDigitada === "31277258") {
+
+                const tempoExpiracao =
+                    Date.now() +
+                    (24 * 60 * 60 * 1000);
+
+                localStorage.setItem(
+                    CHAVE_EXPIRACAO,
+                    tempoExpiracao.toString()
+                );
+
+                document.getElementById(
+                    "login-password"
+                ).value = "";
+
+                verificarSessao();
+
+            } else {
+
+                alert(
+                    "Senha inválida! Tente novamente."
+                );
+
+                document
+                    .getElementById("login-password")
+                    .focus();
+            }
+        }
+
+
+        /* =====================================================
+           LOGOUT
+        ====================================================== */
+
+        function efetuarLogout() {
+
+            if (
+                confirm(
+                    "Tem certeza que deseja sair do sistema?"
+                )
+            ) {
+
+                localStorage.removeItem(
+                    CHAVE_EXPIRACAO
+                );
+
+                verificarSessao();
+            }
+        }
+
+
+        /* =====================================================
+           CARREGAR TURMAS
+        ====================================================== */
+
+        async function carregarTurmas() {
+
+            try {
+
+                const {
+                    data,
+                    error
+                } = await supabaseClient
+                    .from("carometro")
+                    .select("class_name");
+
+
+                if (error) {
+
+                    alert(
+                        "Erro ao carregar turmas do servidor: " +
+                        error.message
+                    );
+
+                    return;
+                }
+
+
+                todasAsTurmas =
+                    [
+                        ...new Set(
+                            data
+                                .map(
+                                    item =>
+                                        item.class_name
+                                )
+                        )
+                    ]
+                    .filter(Boolean)
+                    .sort();
+
+
+                document.getElementById(
+                    "select-etapa"
+                ).value = "";
+
+
+                const selectTurmas =
+                    document.getElementById(
+                        "select-turmas"
+                    );
+
+
+                selectTurmas.innerHTML =
+                    `
+                    <option value="">
+                        Selecione o ano primeiro...
+                    </option>
+                    `;
+
+
+                selectTurmas.disabled = true;
+
+                selectTurmas.classList.add(
+                    "bg-slate-50",
+                    "cursor-not-allowed",
+                    "text-slate-400"
+                );
+
+
+                atualizarSelectNovoAluno();
+
+            } catch (err) {
+
+                alert(
+                    "Erro ao carregar turmas: " +
+                    err.message
+                );
+            }
+        }
+
+
+        /* =====================================================
+           FILTRAR TURMAS
+        ====================================================== */
+
+        function filtrarTurmasPorEtapa() {
+
+            const anoSelecionado =
+                document.getElementById(
+                    "select-etapa"
+                ).value;
+
+
+            const selectTurmas =
+                document.getElementById(
+                    "select-turmas"
+                );
+
+
+            if (!anoSelecionado) {
+
+                selectTurmas.innerHTML =
+                    `
+                    <option value="">
+                        Selecione o ano primeiro...
+                    </option>
+                    `;
+
+                selectTurmas.disabled = true;
+
+                selectTurmas.classList.add(
+                    "bg-slate-50",
+                    "cursor-not-allowed",
+                    "text-slate-400"
+                );
+
+                return;
+            }
+
+
+            let turmasFiltradas = [];
+
+
+            if (anoSelecionado === "EJA") {
+
+                turmasFiltradas =
+                    todasAsTurmas.filter(
+                        turma =>
+                            turma
+                                .toLowerCase()
+                                .includes("eja")
+                    );
+
+            } else {
+
+                turmasFiltradas =
+                    todasAsTurmas.filter(
+                        turma =>
+                            turma.startsWith(
+                                anoSelecionado
+                            )
+                    );
+            }
+
+
+            selectTurmas.innerHTML =
+                `
+                <option value="">
+                    -- Escolha uma Turma --
+                </option>
+                `;
+
+
+            if (turmasFiltradas.length === 0) {
+
+                selectTurmas.innerHTML =
+                    `
+                    <option value="">
+                        Nenhuma turma encontrada
+                    </option>
+                    `;
+
+            } else {
+
+                turmasFiltradas.forEach(
+                    turma => {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        option.value = turma;
+                        option.textContent = turma;
+
+                        selectTurmas.appendChild(
+                            option
+                        );
+                    }
+                );
+            }
+
+
+            selectTurmas.disabled = false;
+
+            selectTurmas.classList.remove(
+                "bg-slate-50",
+                "cursor-not-allowed",
+                "text-slate-400"
+            );
+        }
+
+
+        /* =====================================================
+           SELECT DO NOVO ALUNO
+        ====================================================== */
+
+        function atualizarSelectNovoAluno() {
+
+            const select =
+                document.getElementById(
+                    "novo-turma-select"
+                );
+
+
+            select.innerHTML =
+                `
+                <option value="">
+                    -- Selecione a Turma --
+                </option>
+                `;
+
+
+            todasAsTurmas.forEach(
+                turma => {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value = turma;
+                    option.textContent = turma;
+
+                    select.appendChild(option);
+                }
+            );
+
+
+            const novaOption =
+                document.createElement(
+                    "option"
+                );
+
+            novaOption.value = "NOVA";
+            novaOption.textContent =
+                "+ Criar Nova Turma...";
+
+            select.appendChild(
+                novaOption
+            );
+        }
+
+
+        /* =====================================================
+           NOVA TURMA
+        ====================================================== */
+
+        function toggleNovaTurmaInput() {
+
+            const select =
+                document.getElementById(
+                    "novo-turma-select"
+                );
+
+
+            const campoManual =
+                document.getElementById(
+                    "campo-nova-turma"
+                );
+
+
+            const inputManual =
+                document.getElementById(
+                    "novo-turma-manual"
+                );
+
+
+            if (select.value === "NOVA") {
+
+                campoManual.classList.remove(
+                    "hidden"
+                );
+
+                inputManual.required = true;
+
+                inputManual.focus();
+
+            } else {
+
+                campoManual.classList.add(
+                    "hidden"
+                );
+
+                inputManual.required = false;
+
+                inputManual.value = "";
+            }
+        }
+
+
+        /* =====================================================
+           ENTRAR NA TURMA
+        ====================================================== */
+
+        function entrarNaTurma() {
+
+            const nomeTurma =
+                document.getElementById(
+                    "select-turmas"
+                ).value;
+
+
+            if (!nomeTurma) {
+
+                alert(
+                    "Selecione uma turma para prosseguir!"
+                );
+
+                return;
+            }
+
+
+            document.getElementById(
+                "titulo-turma"
+            ).innerText =
+                `Gerenciamento - ${nomeTurma}`;
+
+
+            document
+                .getElementById("tela-selecao")
+                .classList.add("hidden");
+
+
+            document
+                .getElementById("tela-gerenciador")
+                .classList.remove("hidden");
+
+
+            document.getElementById(
+                "novo-turma-select"
+            ).value = nomeTurma;
+
+
+            toggleNovaTurmaInput();
+
+            carregarAlunos(nomeTurma);
+        }
+
+
+        /* =====================================================
+           VOLTAR
+        ====================================================== */
+
+        function voltarParaSelecao() {
+
+            document
+                .getElementById("tela-gerenciador")
+                .classList.add("hidden");
+
+
+            document
+                .getElementById("tela-selecao")
+                .classList.remove("hidden");
+
+
+            carregarTurmas();
+        }
+
+
+        /* =====================================================
+           ESCAPAR TEXTO
+        ====================================================== */
+
+        function escaparHTML(texto) {
+
+            return String(texto || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+
+        function escaparParaAtributoJS(texto) {
+
+            return String(texto || "")
+                .replace(/\\/g, "\\\\")
+                .replace(/'/g, "\\'")
+                .replace(/\n/g, "\\n")
+                .replace(/\r/g, "\\r");
+        }
+
+
+        /* =====================================================
+           CARREGAR ALUNOS
+        ====================================================== */
+
+        async function carregarAlunos(nomeTurma) {
+
+            mostrarLoading(
+                "Carregando alunos..."
+            );
+
+
+            try {
+
+                const {
+                    data: alunos,
+                    error
+                } = await supabaseClient
+                    .from("carometro")
+                    .select("*")
+                    .eq(
+                        "class_name",
+                        nomeTurma
+                    )
+                    .order(
+                        "student_name"
+                    );
+
+
+                if (error) throw error;
+
+
+                const contador =
+                    document.getElementById(
+                        "contador-alunos"
+                    );
+
+
+                contador.innerText =
+                    `${alunos.length} ${
+                        alunos.length === 1
+                            ? "aluno"
+                            : "alunos"
+                    }`;
+
+
+                const container =
+                    document.getElementById(
+                        "lista-alunos"
+                    );
+
+
+                container.innerHTML = "";
+
+
+                /* =========================================
+                   NENHUM ALUNO
+                ========================================== */
+
+                if (alunos.length === 0) {
+
+                    container.innerHTML =
+                        `
+                        <div
+                            class="
+                                flex
+                                flex-col
+                                items-center
+                                justify-center
+                                py-12
+                                px-6
+                                text-center
+                                rounded-2xl
+                                border
+                                border-dashed
+                                border-slate-300
+                                bg-slate-50/70
+                            "
+                        >
+
+                            <div
+                                class="
+                                    w-14
+                                    h-14
+                                    rounded-full
+                                    bg-white
+                                    border
+                                    border-slate-200
+                                    flex
+                                    items-center
+                                    justify-center
+                                    mb-4
+                                    shadow-sm
+                                "
+                            >
+                                <i
+                                    class="fa-solid fa-users-slash text-xl text-slate-300"
+                                ></i>
+                            </div>
+
+
+                            <p
+                                class="font-semibold text-slate-600 text-sm"
+                            >
+                                Nenhum aluno nesta turma
+                            </p>
+
+
+                            <p
+                                class="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed"
+                            >
+                                Cadastre um novo aluno usando o formulário.
+                            </p>
+
+                        </div>
+                        `;
+
+                    return;
+                }
+
+
+                /* =========================================
+                   CARDS
+                ========================================== */
+
+                alunos.forEach(
+                    aluno => {
+
+                        const row =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        row.className =
+                            `
+                            aluno-card
+                            group
+                            relative
+                            bg-white
+                            rounded-2xl
+                            border
+                            border-slate-200
+                            p-4
+                            sm:p-5
+                            transition-all
+                            duration-200
+                            hover:border-blue-200
+                            hover:shadow-sm
+                            `;
+
+
+                        /* FOTO */
+
+                        let areaFoto =
+                            `
+                            <div
+                                class="
+                                    w-11
+                                    h-11
+                                    sm:w-12
+                                    sm:h-12
+                                    rounded-full
+                                    bg-slate-100
+                                    border
+                                    border-slate-200
+                                    flex
+                                    items-center
+                                    justify-center
+                                    overflow-hidden
+                                    flex-shrink-0
+                                "
+                            >
+
+                                <i
+                                    class="fa-solid fa-user text-base sm:text-lg text-slate-300"
+                                ></i>
+
+                            </div>
+                            `;
+
+
+                        if (aluno.photo_url) {
+
+                            areaFoto =
+                                `
+                                <div
+                                    class="
+                                        w-11
+                                        h-11
+                                        sm:w-12
+                                        sm:h-12
+                                        rounded-full
+                                        border-2
+                                        border-white
+                                        ring-1
+                                        ring-slate-200
+                                        overflow-hidden
+                                        flex-shrink-0
+                                        bg-slate-100
+                                    "
+                                >
+
+                                    <img
+                                        src="${escaparHTML(aluno.photo_url)}"
+                                        alt="${escaparHTML(aluno.student_name || "Aluno")}"
+                                        class="w-full h-full object-cover"
+                                    >
+
+                                </div>
+                                `;
+                        }
+
+
+                        /* SELECT */
+
+                        const opcoesTurma =
+                            todasAsTurmas
+                                .map(
+                                    turma =>
+                                        `
+                                        <option
+                                            value="${escaparHTML(turma)}"
+                                            ${
+                                                turma === aluno.class_name
+                                                    ? "selected"
+                                                    : ""
+                                            }
+                                        >
+                                            ${escaparHTML(turma)}
+                                        </option>
+                                        `
+                                )
+                                .join("");
+
+
+                        const nomeSeguro =
+                            escaparParaAtributoJS(
+                                aluno.student_name
+                            );
+
+
+                        /* CARD HTML */
+
+                        row.innerHTML =
+                            `
+
+                            <!-- =================================
+                                 LIXEIRA
+                            ================================== -->
+
+                            <button
+                                type="button"
+                                onclick="excluirAluno('${aluno.id}', '${nomeSeguro}')"
+                                title="Excluir aluno"
+                                aria-label="Excluir aluno"
+                                class="
+                                    absolute
+                                    top-3
+                                    right-3
+                                    w-9
+                                    h-9
+                                    rounded-xl
+                                    flex
+                                    items-center
+                                    justify-center
+                                    bg-slate-50
+                                    border
+                                    border-slate-200
+                                    text-slate-400
+                                    hover:bg-red-50
+                                    hover:border-red-200
+                                    hover:text-red-600
+                                    active:scale-95
+                                    transition-all
+                                    duration-200
+                                    z-10
+                                "
+                            >
+
+                                <i
+                                    class="fa-solid fa-trash-can text-xs"
+                                ></i>
+
+                            </button>
+
+
+                            <!-- =================================
+                                 ALUNO
+                            ================================== -->
+
+                            <div
+                                class="
+                                    flex
+                                    items-center
+                                    gap-3
+                                    pr-11
+                                    min-w-0
+                                "
+                            >
+
+                                ${areaFoto}
+
+
+                                <div
+                                    class="
+                                        min-w-0
+                                        flex-1
+                                    "
+                                >
+
+                                    <p
+                                        class="
+                                            font-bold
+                                            text-slate-800
+                                            uppercase
+                                            leading-snug
+                                            break-words
+                                            text-[13px]
+                                            sm:text-sm
+                                            md:text-base
+                                        "
+                                    >
+                                        ${escaparHTML(
+                                            aluno.student_name ||
+                                            "Aluno sem nome"
+                                        )}
+                                    </p>
+
+
+                                    <p
+                                        class="
+                                            text-[10px]
+                                            sm:text-xs
+                                            text-slate-400
+                                            mt-0.5
+                                        "
+                                    >
+                                        Aluno cadastrado
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 TURMA + SELECT
+                            ================================== -->
+
+                            <div
+                                class="
+                                    mt-4
+                                    pt-3
+                                    border-t
+                                    border-slate-100
+                                    flex
+                                    items-center
+                                    gap-2
+                                    min-w-0
+                                "
+                            >
+
+                                <!-- LABEL -->
+
+                                <div
+                                    class="
+                                        flex
+                                        items-center
+                                        gap-1.5
+                                        flex-shrink-0
+                                    "
+                                >
+
+                                    <i
+                                        class="fa-solid fa-layer-group text-[10px] text-blue-500"
+                                    ></i>
+
+
+                                    <span
+                                        class="
+                                            text-[10px]
+                                            sm:text-xs
+                                            font-bold
+                                            text-slate-400
+                                            uppercase
+                                            tracking-wide
+                                        "
+                                    >
+                                        Turma
+                                    </span>
+
+                                </div>
+
+
+                                <!-- SELECT -->
+
+                                <div
+                                    class="flex-1 min-w-0"
+                                >
+
+                                    <select
+                                        onchange="atualizarTurmaAluno('${aluno.id}', this.value, '${nomeSeguro}')"
+                                        aria-label="Alterar turma do aluno"
+                                        class="
+                                            w-full
+                                            min-w-0
+                                            h-9
+                                            px-2.5
+                                            sm:px-3
+                                            border
+                                            border-slate-200
+                                            rounded-lg
+                                            bg-slate-50
+                                            hover:bg-white
+                                            focus:bg-white
+                                            focus:border-blue-400
+                                            focus:ring-2
+                                            focus:ring-blue-100
+                                            outline-none
+                                            text-[11px]
+                                            sm:text-xs
+                                            md:text-sm
+                                            font-semibold
+                                            text-slate-700
+                                            truncate
+                                            cursor-pointer
+                                            transition-all
+                                        "
+                                    >
+
+                                        ${opcoesTurma}
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                            `;
+
+
+                        container.appendChild(row);
+
+                    }
+                );
+
+
+            } catch (err) {
+
+                alert(
+                    "Erro ao buscar dados: " +
+                    err.message
+                );
+
+            } finally {
+
+                esconderLoading();
+            }
+        }
+
+
+        /* =====================================================
+           ALTERAR TURMA
+        ====================================================== */
+
+        async function atualizarTurmaAluno(
+            alunoId,
+            novaTurma,
+            nomeAluno
+        ) {
+
+            mostrarLoading(
+                `Movendo ${nomeAluno} para a turma ${novaTurma}...`
+            );
+
+
+            try {
+
+                const {
+                    error
+                } = await supabaseClient
+                    .from("carometro")
+                    .update({
+                        class_name: novaTurma
+                    })
+                    .eq("id", alunoId);
+
+
+                if (error) throw error;
+
+
+                const turmaAtual =
+                    document.getElementById(
+                        "select-turmas"
+                    ).value;
+
+
+                await carregarAlunos(
+                    turmaAtual
+                );
+
+
+            } catch (err) {
+
+                alert(
+                    "Erro ao alterar turma do aluno: " +
+                    err.message
+                );
+
+            } finally {
+
+                esconderLoading();
+            }
+        }
+
+
+        /* =====================================================
+           EXCLUIR ALUNO
+        ====================================================== */
+
+        async function excluirAluno(
+            alunoId,
+            nomeAluno
+        ) {
+
+            const confirmou =
+                confirm(
+                    `Tem certeza que deseja excluir o(a) aluno(a) "${nomeAluno}"?\n\nEssa ação apagará o registro permanentemente do banco de dados.`
+                );
+
+
+            if (!confirmou) {
+                return;
+            }
+
+
+            mostrarLoading(
+                `Excluindo ${nomeAluno} do sistema...`
+            );
+
+
+            try {
+
+                const {
+                    error
+                } = await supabaseClient
+                    .from("carometro")
+                    .delete()
+                    .eq("id", alunoId);
+
+
+                if (error) throw error;
+
+
+                const turmaAtual =
+                    document.getElementById(
+                        "select-turmas"
+                    ).value;
+
+
+                await carregarTurmas();
+
+                await carregarAlunos(
+                    turmaAtual
+                );
+
+
+            } catch (err) {
+
+                alert(
+                    "Erro ao excluir aluno: " +
+                    err.message
+                );
+
+            } finally {
+
+                esconderLoading();
+            }
+        }
+
+
+        /* =====================================================
+           ADICIONAR ALUNO
+        ====================================================== */
+
+        async function adicionarAluno(event) {
+
+            event.preventDefault();
+
+
+            const nome =
+                document
+                    .getElementById("novo-nome")
+                    .value
+                    .trim();
+
+
+            const selectTurma =
+                document
+                    .getElementById(
+                        "novo-turma-select"
+                    )
+                    .value;
+
+
+            const turmaManual =
+                document
+                    .getElementById(
+                        "novo-turma-manual"
+                    )
+                    .value
+                    .trim();
+
+
+            let turmaFinal =
+                selectTurma;
+
+
+            if (selectTurma === "NOVA") {
+
+                if (!turmaManual) {
+
+                    alert(
+                        "Por favor, digite o nome da nova turma!"
+                    );
+
+                    return;
+                }
+
+
+                turmaFinal =
+                    turmaManual.toUpperCase();
+            }
+
+
+            if (!nome || !turmaFinal) {
+
+                alert(
+                    "Nome e Turma são campos obrigatórios!"
+                );
+
+                return;
+            }
+
+
+            mostrarLoading(
+                "Cadastrando aluno no sistema..."
+            );
+
+
+            try {
+
+                const {
+                    error
+                } = await supabaseClient
+                    .from("carometro")
+                    .insert({
+                        student_name: nome,
+                        class_name: turmaFinal
+                    });
+
+
+                if (error) throw error;
+
+
+                document
+                    .getElementById(
+                        "form-novo-aluno"
+                    )
+                    .reset();
+
+
+                document
+                    .getElementById(
+                        "campo-nova-turma"
+                    )
+                    .classList.add("hidden");
+
+
+                document
+                    .getElementById(
+                        "novo-turma-manual"
+                    )
+                    .required = false;
+
+
+                await carregarTurmas();
+
+
+                const turmaVisualizada =
+                    document.getElementById(
+                        "select-turmas"
+                    ).value;
+
+
+                if (
+                    turmaVisualizada ===
+                    turmaFinal
+                ) {
+
+                    await carregarAlunos(
+                        turmaFinal
+                    );
+
+
+                    document.getElementById(
+                        "novo-turma-select"
+                    ).value =
+                        turmaVisualizada;
+
+                } else {
+
+                    alert(
+                        `Aluno(a) "${nome}" foi cadastrado(a) com sucesso na turma "${turmaFinal}"!`
+                    );
+                }
+
+
+            } catch (err) {
+
+                alert(
+                    "Erro ao cadastrar aluno: " +
+                    err.message
+                );
+
+            } finally {
+
+                esconderLoading();
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
+
