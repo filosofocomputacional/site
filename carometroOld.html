@@ -390,7 +390,7 @@
         function efetuarLogin(event) {
             event.preventDefault();
             const senhaDigitada = document.getElementById("login-password").value;
-            if (senhaDigitada === "8583") {
+            if (senhaDigitada === "8737") {
                 const tempoExpiracao = Date.now() + (24 * 60 * 60 * 1000);
                 localStorage.setItem(CHAVE_EXPIRACAO, tempoExpiracao.toString());
                 document.getElementById("login-password").value = "";
