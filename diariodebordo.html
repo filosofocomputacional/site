@@ -292,10 +292,12 @@
         }
 
         function voltarParaCarometro() {
-            if (document.referrer) {
-                window.history.back();
+            // Volta para a página do Carômetro já carregando A MESMA TURMA
+            if (turmaAtualSelecionada) {
+                window.location.href = `index.html?turma=${encodeURIComponent(turmaAtualSelecionada)}`;
             } else {
-                window.location.href = "index.html"; // Ajuste para a página principal do Carômetro se necessário
+                // Se por acaso não tiver turma, volta para a página principal normalmente
+                window.location.href = "index.html";
             }
         }
 
