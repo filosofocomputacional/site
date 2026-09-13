@@ -328,6 +328,13 @@
         document.addEventListener("DOMContentLoaded", async () => {
             verificarSessao();
             configurarInputsDeArquivo();
+            const params = new URLSearchParams(window.location.search);
+           
+            const turmaVindaDoDiario = params.get('turma');
+            if (turmaVindaDoDiario) {
+                // Seleciona automaticamente a turma e carrega os alunos
+                document.getElementById("turma-select").value = turmaVindaDoDiario;
+                carregarAlunosDaTurma(turmaVindaDoDiario);
         });
         
         /* ================= LOADING OVERLAY ================= */
