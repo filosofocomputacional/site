@@ -325,16 +325,38 @@
         let turmaAtualSelecionada = "";
         const CHAVE_EXPIRACAO = "carometro_sessao_expiracao";
         
-        document.addEventListener("DOMContentLoaded", async () => {
+       document.addEventListener("DOMContentLoaded", async () => {
             verificarSessao();
             configurarInputsDeArquivo();
+            
             const params = new URLSearchParams(window.location.search);
-           
             const turmaVindaDoDiario = params.get('turma');
+            
             if (turmaVindaDoDiario) {
-                // Seleciona automaticamente a turma e carrega os alunos
-                document.getElementById("turma-select").value = turmaVindaDoDiario;
-                carregarAlunosDaTurma(turmaVindaDoDiario);
+                // Carrega as turmas primeiro
+                await carregarTurmas();
+                
+                // Descobre qual etapa pertence à turma
+                const etapa = descobrirEtapaDaTurma(turmaVindaDoDiario);
+                if (etapa) {
+                    document.getElementById("select-etapa").value = etapa;
+                    filtrarTurmasPorEtapa();
+                    
+                    // Seleciona a turma e entra
+                    document.getElementById("select-turmas").value = turmaVindaDoDiario;
+                    turmaAtualSelecionada = turmaVindaDoDiario;
+                    
+                    // Entra direto na turma sem precisar clicar
+                    document.getElementById("titulo-turma").innerText = `Carômetro · ${turmaVindaDoDiario}`;
+                    const btnDiario = document.getElementById("btn-diario-bordo");
+                    if (btnDiario) {
+                        btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(turmaVindaDoDiario)}`;
+                    }
+                    document.getElementById("tela-selecao").classList.add("hidden");
+                    document.getElementById("tela-carometro").classList.remove("hidden");
+                    carregarAlunos(turmaVindaDoDiario);
+                }
+            }
         });
         
         /* ================= LOADING OVERLAY ================= */
