@@ -350,7 +350,9 @@
     ====================================================== -->
     <script>
         // DIGITE SUAS CREDENCIAIS DO SUPABASE AQUI:
-         
+        const SUPABASE_URL = "https://vydnefdeqljazqaisslq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
+    
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Mapeamento fixo das etapas no Front-End
