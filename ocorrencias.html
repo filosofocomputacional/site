@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIbOXVvLkM90LrjM2O5kbK02VmW_C_CjchJWi2pSVris17kSKxeTaRYxgY&s=10">
+    <title>DIÁRIO DE BORDO - LIVIA MARA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Compressor.js & Supabase JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+
+        .card-animado { animation: entrada 0.25s ease-out; }
+        @keyframes entrada {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-spinner { animation: girar 0.8s linear infinite; }
+        @keyframes girar { to { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex-col items-center justify-center p-4 z-[9999]">
+        <div class="loading-spinner rounded-full h-12 w-12 border-4 border-white/20 border-t-amber-500 mb-4"></div>
+        <p id="loading-text" class="text-white font-semibold text-sm text-center">Processando...</p>
+    </div>
+
+    <!-- TELA PRINCIPAL DO DIÁRIO DE BORDO -->
+    <div id="tela-diario" class="min-h-screen">
+        <header class="bg-slate-950 text-white border-b border-white/5 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-7 h-7 rounded-lg bg-amber-600 flex items-center justify-center">
+                            <i class="fa-solid fa-book-bookmark text-xs"></i>
+                        </div>
+                        <span class="text-[10px] uppercase font-bold text-amber-400">Diário de Bordo</span>
+                    </div>
+                    <h1 id="titulo-turma" class="text-lg font-bold">Carregando Turma...</h1>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="abrirModalNovaOcorrencia()" class="bg-amber-600 hover:bg-amber-700 px-3.5 py-2.5 rounded-xl font-semibold text-xs text-white shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Nova Ocorrência</span>
+                    </button>
+                    <button onclick="voltarParaCarometro()" class="bg-white/10 hover:bg-white/15 px-3.5 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Voltar ao Carômetro</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-4 sm:p-6">
+            <!-- CARDS INFORMATIVOS -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-users text-lg"></i>
+                    </div>
+                    <div>
+                        <p id="meta-alunos-com-ocorrencia" class="text-2xl font-bold text-slate-900">0</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase">Alunos Registrados</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                    </div>
+                    <div>
+                        <p id="meta-total-ocorrencias" class="text-2xl font-bold text-amber-600">0</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase">Total de Ocorrências</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-shield-cat text-lg"></i>
+                    </div>
+                    <div>
+                        <p id="meta-graves" class="text-2xl font-bold text-red-600">0</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase">Ocorrências Graves</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LISTA DE ALUNOS COM EXPANSÃO DE OCORRÊNCIAS -->
+            <div id="lista-alunos-ocorrencias" class="space-y-3"></div>
+        </main>
+    </div>
+
+    <!-- MODAL: NOVA OCORRÊNCIA -->
+    <div id="modal-ocorrencia" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-bold text-slate-900">Registrar Ocorrência</h3>
+                <button onclick="fecharModalOcorrencia()" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- SELEÇÃO MÚLTIPLA DE ALUNOS -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-slate-500 uppercase">Selecione o(s) Aluno(s) *</label>
+                        <button type="button" onclick="marcarDesmarcarTodosAlunos()" class="text-[11px] font-bold text-amber-600 hover:underline">Marcar / Desmarcar Todos</button>
+                    </div>
+                    <div id="container-alunos-checkbox" class="border border-slate-200 rounded-xl p-3 max-h-40 overflow-y-auto space-y-2 bg-slate-50">
+                        <p class="text-xs text-slate-400">Carregando alunos...</p>
+                    </div>
+                </div>
+
+                <!-- TIPO DE OCORRÊNCIA PREDEFINIDA -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Ocorrência</label>
+                    <select id="ocorr-tipo" class="w-full p-3 border border-slate-200 rounded-xl font-medium text-sm outline-none bg-white">
+                        <!-- Gerado via JS -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Gravidade</label>
+                        <select id="ocorr-gravidade" class="w-full p-3 border border-slate-200 rounded-xl font-medium text-sm outline-none bg-white">
+                            <option value="Leve">Leve</option>
+                            <option value="Média">Média</option>
+                            <option value="Grave">Grave</option>
+                            <option value="Informativa">Informativa</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Registrado por *</label>
+                        <input type="text" id="ocorr-autor" list="lista-professores" autocomplete="off" placeholder="Seu nome completo" required class="w-full p-3 border border-slate-200 rounded-xl font-medium text-sm outline-none focus:border-amber-500">
+                        <datalist id="lista-professores"></datalist>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Detalhes / Observações Adicionais (Opcional)</label>
+                    <textarea id="ocorr-descricao" rows="3" placeholder="Informações complementares sobre o fato..." class="w-full p-3 border border-slate-200 rounded-xl font-medium text-sm outline-none focus:border-amber-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Anexo / Comprovante (Opcional)</label>
+                    <input type="file" id="ocorr-foto" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2.5 mt-6">
+                <button onclick="fecharModalOcorrencia()" class="px-4 py-2.5 bg-slate-100 rounded-xl font-semibold text-xs text-slate-600">Cancelar</button>
+                <button onclick="salvarOcorrencia()" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold text-xs shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Salvar Registro
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        const SUPABASE_URL = "https://vydnefdeqljazqaisslq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const LISTA_OCORRENCIAS = [
+            "Agressão física.",
+            "Agressão verbal.",
+            "Atraso na chegada à aula.",
+            "Conversas excessivas durante a aula.",
+            "Conversas paralelas após orientação da professora.",
+            "Deixou o local de estudo desorganizado.",
+            "Desrespeito aos colegas.",
+            "Desrespeito ao professor.",
+            "Jogou lixo no chão.",
+            "Não entregou a atividade no prazo.",
+            "Não entregou o trabalho solicitado.",
+            "Não realizou a atividade proposta em sala.",
+            "Não realizou a avaliação.",
+            "Não trouxe o material necessário.",
+            "Recusa em guardar o celular após solicitação.",
+            "Recusou-se a realizar a atividade.",
+            "Retorno tardio após o intervalo.",
+            "Saída da sala sem autorização.",
+            "Uso de celular durante a explicação.",
+            "Uso de celular sem autorização.",
+            "Uso de fones de ouvido durante a aula.",
+            "Uso de linguagem inadequada ou ofensiva."
+        ];
+
+        // ARRAY DE PROFESSORES PARA AUTOCOMPLETE (ALTERE / ADICIONE CONFORME NECESSÁRIO)
+        const LISTA_PROFESSORES = [
+            "Ana Maria Souza",
+            "Carlos Eduardo Lima",
+            "Leidiana Vieira da Silva",
+            "João Pedro Santos",
+            "Maria Clara Rocha",
+            "Roberto Silva"
+        ];
+
+        let turmaAtualSelecionada = "";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            popularTiposOcorrencia();
+            popularProfessores();
+
+            // Captura o parâmetro "turma" enviado via URL ex: diariodebordo.html?turma=1%20EM%20A
+            const params = new URLSearchParams(window.location.search);
+            const turmaParam = params.get('turma');
+
+            if (turmaParam) {
+                turmaAtualSelecionada = turmaParam;
+                document.getElementById("titulo-turma").innerText = `Diário de Bordo · ${turmaParam}`;
+                carregarOcorrencias(turmaParam);
+            } else {
+                alert("Nenhuma turma especificada! Redirecionando...");
+                voltarParaCarometro();
+            }
+        });
+
+        function popularTiposOcorrencia() {
+            const selectTipo = document.getElementById("ocorr-tipo");
+            selectTipo.innerHTML = "";
+            LISTA_OCORRENCIAS.forEach(item => {
+                selectTipo.innerHTML += `<option value="${item}">${item}</option>`;
+            });
+        }
+
+        // Substitua a sua função popularProfessores atual por esta:
+        function popularProfessores(filtro = "") {
+            const datalist = document.getElementById("lista-professores");
+            if (!datalist) return;
+            
+            datalist.innerHTML = "";
+            
+            // Filtra pelos nomes que contêm o texto digitado e pega apenas os 5 primeiros
+            const professoresFiltrados = LISTA_PROFESSORES
+                .filter(prof => prof.toLowerCase().includes(filtro.toLowerCase()))
+                .sort()
+                .slice(0, 5);
+        
+            professoresFiltrados.forEach(prof => {
+                datalist.innerHTML += `<option value="${prof}">${prof}</option>`;
+            });
+        }
+        
+        // Adicione este ouvinte dentro do seu eventListener DOMContentLoaded:
+        document.addEventListener("DOMContentLoaded", () => {
+            popularTiposOcorrencia();
+            popularProfessores(); // Carrega os 5 primeiros inicialmente
+        
+            // Atualiza dinamicamente limitando a 5 conforme o usuário digita
+            const inputAutor = document.getElementById("ocorr-autor");
+            if (inputAutor) {
+                inputAutor.addEventListener("input", (e) => {
+                    popularProfessores(e.target.value);
+                });
+            }
+        
+            // ... resto do seu código DOMContentLoaded ...
+        });
+
+        function mostrarLoading(msg) {
+            document.getElementById("loading-text").innerText = msg || "Carregando...";
+            const overlay = document.getElementById("loading-overlay");
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+        }
+
+        function esconderLoading() {
+            const overlay = document.getElementById("loading-overlay");
+            overlay.classList.add("hidden");
+            overlay.classList.remove("flex");
+        }
+
+        function voltarParaCarometro() {
+            if (document.referrer) {
+                window.history.back();
+            } else {
+                window.location.href = "index.html"; // Ajuste para a página principal do Carômetro se necessário
+            }
+        }
+
+        async function carregarOcorrencias(turma) {
+            mostrarLoading("Buscando registros da turma...");
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('ocorrencias')
+                    .select('*')
+                    .eq('class_name', turma)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // Agrupa as ocorrências por aluno
+                const agrupadoPorAluno = {};
+                data.forEach(item => {
+                    if (!agrupadoPorAluno[item.student_name]) {
+                        agrupadoPorAluno[item.student_name] = [];
+                    }
+                    agrupadoPorAluno[item.student_name].push(item);
+                });
+
+                const nomesAlunos = Object.keys(agrupadoPorAluno).sort();
+
+                document.getElementById("meta-alunos-com-ocorrencia").innerText = nomesAlunos.length;
+                document.getElementById("meta-total-ocorrencias").innerText = data.length;
+                document.getElementById("meta-graves").innerText = data.filter(d => d.severity === 'Grave').length;
+
+                const listaContainer = document.getElementById("lista-alunos-ocorrencias");
+                listaContainer.innerHTML = "";
+
+                if (nomesAlunos.length === 0) {
+                    listaContainer.innerHTML = `
+                        <div class="py-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+                            <i class="fa-solid fa-folder-open text-3xl text-slate-300 mb-2"></i>
+                            <p class="font-semibold text-slate-600 text-sm">Nenhuma ocorrência registrada para esta turma.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                nomesAlunos.forEach((nome, index) => {
+                    const ocorrenciasDoAluno = agrupadoPorAluno[nome];
+                    const qtd = ocorrenciasDoAluno.length;
+                    const accordionId = `acc-aluno-${index}`;
+
+                    let htmlOcorrencias = "";
+                    ocorrenciasDoAluno.forEach(oc => {
+                        const dataFmt = new Date(oc.created_at).toLocaleString('pt-BR');
+                        let corBadge = "bg-slate-100 text-slate-700";
+                        if (oc.severity === "Grave") corBadge = "bg-red-100 text-red-700 border-red-200";
+                        if (oc.severity === "Média") corBadge = "bg-amber-100 text-amber-700 border-amber-200";
+                        if (oc.severity === "Leve") corBadge = "bg-blue-100 text-blue-700 border-blue-200";
+
+                        htmlOcorrencias += `
+                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${corBadge}">${oc.severity}</span>
+                                        <span class="text-xs font-bold text-slate-800">${oc.type}</span>
+                                    </div>
+                                    <button onclick="deletarOcorrencia('${oc.id}')" class="text-slate-400 hover:text-red-600 p-1" title="Excluir"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                </div>
+                                ${oc.description ? `<p class="text-xs text-slate-600 whitespace-pre-line">${oc.description}</p>` : ''}
+                                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-200/60">
+                                    <span><i class="fa-regular fa-user mr-1"></i>Registrado por: <strong>${oc.author}</strong></span>
+                                    <span><i class="fa-regular fa-clock mr-1"></i>${dataFmt}</span>
+                                </div>
+                                ${oc.photo_url ? `<a href="${oc.photo_url}" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-amber-600 font-bold hover:underline"><i class="fa-solid fa-paperclip"></i> Ver Anexo</a>` : ''}
+                            </div>
+                        `;
+                    });
+
+                    listaContainer.innerHTML += `
+                        <div class="card-animado bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div onclick="toggleAccordion('${accordionId}')" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                                        <i class="fa-solid fa-user-graduate text-sm"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-sm sm:text-base uppercase">${nome}</h4>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="bg-amber-100 text-amber-800 font-extrabold text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                        ${qtd} <i class="fa-solid fa-plus text-[10px]"></i>
+                                    </span>
+                                    <i id="icon-${accordionId}" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200"></i>
+                                </div>
+                            </div>
+                            <div id="${accordionId}" class="hidden px-4 pb-4 space-y-2 border-t border-slate-100 pt-3">
+                                ${htmlOcorrencias}
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                alert("Erro ao carregar ocorrências: " + err.message);
+            } finally {
+                esconderLoading();
+            }
+        }
+
+        function toggleAccordion(id) {
+            const elemento = document.getElementById(id);
+            const icone = document.getElementById(`icon-${id}`);
+            if (elemento.classList.contains("hidden")) {
+                elemento.classList.remove("hidden");
+                icone.style.transform = "rotate(180deg)";
+            } else {
+                elemento.classList.add("hidden");
+                icone.style.transform = "rotate(0deg)";
+            }
+        }
+
+        async function abrirModalNovaOcorrencia() {
+            mostrarLoading("Carregando alunos da turma...");
+
+            const { data } = await supabaseClient
+                .from('carometro')
+                .select('student_name')
+                .eq('class_name', turmaAtualSelecionada)
+                .order('student_name');
+
+            const container = document.getElementById("container-alunos-checkbox");
+            container.innerHTML = "";
+
+            if (data && data.length > 0) {
+                data.forEach((a) => {
+                    container.innerHTML += `
+                        <label class="flex items-center gap-2.5 p-1.5 hover:bg-white rounded-lg cursor-pointer text-xs font-semibold text-slate-700">
+                            <input type="checkbox" value="${a.student_name}" class="chk-aluno w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500">
+                            <span>${a.student_name}</span>
+                        </label>
+                    `;
+                });
+            } else {
+                container.innerHTML = '<p class="text-xs text-slate-400">Nenhum aluno encontrado nesta turma.</p>';
+            }
+
+            document.getElementById("ocorr-descricao").value = "";
+            document.getElementById("ocorr-autor").value = "";
+            document.getElementById("ocorr-foto").value = "";
+
+            esconderLoading();
+            document.getElementById("modal-ocorrencia").classList.remove("hidden");
+        }
+
+        function marcarDesmarcarTodosAlunos() {
+            const checkboxes = document.querySelectorAll(".chk-aluno");
+            if (checkboxes.length === 0) return;
+            const algumDesmarcado = Array.from(checkboxes).some(cb => !cb.checked);
+            checkboxes.forEach(cb => cb.checked = algumDesmarcado);
+        }
+
+        function fecharModalOcorrencia() {
+            document.getElementById("modal-ocorrencia").classList.add("hidden");
+        }
+
+        async function salvarOcorrencia() {
+            const checkboxes = document.querySelectorAll(".chk-aluno:checked");
+            const alunosSelecionados = Array.from(checkboxes).map(cb => cb.value);
+
+            if (alunosSelecionados.length === 0) {
+                return alert("Selecione pelo menos um aluno!");
+            }
+
+            const autor = document.getElementById("ocorr-autor").value.trim();
+            if (!autor) {
+                return alert("Por favor, preencha o campo 'Registrado por'!");
+            }
+
+            const tipo = document.getElementById("ocorr-tipo").value;
+            const gravidade = document.getElementById("ocorr-gravidade").value;
+            const descricao = document.getElementById("ocorr-descricao").value.trim();
+            const arquivoInput = document.getElementById("ocorr-foto");
+
+            mostrarLoading("Salvando ocorrência(s)...");
+
+            try {
+                let photoUrl = null;
+
+                if (arquivoInput.files.length > 0) {
+                    const file = arquivoInput.files[0];
+                    const fileExt = file.name.split('.').pop();
+                    const path = `ocorrencias/${Date.now()}.${fileExt}`;
+
+                    const { error: storageErr } = await supabaseClient.storage.from('fotos-alunos').upload(path, file);
+                    if (storageErr) throw storageErr;
+
+                    const { data: publicData } = supabaseClient.storage.from('fotos-alunos').getPublicUrl(path);
+                    photoUrl = publicData.publicUrl;
+                }
+
+                // Cria os registros para cada aluno selecionado
+                const registros = alunosSelecionados.map(aluno => ({
+                    student_name: aluno,
+                    class_name: turmaAtualSelecionada,
+                    type: tipo,
+                    severity: gravidade,
+                    description: descricao,
+                    author: autor,
+                    photo_url: photoUrl
+                }));
+
+                const { error } = await supabaseClient
+                    .from('ocorrencias')
+                    .insert(registros);
+
+                if (error) throw error;
+
+                fecharModalOcorrencia();
+                carregarOcorrencias(turmaAtualSelecionada);
+            } catch (err) {
+                alert("Erro ao salvar: " + err.message);
+                esconderLoading();
+            }
+        }
+
+        async function deletarOcorrencia(id) {
+            if (!confirm("Tem certeza que deseja apagar esta ocorrência?")) return;
+
+            mostrarLoading("Removendo...");
+            try {
+                const { error } = await supabaseClient.from('ocorrencias').delete().eq('id', id);
+                if (error) throw error;
+                carregarOcorrencias(turmaAtualSelecionada);
+            } catch (err) {
+                alert("Erro ao deletar: " + err.message);
+                esconderLoading();
+            }
+        }
+    </script>
+</body>
+</html>
