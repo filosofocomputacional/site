@@ -20,20 +20,36 @@
     .btn-primary:hover { background: #2563eb; }
     .btn-secondary { background: #e2e8f0; color: #1e293b; }
     .btn-secondary:hover { background: #cbd5e1; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
     .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
     .hidden { display: none !important; }
     select { padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 1rem; width: 100%; max-width: 300px; }
     .form-group { margin-bottom: 1rem; }
     label { display: block; margin-bottom: 0.375rem; font-weight: 500; color: #334155; }
     .tela { padding: 1rem 0; }
-    .grade-assentos { display: grid; gap: 0.5rem; margin-top: 1.5rem; }
-    .fila { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-    .assento { width: 80px; height: 80px; border-radius: 0.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s; text-align: center; padding: 0.25rem; }
-    .assento:hover { border-color: #3b82f6; background: #eff6ff; }
-    .assento.ocupado { border-color: #ef4444; background: #fef2f2; }
-    .assento.livre { border-color: #22c55e; background: #f0fdf4; }
-    .nome-aluno { font-size: 0.65rem; word-break: break-all; max-width: 100%; line-height: 1; margin-top: 0.25rem; }
-    .numero-assento { font-weight: 700; font-size: 0.9rem; }
+    .grade-assentos { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+    .fileira { display: flex; flex-direction: column; gap: 0.5rem; }
+    .fileira-nome { font-weight: 600; color: #475569; padding-left: 0.25rem; }
+    .assentos-linha { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .assento { width: 90px; height: 90px; border-radius: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s; text-align: center; padding: 0.5rem; }
+    .assento:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .assento.ocupado { border-color: #3b82f6; background: #eff6ff; }
+    .assento.livre { border-color: #94a3b8; background: #f8fafc; border-style: dashed; }
+    .assento.dragging { opacity: 0.5; transform: scale(0.95); }
+    .assento.over { border-color: #22c55e; background: #f0fdf4; border-width: 3px; }
+    .numero-assento { font-weight: 700; font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem; }
+    .nome-aluno { font-size: 0.7rem; line-height: 1.1; color: #1e293b; word-break: break-word; }
+    
+    /* Modal */
+    .modal-fundo { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+    .modal-conteudo { background: white; border-radius: 1rem; width: 100%; max-width: 450px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .modal-cabecalho { padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-cabecalho h3 { font-weight: 600; font-size: 1rem; }
+    .modal-corpo { padding: 1.25rem; overflow-y: auto; max-height: 60vh; }
+    .aluno-item { padding: 0.75rem; border-radius: 0.5rem; cursor: pointer; transition: background 0.2; margin-bottom: 0.25rem; }
+    .aluno-item:hover { background: #f1f5f9; }
+    .botoes-modal { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
   </style>
 </head>
 <body>
@@ -44,7 +60,7 @@
         <p>Organização dos assentos</p>
       </div>
       <div class="header-right">
-        <a id="btn-carometro" href="carometro.html" class="btn btn-secondary">
+        <a id="btn-carometro" href="index.html" class="btn btn-secondary">
           <i class="fas fa-users"></i> Carômetro
         </a>
         <a id="btn-diario-bordo" href="diariodebordo.html" class="btn btn-secondary">
@@ -55,7 +71,7 @@
   </header>
 
   <main class="container">
-    <!-- Tela de Seleção — NÃO APARECE quando vier pela URL -->
+    <!-- Tela de Seleção — Escondida quando vier pela URL -->
     <div id="tela-selecao" class="tela">
       <h2 class="text-xl font-bold mb-4">Escolha a Turma</h2>
       <div class="form-group">
@@ -80,9 +96,7 @@
     <div id="tela-mapeamento" class="tela hidden">
       <h2 class="text-xl font-bold mb-4" id="nome-turma-titulo"></h2>
       
-      <div class="grade-assentos" id="grade-assentos">
-        <!-- Assentos gerados via JS -->
-      </div>
+      <div class="grade-assentos" id="grade-assentos"></div>
 
       <div class="mt-6 flex gap-3">
         <button class="btn btn-secondary" onclick="voltarParaSelecao()">
@@ -92,6 +106,19 @@
     </div>
   </main>
 
+  <!-- Modal para escolher aluno -->
+  <div id="modal-aluno" class="modal-fundo hidden">
+    <div class="modal-conteudo">
+      <div class="modal-cabecalho">
+        <h3 id="modal-titulo">Alocar Aluno</h3>
+        <button onclick="fecharModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-corpo" id="modal-conteudo"></div>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = "https://vydnefdeqljazqaisslq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
@@ -100,7 +127,20 @@
 
     let todasAsTurmas = [];
     let turmaAtualSelecionada = "";
+    let todosAlunos = [];
+    let alunoArrastando = null;
+    let assentoAlvoAtual = null;
     const CHAVE_EXPIRACAO = "carometro_sessao_expiracao";
+    const FILEIRAS = ['Porta', 'Fileira 1', 'Fileira 2', 'Fileira 3', 'Fileira 4'];
+    const CARTEIRAS_POR_FILEIRA = 8;
+
+    // ✅ Mostra só os dois primeiros nomes
+    function formatarNome(nomeCompleto) {
+      if (!nomeCompleto) return "Livre";
+      const partes = nomeCompleto.trim().split(/\s+/);
+      if (partes.length === 1) return partes[0];
+      return `${partes[0]} ${partes[1]}`;
+    }
 
     document.addEventListener("DOMContentLoaded", async () => {
       const params = new URLSearchParams(window.location.search);
@@ -109,7 +149,6 @@
       if (!verificarSessao()) return;
 
       if (turmaVinda) {
-        // 🔹 ESCONDE A SELEÇÃO COMPLETAMENTE — usuário não vê nada
         const telaSelecao = document.getElementById("tela-selecao");
         if (telaSelecao) telaSelecao.style.display = "none";
 
@@ -143,7 +182,6 @@
           }, 100);
         }
       } else {
-        // Sem turma na URL → mostra seleção normalmente
         await carregarTurmas();
         const telaMapeamento = document.getElementById("tela-mapeamento");
         if (telaMapeamento) telaMapeamento.style.display = "none";
@@ -152,13 +190,10 @@
 
     function atualizarLinks(nomeTurma) {
       const btnCarometro = document.getElementById("btn-carometro");
-      if (btnCarometro) {
-        btnCarometro.href = `carometro.html?turma=${encodeURIComponent(nomeTurma)}`;
-      }
+      if (btnCarometro) btnCarometro.href = `index.html?turma=${encodeURIComponent(nomeTurma)}`;
+      
       const btnDiario = document.getElementById("btn-diario-bordo");
-      if (btnDiario) {
-        btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}`;
-      }
+      if (btnDiario) btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}`;
     }
 
     function descobrirEtapaDaTurma(turma) {
@@ -265,83 +300,223 @@
       if (tituloTurma) tituloTurma.innerText = "Mapeamento de Sala";
     }
 
-    // ✅ FUNÇÃO CORRIGIDA — estava faltando e causando o erro
+    // ✅ Carrega dados e monta a grade completa
     async function carregarDadosMapeamento(turma) {
-  const titulo = document.getElementById("nome-turma-titulo");
-  if (titulo) titulo.innerText = turma;
+      const titulo = document.getElementById("nome-turma-titulo");
+      if (titulo) titulo.innerText = turma;
 
-  const grade = document.getElementById("grade-assentos");
-  if (!grade) return;
-  
-  grade.innerHTML = "";
+      const grade = document.getElementById("grade-assentos");
+      if (!grade) return;
+      grade.innerHTML = "";
 
-  // ✅ Colunas CORRETAS do seu banco: student_name, mapeamento
-  const { data, error } = await supabaseClient
-    .from("carometro")
-    .select("id, student_name, mapeamento, photo_url")
-    .eq("class_name", turma);
+      const { data, error } = await supabaseClient
+        .from("carometro")
+        .select("id, student_name, mapeamento, class_name")
+        .eq("class_name", turma);
 
-  if (error) {
-    console.error("Erro ao carregar dados:", error);
-    grade.innerHTML = "<p class='text-red-500'>Erro ao carregar dados da turma.</p>";
-    return;
-  }
-
-  // Reorganiza os alunos pela posição no assento
-  const alunosPorAssento = {};
-  
-  data.forEach(aluno => {
-    if (aluno.mapeamento) {
-      // mapeamento = "fileira-carteira" ex: "1-1", "1-2"...
-      alunosPorAssento[aluno.mapeamento] = aluno;
-    }
-  });
-
-  // Monta a grade — 5 fileiras × 8 assentos = igual ao seu código original
-  const nomesFileiras = ['Porta', 'Fileira 1', 'Fileira 2', 'Fileira 3', 'Fileira 4'];
-  
-  nomesFileiras.forEach((nomeFileira, indice) => {
-    const numeroFileira = indice + 1;
-    const filaDiv = document.createElement("div");
-    filaDiv.style.marginBottom = "1rem";
-    
-    const cabecalho = document.createElement("h4");
-    cabecalho.style.fontWeight = "bold";
-    cabecalho.style.marginBottom = "0.5rem";
-    cabecalho.textContent = nomeFileira;
-    filaDiv.appendChild(cabecalho);
-
-    const assentosDiv = document.createElement("div");
-    assentosDiv.className = "fila";
-
-    for (let carteira = 1; carteira <= 8; carteira++) {
-      const chave = `${numeroFileira}-${carteira}`;
-      const aluno = alunosPorAssento[chave];
-      
-      const assentoDiv = document.createElement("div");
-      assentoDiv.className = "assento";
-      
-      if (aluno) {
-        assentoDiv.classList.add("ocupado");
-        assentoDiv.innerHTML = `
-          <span class="numero-assento">${carteira}</span>
-          <span class="nome-aluno">${aluno.student_name}</span>
-        `;
-      } else {
-        assentoDiv.classList.add("livre");
-        assentoDiv.innerHTML = `
-          <span class="numero-assento">${carteira}</span>
-          <span class="nome-aluno">Livre</span>
-        `;
+      if (error) {
+        console.error("Erro ao carregar:", error);
+        grade.innerHTML = "<p class='text-red-500'>Erro ao carregar dados.</p>";
+        return;
       }
-      
-      assentosDiv.appendChild(assentoDiv);
+
+      todosAlunos = data || [];
+
+      FILEIRAS.forEach((nomeFileira, indice) => {
+        const numeroFileira = indice + 1;
+        const divFileira = document.createElement("div");
+        divFileira.className = "fileira";
+
+        const cabecalho = document.createElement("span");
+        cabecalho.className = "fileira-nome";
+        cabecalho.textContent = nomeFileira;
+        divFileira.appendChild(cabecalho);
+
+        const linhaAssentos = document.createElement("div");
+        linhaAssentos.className = "assentos-linha";
+
+        for (let carteira = 1; carteira <= CARTEIRAS_POR_FILEIRA; carteira++) {
+          const posicao = `${numeroFileira}-${carteira}`;
+          const aluno = todosAlunos.find(a => a.mapeamento === posicao);
+          
+          const assentoEl = document.createElement("div");
+          assentoEl.className = `assento ${aluno ? 'ocupado' : 'livre'}`;
+          assentoEl.dataset.posicao = posicao;
+          assentoEl.dataset.alunoId = aluno?.id || "";
+          
+          // Drag & Drop
+          assentoEl.draggable = !!aluno;
+          assentoEl.addEventListener("click", () => clicarAssento(posicao, aluno));
+          assentoEl.addEventListener("dragstart", (e) => iniciarArrasto(e, posicao, aluno));
+          assentoEl.addEventListener("dragover", (e) => sobreAssento(e));
+          assentoEl.addEventListener("drop", (e) => soltarAssento(e, posicao));
+          assentoEl.addEventListener("dragend", () => finalizarArrasto());
+
+          assentoEl.innerHTML = `
+            <span class="numero-assento">${carteira}</span>
+            <span class="nome-aluno">${formatarNome(aluno?.student_name)}</span>
+          `;
+
+          linhaAssentos.appendChild(assentoEl);
+        }
+
+        divFileira.appendChild(linhaAssentos);
+        grade.appendChild(divFileira);
+      });
     }
 
-    filaDiv.appendChild(assentosDiv);
-    grade.appendChild(filaDiv);
-  });
-}
+    // ✅ Clica no assento — vazio = lista alunos disponíveis | ocupado = opções
+    function clicarAssento(posicao, aluno) {
+      assentoAlvoAtual = posicao;
+      
+      if (!aluno) {
+        // Assento vazio → mostra lista de alunos sem posição
+        const alunosDisponiveis = todosAlunos.filter(a => !a.mapeamento || a.mapeamento === "");
+        abrirModalLista(alunosDisponiveis, posicao);
+      } else {
+        // Assento ocupado → opções: trocar ou remover
+        abrirModalOpcoes(aluno, posicao);
+      }
+    }
+
+    // ✅ Abre modal com alunos disponíveis
+    function abrirModalLista(alunos, posicao) {
+      const modal = document.getElementById("modal-aluno");
+      const titulo = document.getElementById("modal-titulo");
+      const conteudo = document.getElementById("modal-conteudo");
+
+      titulo.textContent = `Alocar em ${posicao}`;
+      conteudo.innerHTML = "";
+
+      if (alunos.length === 0) {
+        conteudo.innerHTML = `<p class="text-gray-500">Nenhum aluno disponível para alocar.</p>`;
+      } else {
+        alunos.forEach(aluno => {
+          const item = document.createElement("div");
+          item.className = "aluno-item";
+          item.textContent = formatarNome(aluno.student_name);
+          item.onclick = () => alocarAluno(aluno, posicao);
+          conteudo.appendChild(item);
+        });
+      }
+
+      modal.classList.remove("hidden");
+    }
+
+    // ✅ Abre modal de opções para assento ocupado
+    function abrirModalOpcoes(aluno, posicao) {
+      const modal = document.getElementById("modal-aluno");
+      const titulo = document.getElementById("modal-titulo");
+      const conteudo = document.getElementById("modal-conteudo");
+
+      titulo.textContent = formatarNome(aluno.student_name);
+      conteudo.innerHTML = `
+        <p class="mb-3 text-gray-600">Posição: ${posicao}</p>
+        <div class="flex flex-col gap-2">
+          <button class="btn btn-danger w-full" onclick="retirarAlunoDaPosicao(${aluno.id})">
+            <i class="fas fa-user-minus"></i> Retirar da posição
+          </button>
+          <button class="btn btn-secondary w-full" onclick="fecharModal()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      `;
+
+      modal.classList.remove("hidden");
+    }
+
+    // ✅ Aloca aluno no assento
+    async function alocarAluno(aluno, posicao) {
+      const { error } = await supabaseClient
+        .from("carometro")
+        .update({ mapeamento: posicao })
+        .eq("id", aluno.id);
+
+      if (error) {
+        alert("Erro ao alocar: " + error.message);
+        return;
+      }
+
+      fecharModal();
+      carregarDadosMapeamento(turmaAtualSelecionada);
+    }
+
+    // ✅ Retira aluno do assento
+    async function retirarAlunoDaPosicao(alunoId) {
+      if (!confirm("Tem certeza que deseja remover este aluno do assento?")) return;
+
+      const { error } = await supabaseClient
+        .from("carometro")
+        .update({ mapeamento: "" })
+        .eq("id", alunoId);
+
+      if (error) {
+        alert("Erro ao remover: " + error.message);
+        return;
+      }
+
+      fecharModal();
+      carregarDadosMapeamento(turmaAtualSelecionada);
+    }
+
+    // ✅ Arraste e solte
+    function iniciarArrasto(e, posicao, aluno) {
+      alunoArrastando = { posicao, aluno };
+      e.target.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    }
+
+    function sobreAssento(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add("over");
+    }
+
+    async function soltarAssento(e, posicaoDestino) {
+      e.preventDefault();
+      e.currentTarget.classList.remove("over");
+      
+      if (!alunoArrastando) return;
+      
+      const posicaoOrigem = alunoArrastando.posicao;
+      if (posicaoOrigem === posicaoDestino) return;
+
+      const alunoOrigem = alunoArrastando.aluno;
+      const alunoDestino = todosAlunos.find(a => a.mapeamento === posicaoDestino);
+
+      if (alunoDestino) {
+        // Troca de lugares
+        await Promise.all([
+          supabaseClient.from("carometro").update({ mapeamento: posicaoDestino }).eq("id", alunoOrigem.id),
+          supabaseClient.from("carometro").update({ mapeamento: posicaoOrigem }).eq("id", alunoDestino.id)
+        ]);
+      } else {
+        // Move para lugar vazio
+        await supabaseClient
+          .from("carometro")
+          .update({ mapeamento: posicaoDestino })
+          .eq("id", alunoOrigem.id);
+      }
+
+      carregarDadosMapeamento(turmaAtualSelecionada);
+    }
+
+    function finalizarArrasto() {
+      alunoArrastando = null;
+      document.querySelectorAll(".assento").forEach(el => {
+        el.classList.remove("dragging", "over");
+      });
+    }
+
+    function fecharModal() {
+      const modal = document.getElementById("modal-aluno");
+      if (modal) modal.classList.add("hidden");
+      assentoAlvoAtual = null;
+    }
+
+    // Fecha modal clicando fora
+    document.getElementById("modal-aluno")?.addEventListener("click", (e) => {
+      if (e.target.id === "modal-aluno") fecharModal();
+    });
   </script>
 </body>
 </html>
