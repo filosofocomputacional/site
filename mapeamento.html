@@ -4,519 +4,724 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mapeamento de Sala</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8fafc; min-height: 100vh; }
-    header { background: #0f172a; color: white; padding: 1rem 1.5rem; position: sticky; top: 0; z-index: 50; }
-    .header-inner { max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
-    .header-left h1 { font-size: 1.1rem; font-weight: 700; }
-    .header-left p { font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem; }
-    .header-right { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer; border: none; font-size: 0.9rem; }
-    .btn-primary { background: #3b82f6; color: white; }
-    .btn-primary:hover { background: #2563eb; }
-    .btn-secondary { background: #e2e8f0; color: #1e293b; }
-    .btn-secondary:hover { background: #cbd5e1; }
-    .btn-danger { background: #ef4444; color: white; }
-    .btn-danger:hover { background: #dc2626; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
-    .hidden { display: none !important; }
-    select { padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 1rem; width: 100%; max-width: 300px; }
-    .form-group { margin-bottom: 1rem; }
-    label { display: block; margin-bottom: 0.375rem; font-weight: 500; color: #334155; }
-    .tela { padding: 1rem 0; }
-    .grade-assentos { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
-    .fileira { display: flex; flex-direction: column; gap: 0.5rem; }
-    .fileira-nome { font-weight: 600; color: #475569; padding-left: 0.25rem; }
-    .assentos-linha { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-    .assento { width: 90px; height: 90px; border-radius: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s; text-align: center; padding: 0.5rem; }
-    .assento:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .assento.ocupado { border-color: #3b82f6; background: #eff6ff; }
-    .assento.livre { border-color: #94a3b8; background: #f8fafc; border-style: dashed; }
-    .assento.dragging { opacity: 0.5; transform: scale(0.95); }
-    .assento.over { border-color: #22c55e; background: #f0fdf4; border-width: 3px; }
-    .numero-assento { font-weight: 700; font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem; }
-    .nome-aluno { font-size: 0.7rem; line-height: 1.1; color: #1e293b; word-break: break-word; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 10px; }
     
-    /* Modal */
-    .modal-fundo { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
-    .modal-conteudo { background: white; border-radius: 1rem; width: 100%; max-width: 450px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-    .modal-cabecalho { padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .modal-cabecalho h3 { font-weight: 600; font-size: 1rem; }
-    .modal-corpo { padding: 1.25rem; overflow-y: auto; max-height: 60vh; }
-    .aluno-item { padding: 0.75rem; border-radius: 0.5rem; cursor: pointer; transition: background 0.2; margin-bottom: 0.25rem; }
-    .aluno-item:hover { background: #f1f5f9; }
-    .botoes-modal { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
+    /* ===== CABEÇALHO ===== */
+    .cabecalho {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .cabecalho-topo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .cabecalho-titulo h1 {
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+    .cabecalho-titulo p {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .cabecalho-botoes {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-navegacao {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-carometro {
+      background: #3b82f6;
+      color: white;
+    }
+    .btn-carometro:hover {
+      background: #2563eb;
+    }
+    .btn-diario {
+      background: #f59e0b;
+      color: #1f2937;
+    }
+    .btn-diario:hover {
+      background: #d97706;
+    }
+    
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { text-align: center; color: #333; margin-bottom: 15px; font-size: 24px; }
+    .turma-selector { margin-bottom: 15px; text-align: center; }
+    .turma-selector select { padding: 10px 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; width: 100%; max-width: 300px; }
+    
+    .sala-container { display: flex; flex-direction: row; gap: 5px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-height: 600px; }
+    .fileira-col { flex: 1; display: flex; flex-direction: column; background: #fafafa; border-radius: 8px; overflow: hidden; transition: all 0.4s ease; border: 2px solid transparent; }
+    .fileira-col.active { flex: 3; border-color: #667eea; box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3); }
+    .fileira-col:not(.active) { flex: 1; }
+    
+    .fileira-header { padding: 12px 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer; text-align: center; user-select: none; transition: all 0.3s ease; }
+    .fileira-col.active .fileira-header { padding: 15px 10px; }
+    .fileira-header h3 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fileira-col.active .fileira-header h3 { font-size: 18px; }
+    
+    .fileira-content { flex: 1; display: flex; flex-direction: column; padding: 8px; overflow-y: auto; }
+    .fileira-col.active .fileira-content { padding: 15px; }
+    
+    .carteiras-stack { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .carteira { 
+      background: white; border: 2px dashed #ccc; border-radius: 8px; 
+      display: flex; align-items: center; justify-content: center; 
+      cursor: pointer; transition: all 0.2s ease; position: relative; 
+      min-height: 50px; padding: 5px;
+    }
+    .carteira:hover { border-color: #667eea; background: #f0f4ff; }
+    .carteira.vazia:hover { border-style: solid; border-color: #667eea; background: #eef2ff; }
+    .fileira-col.active .carteira { min-height: 70px; padding: 10px; }
+    .carteira.occupied { border-style: solid; border-color: #667eea; background: #e8ecff; }
+    .carteira.drag-over { border-color: #764ba2; background: #f5f0ff; transform: scale(1.05); }
+    
+    .carteira-numero { position: absolute; top: 2px; left: 5px; font-size: 10px; color: #999; font-weight: bold; }
+    .fileira-col.active .carteira-numero { font-size: 12px; }
+    
+    .carteira-aluno { display: flex; align-items: center; gap: 8px; width: 100%; padding-left: 20px; }
+    .carteira-aluno img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #ddd; }
+    .fileira-col.active .carteira-aluno img { width: 45px; height: 45px; }
+    .carteira-aluno p { font-size: 11px; color: #333; font-weight: 600; word-wrap: break-word; flex: 1; line-height: 1.2; }
+    .fileira-col.active .carteira-aluno p { font-size: 14px; }
+    
+    .btn-remover { position: absolute; top: 2px; right: 2px; background: #ff6b6b; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10; }
+    .btn-remover:hover { background: #ee5a5a; }
+    
+    .alunos-disponiveis { margin-top: 15px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #eee; display: none; }
+    .fileira-col.active .alunos-disponiveis { display: block; }
+    .alunos-disponiveis h4 { margin-bottom: 10px; color: #333; font-size: 14px; }
+    .alunos-lista { display: flex; flex-wrap: wrap; gap: 8px; max-height: 150px; overflow-y: auto; padding: 5px; }
+    .aluno-item { padding: 6px 10px; background: #667eea; color: white; border-radius: 16px; cursor: pointer; font-size: 12px; user-select: none; transition: all 0.2s ease; }
+    .aluno-item:hover { background: #764ba2; transform: translateY(-2px); }
+    .aluno-item.dragging { opacity: 0.5; }
+    
+    .popup-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .popup-overlay.aberto { opacity: 1; visibility: visible; }
+    .popup {
+      background: white; border-radius: 12px; padding: 24px; max-width: 420px; width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2); transform: translateY(20px); transition: transform 0.3s ease;
+      display: flex; flex-direction: column;
+      max-height: 85vh;
+    }
+    .popup-overlay.aberto .popup { transform: translateY(0); }
+    .popup-cabecalho { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
+    .popup-cabecalho h3 { color: #333; font-size: 18px; }
+    .popup-fechar { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; line-height: 1; }
+    .popup-fechar:hover { color: #333; }
+    
+    .popup-lista { 
+      display: flex; flex-direction: column; gap: 8px; 
+      overflow-y: auto; padding-right: 4px;
+      flex: 1;
+      min-height: 0;
+    }
+    .popup-lista::-webkit-scrollbar { width: 6px; }
+    .popup-lista::-webkit-scrollbar-track { background: #f5f5f5; border-radius: 3px; }
+    .popup-lista::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    .popup-lista::-webkit-scrollbar-thumb:hover { background: #aaa; }
+    
+    .popup-aluno {
+      display: flex; align-items: center; gap: 10px; padding: 10px;
+      border-radius: 8px; cursor: pointer; transition: background 0.2s ease;
+      border: 1px solid #eee;
+      flex-shrink: 0;
+    }
+    .popup-aluno:hover { background: #f0f4ff; border-color: #667eea; }
+    .popup-aluno img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #ddd; flex-shrink: 0; }
+    .popup-aluno span { font-size: 14px; color: #333; font-weight: 500; }
+    .popup-vazio { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+    
+    .popup-mensagem { text-align: center; margin-bottom: 20px; color: #444; font-size: 15px; line-height: 1.5; flex-shrink: 0; }
+    .popup-botoes { display: flex; gap: 10px; justify-content: center; flex-shrink: 0; }
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .btn-cancelar { background: #eee; color: #555; }
+    .btn-cancelar:hover { background: #ddd; }
+    .btn-confirmar { background: #667eea; color: white; }
+    .btn-confirmar:hover { background: #5a6fd8; }
+    .btn-confirmar.perigo { background: #ff6b6b; }
+    .btn-confirmar.perigo:hover { background: #ee5a5a; }
+    
+    .notificacao {
+      position: fixed; top: 20px; right: 20px; z-index: 2000;
+      padding: 14px 20px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      font-weight: 500; font-size: 14px; max-width: 320px;
+      transform: translateX(120%); transition: transform 0.3s ease;
+    }
+    .notificacao.mostrar { transform: translateX(0); }
+    .notificacao.sucesso { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .notificacao.erro { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    
+    .loading { text-align: center; padding: 20px; color: #666; font-weight: bold; display: none; }
+    
+    @media (max-width: 768px) {
+      .sala-container { flex-direction: column; min-height: auto; }
+      .fileira-col { flex: none !important; max-height: 80px; transition: max-height 0.4s ease; }
+      .fileira-col.active { max-height: none; }
+      .fileira-col:not(.active) .fileira-content { display: none; }
+      .fileira-header h3 { font-size: 16px !important; }
+      .notificacao { right: 10px; left: 10px; max-width: unset; }
+      .popup { padding: 20px; }
+      .cabecalho-topo { flex-direction: column; text-align: center; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-inner">
-      <div class="header-left">
-        <h1 id="titulo-turma">Mapeamento de Sala</h1>
-        <p>Organização dos assentos</p>
-      </div>
-      <div class="header-right">
-        <a id="btn-carometro" href="carometro.html" class="btn btn-secondary">
-          <i class="fas fa-users"></i> Carômetro
-        </a>
-        <a id="btn-diario-bordo" href="diariodebordo.html" class="btn btn-secondary">
-          <i class="fas fa-book"></i> Diário de Bordo
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <main class="container">
-    <!-- Tela de Seleção — Escondida quando vier pela URL -->
-    <div id="tela-selecao" class="tela">
-      <h2 class="text-xl font-bold mb-4">Escolha a Turma</h2>
-      <div class="form-group">
-        <label for="select-etapa">Etapa</label>
-        <select id="select-etapa" onchange="filtrarTurmasPorEtapa()">
-          <option value="">-- Selecione --</option>
-          <option value="1 REG">1ª Etapa - REG</option>
-          <option value="1 ADM">1ª Etapa - ADM</option>
-          <option value="2 REG">2ª Etapa - REG</option>
-          <option value="3 REG">3ª Etapa - REG</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="select-turmas">Turma</label>
-        <select id="select-turmas" disabled onchange="selecionarTurmaManual(this.value)">
-          <option value="">-- Escolha uma Turma --</option>
-        </select>
+  <div class="container">
+    <!-- ===== CABEÇALHO COM BOTÕES ===== -->
+    <div class="cabecalho">
+      <div class="cabecalho-topo">
+        <div class="cabecalho-titulo">
+          <h1>📚 Mapeamento de Sala</h1>
+          <p id="nome-turma-atual">Selecione uma turma para começar</p>
+        </div>
+        <div class="cabecalho-botoes">
+          <a id="btn-carometro" href="carometro.html" class="btn-navegacao btn-carometro">
+            <i class="fas fa-users"></i> Carômetro
+          </a>
+          <a id="btn-diario" href="diariodebordo.html" class="btn-navegacao btn-diario">
+            <i class="fas fa-book"></i> Diário de Bordo
+          </a>
+        </div>
       </div>
     </div>
 
-    <!-- Tela do Mapeamento -->
-    <div id="tela-mapeamento" class="tela hidden">
-      <h2 class="text-xl font-bold mb-4" id="nome-turma-titulo"></h2>
-      
-      <div class="grade-assentos" id="grade-assentos"></div>
-
-      <div class="mt-6 flex gap-3">
-        <button class="btn btn-secondary" onclick="voltarParaSelecao()">
-          <i class="fas fa-arrow-left"></i> Trocar Turma
-        </button>
-      </div>
+    <div class="turma-selector" id="area-selecao-turma">
+      <select id="turmaSelect">
+        <option value="">-- Escolha uma Turma --</option>
+      </select>
     </div>
-  </main>
+    <div id="loading" class="loading">Carregando dados do Supabase...</div>
+    <div id="salaContainer" class="sala-container" style="display: none;"></div>
+  </div>
 
-  <!-- Modal para escolher aluno -->
-  <div id="modal-aluno" class="modal-fundo hidden">
-    <div class="modal-conteudo">
-      <div class="modal-cabecalho">
-        <h3 id="modal-titulo">Alocar Aluno</h3>
-        <button onclick="fecharModal()" class="text-gray-400 hover:text-gray-600">
-          <i class="fas fa-times"></i>
-        </button>
+  <div id="popupEscolhaOverlay" class="popup-overlay">
+    <div class="popup">
+      <div class="popup-cabecalho">
+        <h3 id="popupEscolhaTitulo">Ocupar Assento</h3>
+        <button class="popup-fechar" id="popupEscolhaFechar">&times;</button>
       </div>
-      <div class="modal-corpo" id="modal-conteudo"></div>
+      <div id="popupEscolhaConteudo" class="popup-lista"></div>
     </div>
   </div>
 
+  <div id="popupConfirmarOverlay" class="popup-overlay">
+    <div class="popup">
+      <div class="popup-cabecalho">
+        <h3 id="popupConfirmarTitulo">Confirmação</h3>
+        <button class="popup-fechar" id="popupConfirmarFechar">&times;</button>
+      </div>
+      <p class="popup-mensagem" id="popupConfirmarTexto"></p>
+      <div class="popup-botoes">
+        <button class="btn btn-cancelar" id="popupConfirmarCancelar">Cancelar</button>
+        <button class="btn btn-confirmar" id="popupConfirmarOk">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="notificacao" class="notificacao"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   <script>
     const SUPABASE_URL = "https://vydnefdeqljazqaisslq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
-
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let todasAsTurmas = [];
-    let turmaAtualSelecionada = "";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
+    
+    const PLACEHOLDER_FOTO = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjNjY2IiBmb250LXNpemU9IjE0Ij5Gb3RvPC90ZXh0Pjwvc3ZnPg==';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const TABELA_CAROMETRO = 'carometro';
+    const CHAVE_SESSAO = "carometro_sessao_expiracao";
+    
+    let currentTurma = '';
     let todosAlunos = [];
-    let alunoArrastando = null;
-    let assentoAlvoAtual = null;
-    const CHAVE_EXPIRACAO = "carometro_sessao_expiracao";
-    const FILEIRAS = ['Porta', 'Fileira 1', 'Fileira 2', 'Fileira 3', 'Fileira 4'];
-    const CARTEIRAS_POR_FILEIRA = 8;
+    const nomesFileiras = ['Porta', 'Fileira 1', 'Fileira 2', 'Fileira 3', 'Mesa do Prof'];
+    
+    let assentoAlvo = { fileira: null, carteira: null };
+    let fileiraAtiva = null;
+    let acaoConfirmada = null;
 
     // ✅ Mostra só os dois primeiros nomes
     function formatarNome(nomeCompleto) {
-      if (!nomeCompleto) return "Livre";
+      if (!nomeCompleto) return "";
       const partes = nomeCompleto.trim().split(/\s+/);
       if (partes.length === 1) return partes[0];
       return `${partes[0]} ${partes[1]}`;
     }
 
-    document.addEventListener("DOMContentLoaded", async () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
       const turmaVinda = params.get('turma');
-
+      
+      // Verifica sessão
       if (!verificarSessao()) return;
-
+      
+      await carregarTurmas();
+      
+      // ✅ Se veio turma pela URL → entra direto
       if (turmaVinda) {
-        const telaSelecao = document.getElementById("tela-selecao");
-        if (telaSelecao) telaSelecao.style.display = "none";
-
-        await carregarTurmas();
-        const etapa = descobrirEtapaDaTurma(turmaVinda);
+        const select = document.getElementById('turmaSelect');
+        select.value = turmaVinda;
+        currentTurma = turmaVinda;
         
-        if (etapa) {
-          const selectEtapa = document.getElementById("select-etapa");
-          if (selectEtapa) selectEtapa.value = etapa;
-          
-          filtrarTurmasPorEtapa();
-
-          setTimeout(() => {
-            const selectTurmas = document.getElementById("select-turmas");
-            if (selectTurmas) selectTurmas.value = turmaVinda;
-            
-            turmaAtualSelecionada = turmaVinda;
-
-            const tituloTurma = document.getElementById("titulo-turma");
-            if (tituloTurma) tituloTurma.innerText = `Mapeamento · ${turmaVinda}`;
-            
-            atualizarLinks(turmaVinda);
-
-            const telaMapeamento = document.getElementById("tela-mapeamento");
-            if (telaMapeamento) {
-              telaMapeamento.classList.remove("hidden");
-              telaMapeamento.style.display = "block";
-            }
-
-            carregarDadosMapeamento(turmaVinda);
-          }, 100);
-        }
-      } else {
-        await carregarTurmas();
-        const telaMapeamento = document.getElementById("tela-mapeamento");
-        if (telaMapeamento) telaMapeamento.style.display = "none";
+        // Esconde a seleção de turma
+        document.getElementById('area-selecao-turma').style.display = 'none';
+        
+        atualizarLinksNavegacao(turmaVinda);
+        await carregarMapeamento();
       }
+      
+      setupEventListeners();
     });
 
-    function atualizarLinks(nomeTurma) {
-      const btnCarometro = document.getElementById("btn-carometro");
-      if (btnCarometro) btnCarometro.href = `carometro.html?turma=${encodeURIComponent(nomeTurma)}`;
-      
-      const btnDiario = document.getElementById("btn-diario-bordo");
-      if (btnDiario) btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}`;
-    }
-
-    function descobrirEtapaDaTurma(turma) {
-      if (!turma) return "";
-      const t = turma.toUpperCase();
-      if (t.startsWith("1 REG")) return "1 REG";
-      if (t.includes("ADM")) return "1 ADM";
-      if (t.startsWith("2 REG")) return "2 REG";
-      if (t.startsWith("3 REG")) return "3 REG";
-      return "";
-    }
-
     function verificarSessao() {
-      const expiracao = localStorage.getItem(CHAVE_EXPIRACAO);
+      const expiracao = localStorage.getItem(CHAVE_SESSAO);
       const agora = Date.now();
       if (!expiracao || agora >= parseInt(expiracao)) {
-        localStorage.removeItem(CHAVE_EXPIRACAO);
+        localStorage.removeItem(CHAVE_SESSAO);
         window.location.href = "carometro.html";
         return false;
       }
       return true;
     }
 
-    async function carregarTurmas() {
-      const { data, error } = await supabaseClient.from("carometro").select("class_name");
-      if (error) {
-        console.error("Erro ao carregar turmas:", error);
-        return;
+    function atualizarLinksNavegacao(nomeTurma) {
+      // Atualiza título
+      document.getElementById('nome-turma-atual').textContent = nomeTurma;
+      
+      // Atualiza links com a turma
+      const btnCarometro = document.getElementById('btn-carometro');
+      if (btnCarometro) {
+        btnCarometro.href = `carometro.html?turma=${encodeURIComponent(nomeTurma)}`;
       }
-      todasAsTurmas = [...new Set(
-        data.map(item => item.class_name?.trim()).filter(Boolean)
-      )].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
+      const btnDiario = document.getElementById('btn-diario');
+      if (btnDiario) {
+        btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}`;
+      }
     }
 
-    function filtrarTurmasPorEtapa() {
-      const selectEtapa = document.getElementById("select-etapa");
-      if (!selectEtapa) return;
-      
-      const etapa = selectEtapa.value;
-      const selectTurmas = document.getElementById("select-turmas");
-      if (!selectTurmas) return;
-
-      selectTurmas.innerHTML = '<option value="">-- Escolha uma Turma --</option>';
-      if (!etapa) {
-        selectTurmas.disabled = true;
-        return;
-      }
-
-      let filtradas = [];
-      if (etapa === "1 REG") filtradas = todasAsTurmas.filter(t => t.toUpperCase().startsWith("1 REG"));
-      else if (etapa === "1 ADM") filtradas = todasAsTurmas.filter(t => t.toUpperCase().includes("ADM"));
-      else if (etapa === "2 REG") filtradas = todasAsTurmas.filter(t => t.toUpperCase().startsWith("2 REG"));
-      else if (etapa === "3 REG") filtradas = todasAsTurmas.filter(t => t.toUpperCase().startsWith("3 REG"));
-
-      filtradas.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t;
-        opt.textContent = t;
-        selectTurmas.appendChild(opt);
-      });
-      selectTurmas.disabled = filtradas.length === 0;
-    }
-
-    function selecionarTurmaManual(turma) {
-      if (!turma) return;
-      turmaAtualSelecionada = turma;
-      
-      const tituloTurma = document.getElementById("titulo-turma");
-      if (tituloTurma) tituloTurma.innerText = `Mapeamento · ${turma}`;
-      
-      atualizarLinks(turma);
-
-      const telaSelecao = document.getElementById("tela-selecao");
-      if (telaSelecao) telaSelecao.style.display = "none";
-      
-      const telaMapeamento = document.getElementById("tela-mapeamento");
-      if (telaMapeamento) {
-        telaMapeamento.classList.remove("hidden");
-        telaMapeamento.style.display = "block";
-      }
-
-      carregarDadosMapeamento(turma);
-    }
-
-    function voltarParaSelecao() {
-      turmaAtualSelecionada = "";
-      
-      const telaMapeamento = document.getElementById("tela-mapeamento");
-      if (telaMapeamento) telaMapeamento.style.display = "none";
-      
-      const telaSelecao = document.getElementById("tela-selecao");
-      if (telaSelecao) telaSelecao.style.display = "block";
-      
-      const selectEtapa = document.getElementById("select-etapa");
-      if (selectEtapa) selectEtapa.value = "";
-      
-      const selectTurmas = document.getElementById("select-turmas");
-      if (selectTurmas) {
-        selectTurmas.innerHTML = '<option value="">-- Escolha uma Turma --</option>';
-        selectTurmas.disabled = true;
-      }
-      
-      const tituloTurma = document.getElementById("titulo-turma");
-      if (tituloTurma) tituloTurma.innerText = "Mapeamento de Sala";
-    }
-
-    // ✅ Carrega dados e monta a grade completa
-    async function carregarDadosMapeamento(turma) {
-      const titulo = document.getElementById("nome-turma-titulo");
-      if (titulo) titulo.innerText = turma;
-
-      const grade = document.getElementById("grade-assentos");
-      if (!grade) return;
-      grade.innerHTML = "";
-
-      const { data, error } = await supabaseClient
-        .from("carometro")
-        .select("id, student_name, mapeamento, class_name")
-        .eq("class_name", turma);
-
-      if (error) {
-        console.error("Erro ao carregar:", error);
-        grade.innerHTML = "<p class='text-red-500'>Erro ao carregar dados.</p>";
-        return;
-      }
-
-      todosAlunos = data || [];
-
-      FILEIRAS.forEach((nomeFileira, indice) => {
-        const numeroFileira = indice + 1;
-        const divFileira = document.createElement("div");
-        divFileira.className = "fileira";
-
-        const cabecalho = document.createElement("span");
-        cabecalho.className = "fileira-nome";
-        cabecalho.textContent = nomeFileira;
-        divFileira.appendChild(cabecalho);
-
-        const linhaAssentos = document.createElement("div");
-        linhaAssentos.className = "assentos-linha";
-
-        for (let carteira = 1; carteira <= CARTEIRAS_POR_FILEIRA; carteira++) {
-          const posicao = `${numeroFileira}-${carteira}`;
-          const aluno = todosAlunos.find(a => a.mapeamento === posicao);
-          
-          const assentoEl = document.createElement("div");
-          assentoEl.className = `assento ${aluno ? 'ocupado' : 'livre'}`;
-          assentoEl.dataset.posicao = posicao;
-          assentoEl.dataset.alunoId = aluno?.id || "";
-          
-          // Drag & Drop
-          assentoEl.draggable = !!aluno;
-          assentoEl.addEventListener("click", () => clicarAssento(posicao, aluno));
-          assentoEl.addEventListener("dragstart", (e) => iniciarArrasto(e, posicao, aluno));
-          assentoEl.addEventListener("dragover", (e) => sobreAssento(e));
-          assentoEl.addEventListener("drop", (e) => soltarAssento(e, posicao));
-          assentoEl.addEventListener("dragend", () => finalizarArrasto());
-
-          assentoEl.innerHTML = `
-            <span class="numero-assento">${carteira}</span>
-            <span class="nome-aluno">${formatarNome(aluno?.student_name)}</span>
-          `;
-
-          linhaAssentos.appendChild(assentoEl);
+    function setupEventListeners() {
+      document.getElementById('turmaSelect').addEventListener('change', async (e) => {
+        currentTurma = e.target.value;
+        fileiraAtiva = null;
+        if (currentTurma) {
+          // Mostra seleção mas também atualiza links
+          atualizarLinksNavegacao(currentTurma);
+          await carregarMapeamento();
+        } else {
+          document.getElementById('salaContainer').style.display = 'none';
+          todosAlunos = [];
+          document.getElementById('nome-turma-atual').textContent = 'Selecione uma turma para começar';
         }
-
-        divFileira.appendChild(linhaAssentos);
-        grade.appendChild(divFileira);
+      });
+      
+      document.getElementById('popupEscolhaFechar').addEventListener('click', fecharPopupEscolha);
+      document.getElementById('popupEscolhaOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) fecharPopupEscolha();
+      });
+      
+      document.getElementById('popupConfirmarFechar').addEventListener('click', fecharPopupConfirmar);
+      document.getElementById('popupConfirmarCancelar').addEventListener('click', fecharPopupConfirmar);
+      document.getElementById('popupConfirmarOk').addEventListener('click', executarAcaoConfirmada);
+      document.getElementById('popupConfirmarOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) fecharPopupConfirmar();
       });
     }
 
-    // ✅ Clica no assento — vazio = lista alunos disponíveis | ocupado = opções
-    function clicarAssento(posicao, aluno) {
-      assentoAlvoAtual = posicao;
-      
-      if (!aluno) {
-        // Assento vazio → mostra lista de alunos sem posição
-        const alunosDisponiveis = todosAlunos.filter(a => !a.mapeamento || a.mapeamento === "");
-        abrirModalLista(alunosDisponiveis, posicao);
-      } else {
-        // Assento ocupado → opções: trocar ou remover
-        abrirModalOpcoes(aluno, posicao);
+    async function carregarTurmas() {
+      try {
+        const { data, error } = await supabaseClient
+          .from(TABELA_CAROMETRO)
+          .select('class_name')
+          .order('class_name');
+        
+        if (error) throw error;
+        
+        const turmasUnicas = [...new Set(data.map(a => a.class_name).filter(Boolean))].sort();
+        const select = document.getElementById('turmaSelect');
+        select.innerHTML = '<option value="">-- Escolha uma Turma --</option>';
+        turmasUnicas.forEach(turma => {
+          const option = document.createElement('option');
+          option.value = turma;
+          option.textContent = turma;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        mostrarNotificacao('Erro ao carregar turmas: ' + error.message, 'erro');
       }
     }
 
-    // ✅ Abre modal com alunos disponíveis
-    function abrirModalLista(alunos, posicao) {
-      const modal = document.getElementById("modal-aluno");
-      const titulo = document.getElementById("modal-titulo");
-      const conteudo = document.getElementById("modal-conteudo");
+    async function carregarMapeamento() {
+      showLoading(true);
+      try {
+        const { data: alunos, error } = await supabaseClient
+          .from(TABELA_CAROMETRO)
+          .select('id, student_name, photo_url, class_name, mapeamento')
+          .eq('class_name', currentTurma)
+          .order('student_name');
+        
+        if (error) throw error;
+        
+        todosAlunos = alunos || [];
+        renderizarSala();
+        showLoading(false);
+        mostrarNotificacao('Mapeamento carregado com sucesso!', 'sucesso');
+      } catch (error) {
+        showLoading(false);
+        mostrarNotificacao('Erro ao carregar mapeamento: ' + error.message, 'erro');
+      }
+    }
 
-      titulo.textContent = `Alocar em ${posicao}`;
-      conteudo.innerHTML = "";
+    function renderizarSala() {
+      const container = document.getElementById('salaContainer');
+      container.innerHTML = '';
+      container.style.display = 'flex';
+      
+      for (let fileira = 1; fileira <= 5; fileira++) {
+        const col = criarFileiraCol(fileira);
+        if (fileiraAtiva === fileira) col.classList.add('active');
+        container.appendChild(col);
+      }
+    }
 
-      if (alunos.length === 0) {
-        conteudo.innerHTML = `<p class="text-gray-500">Nenhum aluno disponível para alocar.</p>`;
+    function criarFileiraCol(fileiraNum) {
+      const col = document.createElement('div');
+      col.className = 'fileira-col';
+      col.dataset.fileira = fileiraNum;
+      
+      const header = document.createElement('div');
+      header.className = 'fileira-header';
+      header.innerHTML = `<h3>${nomesFileiras[fileiraNum - 1]}</h3>`;
+      header.addEventListener('click', () => toggleFileira(col, fileiraNum));
+      
+      const content = document.createElement('div');
+      content.className = 'fileira-content';
+      
+      const stack = document.createElement('div');
+      stack.className = 'carteiras-stack';
+      for (let carteira = 1; carteira <= 8; carteira++) {
+        stack.appendChild(criarCarteira(fileiraNum, carteira));
+      }
+      content.appendChild(stack);
+      
+      const alunosDiv = document.createElement('div');
+      alunosDiv.className = 'alunos-disponiveis';
+      alunosDiv.innerHTML = '<h4>Alunos Disponíveis:</h4>';
+      
+      const lista = document.createElement('div');
+      lista.className = 'alunos-lista';
+      const disponiveis = todosAlunos.filter(a => !a.mapeamento || a.mapeamento.trim() === '');
+      
+      if (disponiveis.length === 0) {
+        lista.innerHTML = '<p style="color: #666; font-size: 12px; width: 100%; text-align: center;">Todos posicionados</p>';
       } else {
-        alunos.forEach(aluno => {
-          const item = document.createElement("div");
-          item.className = "aluno-item";
-          item.textContent = formatarNome(aluno.student_name);
-          item.onclick = () => alocarAluno(aluno, posicao);
+        disponiveis.forEach(aluno => {
+          const alunoItem = document.createElement('div');
+          alunoItem.className = 'aluno-item';
+          alunoItem.draggable = true;
+          alunoItem.textContent = formatarNome(aluno.student_name);
+          alunoItem.dataset.alunoId = aluno.id;
+          alunoItem.addEventListener('dragstart', handleDragStart);
+          alunoItem.addEventListener('dragend', handleDragEnd);
+          lista.appendChild(alunoItem);
+        });
+      }
+      
+      alunosDiv.appendChild(lista);
+      content.appendChild(alunosDiv);
+      
+      col.appendChild(header);
+      col.appendChild(content);
+      return col;
+    }
+
+    function criarCarteira(fileira, carteira) {
+      const div = document.createElement('div');
+      div.className = 'carteira';
+      const posicaoEsperada = `${fileira}-${carteira}`;
+      const alunoAlocado = todosAlunos.find(a => a.mapeamento === posicaoEsperada);
+      
+      const numero = document.createElement('span');
+      numero.className = 'carteira-numero';
+      numero.textContent = carteira;
+      div.appendChild(numero);
+      
+      if (alunoAlocado) {
+        div.classList.add('occupied');
+        const alunoDiv = document.createElement('div');
+        alunoDiv.className = 'carteira-aluno';
+        
+        const btnRemover = document.createElement('button');
+        btnRemover.className = 'btn-remover';
+        btnRemover.innerHTML = '×';
+        btnRemover.title = 'Remover';
+        btnRemover.onclick = (e) => {
+          e.stopPropagation();
+          abrirPopupConfirmar(
+            'Remover Aluno',
+            'Deseja realmente remover o aluno deste assento?',
+            () => removerAlunoDoAssento(alunoAlocado.id),
+            true
+          );
+        };
+        alunoDiv.appendChild(btnRemover);
+        
+        const img = document.createElement('img');
+        img.src = alunoAlocado.photo_url || PLACEHOLDER_FOTO;
+        img.alt = alunoAlocado.student_name;
+        
+        const nome = document.createElement('p');
+        nome.textContent = formatarNome(alunoAlocado.student_name);
+        alunoDiv.appendChild(img);
+        alunoDiv.appendChild(nome);
+        div.appendChild(alunoDiv);
+        
+        div.draggable = true;
+        div.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('application/aluno-id', alunoAlocado.id);
+          div.classList.add('dragging');
+        });
+        div.addEventListener('dragend', () => div.classList.remove('dragging'));
+      } else {
+        div.classList.add('vazia');
+        div.addEventListener('click', () => abrirPopupEscolha(fileira, carteira));
+      }
+      
+      div.addEventListener('dragover', handleDragOver);
+      div.addEventListener('dragleave', handleDragLeave);
+      div.addEventListener('drop', (e) => handleDrop(e, fileira, carteira));
+      
+      return div;
+    }
+
+    function abrirPopupEscolha(fileira, carteira) {
+      assentoAlvo = { fileira, carteira };
+      
+      const disponiveis = todosAlunos.filter(a => !a.mapeamento || a.mapeamento.trim() === '');
+      const conteudo = document.getElementById('popupEscolhaConteudo');
+      const titulo = document.getElementById('popupEscolhaTitulo');
+      
+      titulo.textContent = `Assento: ${nomesFileiras[fileira - 1]} — Lugar ${carteira}`;
+      
+      if (disponiveis.length === 0) {
+        conteudo.innerHTML = '<p class="popup-vazio">Não há alunos disponíveis no momento.</p>';
+      } else {
+        conteudo.innerHTML = '';
+        disponiveis.forEach(aluno => {
+          const item = document.createElement('div');
+          item.className = 'popup-aluno';
+          item.innerHTML = `
+            <img src="${aluno.photo_url || PLACEHOLDER_FOTO}" alt="${aluno.student_name}">
+            <span>${formatarNome(aluno.student_name)}</span>
+          `;
+          item.addEventListener('click', () => selecionarAlunoParaAssento(aluno.id));
           conteudo.appendChild(item);
         });
       }
-
-      modal.classList.remove("hidden");
-    }
-
-    // ✅ Abre modal de opções para assento ocupado
-    function abrirModalOpcoes(aluno, posicao) {
-      const modal = document.getElementById("modal-aluno");
-      const titulo = document.getElementById("modal-titulo");
-      const conteudo = document.getElementById("modal-conteudo");
-
-      titulo.textContent = formatarNome(aluno.student_name);
-      conteudo.innerHTML = `
-        <p class="mb-3 text-gray-600">Posição: ${posicao}</p>
-        <div class="flex flex-col gap-2">
-          <button class="btn btn-danger w-full" onclick="retirarAlunoDaPosicao(${aluno.id})">
-            <i class="fas fa-user-minus"></i> Retirar da posição
-          </button>
-          <button class="btn btn-secondary w-full" onclick="fecharModal()">
-            <i class="fas fa-times"></i> Cancelar
-          </button>
-        </div>
-      `;
-
-      modal.classList.remove("hidden");
-    }
-
-    // ✅ Aloca aluno no assento
-    async function alocarAluno(aluno, posicao) {
-      const { error } = await supabaseClient
-        .from("carometro")
-        .update({ mapeamento: posicao })
-        .eq("id", aluno.id);
-
-      if (error) {
-        alert("Erro ao alocar: " + error.message);
-        return;
-      }
-
-      fecharModal();
-      carregarDadosMapeamento(turmaAtualSelecionada);
-    }
-
-    // ✅ Retira aluno do assento
-    async function retirarAlunoDaPosicao(alunoId) {
-      if (!confirm("Tem certeza que deseja remover este aluno do assento?")) return;
-
-      const { error } = await supabaseClient
-        .from("carometro")
-        .update({ mapeamento: "" })
-        .eq("id", alunoId);
-
-      if (error) {
-        alert("Erro ao remover: " + error.message);
-        return;
-      }
-
-      fecharModal();
-      carregarDadosMapeamento(turmaAtualSelecionada);
-    }
-
-    // ✅ Arraste e solte
-    function iniciarArrasto(e, posicao, aluno) {
-      alunoArrastando = { posicao, aluno };
-      e.target.classList.add("dragging");
-      e.dataTransfer.effectAllowed = "move";
-    }
-
-    function sobreAssento(e) {
-      e.preventDefault();
-      e.currentTarget.classList.add("over");
-    }
-
-    async function soltarAssento(e, posicaoDestino) {
-      e.preventDefault();
-      e.currentTarget.classList.remove("over");
       
-      if (!alunoArrastando) return;
+      document.getElementById('popupEscolhaOverlay').classList.add('aberto');
+    }
+
+    function fecharPopupEscolha() {
+      document.getElementById('popupEscolhaOverlay').classList.remove('aberto');
+      assentoAlvo = { fileira: null, carteira: null };
+    }
+
+    async function selecionarAlunoParaAssento(alunoId) {
+      const { fileira, carteira } = assentoAlvo;
+      if (!fileira || !carteira) return;
       
-      const posicaoOrigem = alunoArrastando.posicao;
-      if (posicaoOrigem === posicaoDestino) return;
+      const novaPosicao = `${fileira}-${carteira}`;
+      fecharPopupEscolha();
+      
+      const aluno = todosAlunos.find(a => a.id === alunoId);
+      if (aluno) aluno.mapeamento = novaPosicao;
+      
+      const alunoNoAlvo = todosAlunos.find(a => a.mapeamento === novaPosicao && a.id !== alunoId);
+      if (alunoNoAlvo) alunoNoAlvo.mapeamento = null;
+      
+      renderizarSala();
+      
+      try {
+        const updates = [];
+        if (alunoNoAlvo) {
+          updates.push(
+            supabaseClient.from(TABELA_CAROMETRO)
+              .update({ mapeamento: null })
+              .eq('id', alunoNoAlvo.id)
+          );
+        }
+        updates.push(
+          supabaseClient.from(TABELA_CAROMETRO)
+            .update({ mapeamento: novaPosicao })
+            .eq('id', alunoId)
+        );
+        const results = await Promise.all(updates);
+        const errors = results.filter(r => r.error);
+        if (errors.length > 0) throw errors[0].error;
+        
+        mostrarNotificacao('Aluno alocado com sucesso!', 'sucesso');
+      } catch (error) {
+        mostrarNotificacao('Erro: ' + error.message, 'erro');
+        await carregarMapeamento();
+      }
+    }
 
-      const alunoOrigem = alunoArrastando.aluno;
-      const alunoDestino = todosAlunos.find(a => a.mapeamento === posicaoDestino);
-
-      if (alunoDestino) {
-        // Troca de lugares
-        await Promise.all([
-          supabaseClient.from("carometro").update({ mapeamento: posicaoDestino }).eq("id", alunoOrigem.id),
-          supabaseClient.from("carometro").update({ mapeamento: posicaoOrigem }).eq("id", alunoDestino.id)
-        ]);
+    function abrirPopupConfirmar(titulo, texto, acao, perigo = false) {
+      acaoConfirmada = acao;
+      document.getElementById('popupConfirmarTitulo').textContent = titulo;
+      document.getElementById('popupConfirmarTexto').textContent = texto;
+      
+      const btnOk = document.getElementById('popupConfirmarOk');
+      if (perigo) {
+        btnOk.classList.add('perigo');
       } else {
-        // Move para lugar vazio
-        await supabaseClient
-          .from("carometro")
-          .update({ mapeamento: posicaoDestino })
-          .eq("id", alunoOrigem.id);
+        btnOk.classList.remove('perigo');
       }
-
-      carregarDadosMapeamento(turmaAtualSelecionada);
+      
+      document.getElementById('popupConfirmarOverlay').classList.add('aberto');
     }
 
-    function finalizarArrasto() {
-      alunoArrastando = null;
-      document.querySelectorAll(".assento").forEach(el => {
-        el.classList.remove("dragging", "over");
-      });
+    function fecharPopupConfirmar() {
+      document.getElementById('popupConfirmarOverlay').classList.remove('aberto');
+      acaoConfirmada = null;
     }
 
-    function fecharModal() {
-      const modal = document.getElementById("modal-aluno");
-      if (modal) modal.classList.add("hidden");
-      assentoAlvoAtual = null;
+    function executarAcaoConfirmada() {
+      if (typeof acaoConfirmada === 'function') {
+        acaoConfirmada();
+      }
+      fecharPopupConfirmar();
     }
 
-    // Fecha modal clicando fora
-    document.getElementById("modal-aluno")?.addEventListener("click", (e) => {
-      if (e.target.id === "modal-aluno") fecharModal();
-    });
+    function toggleFileira(col, numero) {
+      const isActive = col.classList.contains('active');
+      document.querySelectorAll('.fileira-col').forEach(c => c.classList.remove('active'));
+      
+      if (!isActive) {
+        col.classList.add('active');
+        fileiraAtiva = numero;
+      } else {
+        fileiraAtiva = null;
+      }
+    }
+
+    function handleDragStart(e) {
+      e.dataTransfer.setData('application/aluno-id', e.target.dataset.alunoId);
+      e.target.classList.add('dragging');
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    async function handleDrop(e, fileira, carteira) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      
+      const alunoId = e.dataTransfer.getData('application/aluno-id');
+      if (!alunoId) return;
+      
+      const novaPosicao = `${fileira}-${carteira}`;
+      const alunoNoAlvo = todosAlunos.find(a => a.mapeamento === novaPosicao && a.id !== alunoId);
+      const aluno = todosAlunos.find(a => a.id === alunoId);
+      
+      if (aluno) aluno.mapeamento = novaPosicao;
+      if (alunoNoAlvo) alunoNoAlvo.mapeamento = null;
+      
+      renderizarSala();
+      
+      try {
+        const updates = [];
+        if (alunoNoAlvo) {
+          updates.push(
+            supabaseClient.from(TABELA_CAROMETRO)
+              .update({ mapeamento: null })
+              .eq('id', alunoNoAlvo.id)
+          );
+        }
+        updates.push(
+          supabaseClient.from(TABELA_CAROMETRO)
+            .update({ mapeamento: novaPosicao })
+            .eq('id', alunoId)
+        );
+        const results = await Promise.all(updates);
+        const errors = results.filter(r => r.error);
+        if (errors.length > 0) throw errors[0].error;
+        
+        mostrarNotificacao('Posição atualizada com sucesso!', 'sucesso');
+      } catch (error) {
+        mostrarNotificacao('Erro: ' + error.message, 'erro');
+        await carregarMapeamento();
+      }
+    }
+
+    async function removerAlunoDoAssento(alunoId) {
+      const aluno = todosAlunos.find(a => a.id === alunoId);
+      if (aluno) aluno.mapeamento = null;
+      renderizarSala();
+      
+      try {
+        const { error } = await supabaseClient
+          .from(TABELA_CAROMETRO)
+          .update({ mapeamento: null })
+          .eq('id', alunoId);
+        
+        if (error) throw error;
+        mostrarNotificacao('Aluno removido com sucesso!', 'sucesso');
+      } catch (error) {
+        mostrarNotificacao('Erro: ' + error.message, 'erro');
+        await carregarMapeamento();
+      }
+    }
+
+    function showLoading(show) {
+      document.getElementById('loading').style.display = show ? 'block' : 'none';
+      if (show) document.getElementById('salaContainer').style.display = 'none';
+    }
+
+    function mostrarNotificacao(texto, tipo) {
+      const el = document.getElementById('notificacao');
+      el.className = `notificacao ${tipo}`;
+      el.textContent = texto;
+      el.classList.add('mostrar');
+      
+      setTimeout(() => {
+        el.classList.remove('mostrar');
+      }, 3500);
+    }
   </script>
 </body>
 </html>
