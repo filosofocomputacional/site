@@ -267,55 +267,81 @@
 
     // ✅ FUNÇÃO CORRIGIDA — estava faltando e causando o erro
     async function carregarDadosMapeamento(turma) {
-      const titulo = document.getElementById("nome-turma-titulo");
-      if (titulo) titulo.innerText = turma;
+  const titulo = document.getElementById("nome-turma-titulo");
+  if (titulo) titulo.innerText = turma;
 
-      const grade = document.getElementById("grade-assentos");
-      if (!grade) return;
-      
-      grade.innerHTML = "";
+  const grade = document.getElementById("grade-assentos");
+  if (!grade) return;
+  
+  grade.innerHTML = "";
 
-      // Busca alunos da turma no Supabase
-      const { data, error } = await supabaseClient
-        .from("carometro")
-        .select("name, seat_number, occupied")
-        .eq("class_name", turma)
-        .order("seat_number", { ascending: true });
+  // ✅ Colunas CORRETAS do seu banco: student_name, mapeamento
+  const { data, error } = await supabaseClient
+    .from("carometro")
+    .select("id, student_name, mapeamento, photo_url")
+    .eq("class_name", turma);
 
-      if (error) {
-        console.error("Erro ao carregar dados:", error);
-        grade.innerHTML = "<p class='text-red-500'>Erro ao carregar dados da turma.</p>";
-        return;
-      }
+  if (error) {
+    console.error("Erro ao carregar dados:", error);
+    grade.innerHTML = "<p class='text-red-500'>Erro ao carregar dados da turma.</p>";
+    return;
+  }
 
-      // Organiza em filas de 5 assentos
-      const assentosPorFila = 5;
-      for (let i = 0; i < 30; i += assentosPorFila) {
-        const filaDiv = document.createElement("div");
-        filaDiv.className = "fila";
-
-        for (let j = i + 1; j <= i + assentosPorFila; j++) {
-          const aluno = data?.find(a => a.seat_number === j);
-          const assentoDiv = document.createElement("div");
-          
-          assentoDiv.className = "assento";
-          if (aluno && aluno.occupied) {
-            assentoDiv.classList.add("ocupado");
-          } else {
-            assentoDiv.classList.add("livre");
-          }
-
-          assentoDiv.innerHTML = `
-            <span class="numero-assento">${j}</span>
-            <span class="nome-aluno">${aluno?.name || "Livre"}</span>
-          `;
-          
-          filaDiv.appendChild(assentoDiv);
-        }
-
-        grade.appendChild(filaDiv);
-      }
+  // Reorganiza os alunos pela posição no assento
+  const alunosPorAssento = {};
+  
+  data.forEach(aluno => {
+    if (aluno.mapeamento) {
+      // mapeamento = "fileira-carteira" ex: "1-1", "1-2"...
+      alunosPorAssento[aluno.mapeamento] = aluno;
     }
+  });
+
+  // Monta a grade — 5 fileiras × 8 assentos = igual ao seu código original
+  const nomesFileiras = ['Porta', 'Fileira 1', 'Fileira 2', 'Fileira 3', 'Fileira 4'];
+  
+  nomesFileiras.forEach((nomeFileira, indice) => {
+    const numeroFileira = indice + 1;
+    const filaDiv = document.createElement("div");
+    filaDiv.style.marginBottom = "1rem";
+    
+    const cabecalho = document.createElement("h4");
+    cabecalho.style.fontWeight = "bold";
+    cabecalho.style.marginBottom = "0.5rem";
+    cabecalho.textContent = nomeFileira;
+    filaDiv.appendChild(cabecalho);
+
+    const assentosDiv = document.createElement("div");
+    assentosDiv.className = "fila";
+
+    for (let carteira = 1; carteira <= 8; carteira++) {
+      const chave = `${numeroFileira}-${carteira}`;
+      const aluno = alunosPorAssento[chave];
+      
+      const assentoDiv = document.createElement("div");
+      assentoDiv.className = "assento";
+      
+      if (aluno) {
+        assentoDiv.classList.add("ocupado");
+        assentoDiv.innerHTML = `
+          <span class="numero-assento">${carteira}</span>
+          <span class="nome-aluno">${aluno.student_name}</span>
+        `;
+      } else {
+        assentoDiv.classList.add("livre");
+        assentoDiv.innerHTML = `
+          <span class="numero-assento">${carteira}</span>
+          <span class="nome-aluno">Livre</span>
+        `;
+      }
+      
+      assentosDiv.appendChild(assentoDiv);
+    }
+
+    filaDiv.appendChild(assentosDiv);
+    grade.appendChild(filaDiv);
+  });
+}
   </script>
 </body>
 </html>
