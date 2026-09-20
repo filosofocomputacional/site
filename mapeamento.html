@@ -205,62 +205,93 @@
 
     let turmaAtualSelecionada = "";
 
+let todasAsTurmas = [];
+let turmaAtualSelecionada = "";
+const CHAVE_EXPIRACAO = "carometro_sessao_expiracao";
+
 document.addEventListener("DOMContentLoaded", async () => {
-    // 👇 ESTA É A PARTE PRINCIPAL — lê a turma da URL
+    // 🔑 LÊ A TURMA QUE VEIO DO CARÔMETRO
     const params = new URLSearchParams(window.location.search);
-    const turmaVindaDoCarometro = params.get('turma');
+    const turmaVinda = params.get('turma');
     
-    if (turmaVindaDoCarometro) {
-        // Carrega a lista de turmas primeiro
+    // Verifica sessão primeiro
+    if (!verificarSessao()) return;
+
+    if (turmaVinda) {
+        // Carrega lista de turmas do Supabase
         await carregarTurmas();
         
-        // Descobre qual etapa é essa turma
-        const etapa = descobrirEtapaDaTurma(turmaVindaDoCarometro);
+        // Descobre qual etapa pertence à turma
+        const etapa = descobrirEtapaDaTurma(turmaVinda);
         if (etapa) {
-            // Seleciona a etapa no select
+            // Preenche os selects automaticamente
             document.getElementById("select-etapa").value = etapa;
-            filtrarTurmasPorEtapa();
+            filtrarTurmasPorEtapa(); // Preenche a lista de turmas
             
-            // Seleciona a turma
-            document.getElementById("select-turmas").value = turmaVindaDoCarometro;
-            turmaAtualSelecionada = turmaVindaDoCarometro;
-            
-            // Entra direto na tela da turma
-            document.getElementById("titulo-turma").innerText = `Mapeamento · ${turmaVindaDoCarometro}`;
-            
-            // ✅ Atualiza o link de VOLTAR para o Carômetro com a turma
-            const btnCarometro = document.getElementById("btn-carometro");
-            if (btnCarometro) {
-                btnCarometro.href = `index.html?turma=${encodeURIComponent(turmaVindaDoCarometro)}`;
-            }
-            
-            // ✅ Atualiza o link do Diário de Bordo também
-            const btnDiario = document.getElementById("btn-diario-bordo");
-            if (btnDiario) {
-                btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(turmaVindaDoCarometro)}`;
-            }
-            
-            // Esconde a seleção e mostra o conteúdo da turma
-            document.getElementById("tela-selecao").classList.add("hidden");
-            document.getElementById("tela-mapeamento").classList.remove("hidden");
-            
-            // Carrega os dados da turma
-            carregarDadosTurma(turmaVindaDoCarometro);
+            // Espera o select ser preenchido e seleciona
+            setTimeout(() => {
+                document.getElementById("select-turmas").value = turmaVinda;
+                turmaAtualSelecionada = turmaVinda;
+                
+                // Atualiza título e links de navegação
+                document.getElementById("titulo-turma").innerText = `Mapeamento · ${turmaVinda}`;
+                atualizarLinks(turmaVinda);
+                
+                // Mostra direto a tela da turma
+                document.getElementById("tela-selecao").classList.add("hidden");
+                document.getElementById("tela-mapeamento").classList.remove("hidden");
+                
+                // Carrega os alunos/dados da turma
+                carregarDadosMapeamento(turmaVinda);
+            }, 50); // Pequeno atraso para garantir que o select foi preenchido
         }
+    } else {
+        // Se não veio turma, mostra a seleção normalmente
+        await carregarTurmas();
     }
 });
 
-// Função que descobre a etapa (igual ao Carômetro)
+// ✅ Atualiza todos os links para manter a turma
+function atualizarLinks(nomeTurma) {
+    // Link para voltar ao Carômetro
+    const btnCarometro = document.getElementById("btn-carometro");
+    if (btnCarometro) {
+        btnCarometro.href = `index.html?turma=${encodeURIComponent(nomeTurma)}`;
+    }
+    // Link para o Diário de Bordo
+    const btnDiario = document.getElementById("btn-diario-bordo");
+    if (btnDiario) {
+        btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}`;
+    }
+}
+
+// ✅ Descobre a etapa (igual ao Carômetro)
 function descobrirEtapaDaTurma(turma) {
     if (!turma) return "";
-    const turmaUpper = turma.toUpperCase();
-    if (turmaUpper.startsWith("1 REG")) return "1 REG";
-    if (turmaUpper.includes("ADM")) return "1 ADM";
-    if (turmaUpper.startsWith("2 REG")) return "2 REG";
-    if (turmaUpper.startsWith("3 REG")) return "3 REG";
+    const t = turma.toUpperCase();
+    if (t.startsWith("1 REG")) return "1 REG";
+    if (t.includes("ADM")) return "1 ADM";
+    if (t.startsWith("2 REG")) return "2 REG";
+    if (t.startsWith("3 REG")) return "3 REG";
     return "";
 }
 
+// ✅ Verifica sessão
+function verificarSessao() {
+    const expiracao = localStorage.getItem(CHAVE_EXPIRACAO);
+    const agora = Date.now();
+    if (!expiracao || agora >= parseInt(expiracao)) {
+        localStorage.removeItem(CHAVE_EXPIRACAO);
+        window.location.href = "index.html";
+        return false;
+    }
+    return true;
+}
+
+// ⚠️ Confirme que estas funções existem na sua página:
+// - carregarTurmas() → busca as turmas no Supabase
+// - filtrarTurmasPorEtapa() → filtra e preenche o select-turmas
+// - carregarDadosMapeamento(nomeTurma) → carrega os alunos/posições da turma
     // CODIGO ORIGINAL
 
     document.addEventListener('DOMContentLoaded', () => {
