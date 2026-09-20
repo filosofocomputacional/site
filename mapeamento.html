@@ -195,77 +195,56 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const TABELA_CAROMETRO = 'carometro';
     
-    let currentTurma = '';
-    let todosAlunos = [];
-    const nomesFileiras = ['Porta', 'Fileira 1', 'Fileira 2', 'Fileira 3', 'Mesa do Prof'];
-    
-    let assentoAlvo = { fileira: null, carteira: null };
-    let fileiraAtiva = null;
-    let acaoConfirmada = null;
-
-    let turmaAtualSelecionada = "";
-
-let todasAsTurmas = [];
+  let todasAsTurmas = [];
 let turmaAtualSelecionada = "";
 const CHAVE_EXPIRACAO = "carometro_sessao_expiracao";
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // 🔑 LÊ A TURMA QUE VEIO DO CARÔMETRO
     const params = new URLSearchParams(window.location.search);
     const turmaVinda = params.get('turma');
-    
-    // Verifica sessão primeiro
+
     if (!verificarSessao()) return;
 
     if (turmaVinda) {
-        // Carrega lista de turmas do Supabase
         await carregarTurmas();
-        
-        // Descobre qual etapa pertence à turma
         const etapa = descobrirEtapaDaTurma(turmaVinda);
+        
         if (etapa) {
-            // Preenche os selects automaticamente
             document.getElementById("select-etapa").value = etapa;
-            filtrarTurmasPorEtapa(); // Preenche a lista de turmas
-            
-            // Espera o select ser preenchido e seleciona
+            filtrarTurmasPorEtapa();
+
+            // Seleciona e entra direto — sem mostrar a tela de escolha
             setTimeout(() => {
                 document.getElementById("select-turmas").value = turmaVinda;
                 turmaAtualSelecionada = turmaVinda;
-                
-                // Atualiza título e links de navegação
+
                 document.getElementById("titulo-turma").innerText = `Mapeamento · ${turmaVinda}`;
                 atualizarLinks(turmaVinda);
-                
-                // Mostra direto a tela da turma
-                document.getElementById("tela-selecao").classList.add("hidden");
+
+                // 👇 ESCONDE COMPLETAMENTE A TELA DE SELEÇÃO
+                document.getElementById("tela-selecao").style.display = "none";
                 document.getElementById("tela-mapeamento").classList.remove("hidden");
-                
-                // Carrega os alunos/dados da turma
+
                 carregarDadosMapeamento(turmaVinda);
-            }, 50); // Pequeno atraso para garantir que o select foi preenchido
+            }, 80);
         }
     } else {
-        // Se não veio turma, mostra a seleção normalmente
+        // Só mostra seleção se não veio turma na URL
         await carregarTurmas();
     }
 });
 
-// ✅ Atualiza todos os links para manter a turma
 function atualizarLinks(nomeTurma) {
-    // Link para voltar ao Carômetro
     const btnCarometro = document.getElementById("btn-carometro");
     if (btnCarometro) {
         btnCarometro.href = `index.html?turma=${encodeURIComponent(nomeTurma)}`;
     }
-    // Link para o Diário de Bordo
     const btnDiario = document.getElementById("btn-diario-bordo");
     if (btnDiario) {
         btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}`;
     }
 }
 
-// ✅ Descobre a etapa (igual ao Carômetro)
 function descobrirEtapaDaTurma(turma) {
     if (!turma) return "";
     const t = turma.toUpperCase();
@@ -276,7 +255,6 @@ function descobrirEtapaDaTurma(turma) {
     return "";
 }
 
-// ✅ Verifica sessão
 function verificarSessao() {
     const expiracao = localStorage.getItem(CHAVE_EXPIRACAO);
     const agora = Date.now();
@@ -287,6 +265,40 @@ function verificarSessao() {
     }
     return true;
 }
+
+async function carregarTurmas() {
+    const { data, error } = await supabaseClient.from("carometro").select("class_name");
+    if (error) {
+        alert("Erro ao carregar turmas: " + error.message);
+        return;
+    }
+    todasAsTurmas = [...new Set(
+        data.map(item => item.class_name?.trim()).filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
+}
+
+function filtrarTurmasPorEtapa() {
+    const etapa = document.getElementById("select-etapa").value;
+    const selectTurmas = document.getElementById("select-turmas");
+    selectTurmas.innerHTML = '<option value="">-- Escolha uma Turma --</option>';
+
+    if (!etapa) return;
+
+    let filtradas = [];
+    if (etapa === "1 REG") filtradas = todasAsTurmas.filter(t => t.toUpperCase().startsWith("1 REG"));
+    else if (etapa === "1 ADM") filtradas = todasAsTurmas.filter(t => t.toUpperCase().includes("ADM"));
+    else if (etapa === "2 REG") filtradas = todasAsTurmas.filter(t => t.toUpperCase().startsWith("2 REG"));
+    else if (etapa === "3 REG") filtradas = todasAsTurmas.filter(t => t.toUpperCase().startsWith("3 REG"));
+
+    filtradas.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        selectTurmas.appendChild(opt);
+    });
+    selectTurmas.disabled = false;
+}
+
 
 // ⚠️ Confirme que estas funções existem na sua página:
 // - carregarTurmas() → busca as turmas no Supabase
