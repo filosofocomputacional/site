@@ -81,14 +81,15 @@
         <div class="w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
             <div class="px-6 sm:px-8 pt-8 pb-5 text-center">
                 <div class="mx-auto mb-4 w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center overflow-hidden p-1 shadow-sm">
-                   <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEu6XYfBX6dLECkxfarfPyb2WfE9KQSWr1B8WeCshx2w&amp;s" class="relative h-20 w-20 rounded-full border-4 border-white shadow-lg" alt="Logo">                </div>
+                   <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEu6XYfBX6dLECkxfarfPyb2WfE9KQSWr1B8WeCshx2w&s" class="relative h-20 w-20 rounded-full border-4 border-white shadow-lg" alt="Logo">
+                </div>
                 <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Acesso ao Carômetro</h1>
-                <p class="text-sm text-slate-500 mt-1">E.E E.E Francisco Firmo de Matos</p>
+                <p class="text-sm text-slate-500 mt-1">E.E Francisco Firmo de Matos</p>
             </div>
             <form id="form-login" onsubmit="efetuarLogin(event)" class="px-6 sm:px-8 pb-8 space-y-5">
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Usuário / Escola</label>
-                    <input type="text" id="login-username" name="username" value="E.E E.E Francisco Firmo de Matos" readonly autocomplete="username"
+                    <input type="text" id="login-username" name="username" value="E.E Francisco Firmo de Matos" readonly autocomplete="username"
                         class="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl font-semibold text-slate-600 text-sm outline-none cursor-not-allowed">
                 </div>
                 <div>
@@ -103,14 +104,14 @@
         </div>
     </div>
     <!-- =====================================================
-         TELA DE SELEÇÃO DE TURMAS — IGUAL AO CÓDIGO ANTIGO
+         TELA DE SELEÇÃO DE TURMAS
     ====================================================== -->
     <div id="tela-selecao" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
         <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-5 sm:px-7 pt-6 sm:pt-7">
                 <div class="flex items-center justify-between gap-4">
                     <div>
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-1">E.E E.E Francisco Firmo de Matos</p>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-1">E.E Francisco Firmo de Matos</p>
                         <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Seleção de Turma</h2>
                     </div>
                     <button onclick="efetuarLogout()" class="w-9 h-9 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition flex items-center justify-center" title="Sair">
@@ -119,7 +120,6 @@
                 </div>
             </div>
             <div class="p-5 sm:p-7 space-y-5">
-                <!-- ETAPA — IGUAL AO ANTIGO -->
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">1º Passo: Escolha a Etapa de Ensino</label>
                     <select id="select-etapa" onchange="filtrarTurmasPorEtapa()" class="w-full p-3.5 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium text-sm transition">
@@ -130,7 +130,6 @@
                         <option value="3 REG">3º Ano Regular (3 REG)</option>
                     </select>
                 </div>
-                <!-- TURMAS FILTRADAS -->
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">2º Passo: Escolha a Turma</label>
                     <select id="select-turmas" disabled class="w-full p-3.5 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium text-sm transition disabled:bg-slate-100 disabled:text-slate-400">
@@ -157,13 +156,19 @@
                             <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-solid fa-school text-xs"></i>
                             </div>
-                            <span class="text-[10px] uppercase tracking-wider font-bold text-blue-300">E.E E.E Francisco Firmo de Matos</span>
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-blue-300">E.E Francisco Firmo de Matos</span>
                         </div>
                         <h1 id="titulo-turma" class="text-lg sm:text-xl font-bold truncate">Carômetro</h1>
                         <p class="text-xs text-slate-400 mt-0.5">Gerencie os alunos e fotos da turma</p>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <!-- ÍCONE REDONDO DO DIÁRIO DE BORDO -->
+                        <!-- ÍCONE: MAPEAMENTO DE SALA -->
+                        <a id="btn-mapeamento" href="#" title="Mapeamento de Sala">
+                            <div class="w-10 h-10 rounded-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white flex items-center justify-center transition shadow-sm text-lg">
+                                <i class="fa-solid fa-location-dot"></i>
+                            </div>
+                        </a>
+                        <!-- ÍCONE: DIÁRIO DE BORDO -->
                         <a id="btn-diario-bordo" href="#" title="Diário de Bordo">
                             <div class="w-10 h-10 rounded-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white flex items-center justify-center transition shadow-sm text-lg">
                                 📋
@@ -285,7 +290,6 @@
                     <select id="edit-turma" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-medium text-sm transition bg-white">
                     </select>
                 </div>
-                <!-- CAMPO RADIO NEURODIVERGENTE -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Aluno Neurodivergente</label>
                     <div class="flex items-center gap-6 p-3 bg-slate-50 rounded-xl border border-slate-200">
@@ -310,10 +314,9 @@
         </div>
     </div>
     <!-- =====================================================
-         JAVASCRIPT — SELEÇÃO IDÊNTICA AO CÓDIGO ANTIGO
+         JAVASCRIPT
     ====================================================== -->
     <script>
-        // CREDENCIAIS DO SUPABASE
         const SUPABASE_URL = "https://vydnefdeqljazqaisslq.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
     
@@ -324,39 +327,45 @@
         let turmaAtualSelecionada = "";
         const CHAVE_EXPIRACAO = "carometro_sessao_expiracao";
         
-       document.addEventListener("DOMContentLoaded", async () => {
+        document.addEventListener("DOMContentLoaded", async () => {
             verificarSessao();
             configurarInputsDeArquivo();
             
             const params = new URLSearchParams(window.location.search);
-            const turmaVindaDoDiario = params.get('turma');
+            const turmaVindaDoMapeamento = params.get('turma');
             
-            if (turmaVindaDoDiario) {
-                // Carrega as turmas primeiro
+            if (turmaVindaDoMapeamento) {
+                // Entrou vindo do mapeamento — carrega direto na turma
                 await carregarTurmas();
-                
-                // Descobre qual etapa pertence à turma
-                const etapa = descobrirEtapaDaTurma(turmaVindaDoDiario);
+                const etapa = descobrirEtapaDaTurma(turmaVindaDoMapeamento);
                 if (etapa) {
                     document.getElementById("select-etapa").value = etapa;
                     filtrarTurmasPorEtapa();
+                    document.getElementById("select-turmas").value = turmaVindaDoMapeamento;
+                    turmaAtualSelecionada = turmaVindaDoMapeamento;
                     
-                    // Seleciona a turma e entra
-                    document.getElementById("select-turmas").value = turmaVindaDoDiario;
-                    turmaAtualSelecionada = turmaVindaDoDiario;
+                    document.getElementById("titulo-turma").innerText = `Carômetro · ${turmaVindaDoMapeamento}`;
+                    atualizarLinksNavegacao(turmaVindaDoMapeamento);
                     
-                    // Entra direto na turma sem precisar clicar
-                    document.getElementById("titulo-turma").innerText = `Carômetro · ${turmaVindaDoDiario}`;
-                    const btnDiario = document.getElementById("btn-diario-bordo");
-                    if (btnDiario) {
-                        btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(turmaVindaDoDiario)}`;
-                    }
                     document.getElementById("tela-selecao").classList.add("hidden");
                     document.getElementById("tela-carometro").classList.remove("hidden");
-                    carregarAlunos(turmaVindaDoDiario);
+                    carregarAlunos(turmaVindaDoMapeamento);
                 }
             }
         });
+        
+        // Atualiza os links de navegação com a turma atual
+        function atualizarLinksNavegacao(nomeTurma) {
+            const btnDiario = document.getElementById("btn-diario-bordo");
+            const btnMapeamento = document.getElementById("btn-mapeamento");
+            
+            if (btnDiario) {
+                btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}&origem=carometro`;
+            }
+            if (btnMapeamento) {
+                btnMapeamento.href = `mapeamento.html?turma=${encodeURIComponent(nomeTurma)}&origem=carometro`;
+            }
+        }
         
         /* ================= LOADING OVERLAY ================= */
         function mostrarLoading(mensagem) {
@@ -407,7 +416,7 @@
             }
         }
         
-        /* ================= CARREGAR TURMAS — IGUAL AO ANTIGO ================= */
+        /* ================= CARREGAR TURMAS ================= */
         async function carregarTurmas() {
             const { data, error } = await supabaseClient
                 .from("carometro")
@@ -432,7 +441,7 @@
             selectTurmas.classList.add("disabled:bg-slate-100", "disabled:text-slate-400");
         }
         
-        /* ================= FILTRAR TURMAS POR ETAPA — IGUAL AO ANTIGO ================= */
+        /* ================= FILTRAR TURMAS POR ETAPA ================= */
         function filtrarTurmasPorEtapa() {
             const etapaSelecionada = document.getElementById("select-etapa").value;
             const selectTurmas = document.getElementById("select-turmas");
@@ -488,11 +497,10 @@
             }
             turmaAtualSelecionada = nomeTurma;
             document.getElementById("titulo-turma").innerText = `Carômetro · ${nomeTurma}`;
-            // Atualiza link do Diário de Bordo
-            const btnDiario = document.getElementById("btn-diario-bordo");
-            if (btnDiario) {
-                btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}`;
-            }
+            
+            // Atualiza links com a turma selecionada
+            atualizarLinksNavegacao(nomeTurma);
+            
             document.getElementById("tela-selecao").classList.add("hidden");
             document.getElementById("tela-carometro").classList.remove("hidden");
             carregarAlunos(nomeTurma);
@@ -504,7 +512,7 @@
             carregarTurmas();
         }
         
-        /* ================= DESCOBRIR ETAPA DA TURMA — IGUAL AO ANTIGO ================= */
+        /* ================= DESCOBRIR ETAPA DA TURMA ================= */
         function descobrirEtapaDaTurma(turma) {
             if (!turma) return "";
             const turmaUpper = turma.toUpperCase();
@@ -651,7 +659,7 @@
             }
         }
         
-        /* ================= UPLOAD E COMPRESSÃO DE FOTOS ================= */
+        /* ================= UPLOAD DE FOTOS ================= */
         function dispararUpload(alunoId, origem) {
             alunoSelecionadoParaUpload = alunoId;
             if (origem === 'camera') document.getElementById("input-camera").click();
@@ -698,7 +706,7 @@
             document.getElementById("input-galeria").addEventListener("change", processarArquivo);
         }
         
-        /* ================= EXCLUIR FOTO ================= */
+        /* ================= REMOVER FOTO ================= */
         async function removerFoto(alunoId) {
             if (!confirm("Tem certeza que deseja remover a foto deste aluno?")) return;
             mostrarLoading("Removendo foto...");
@@ -727,13 +735,12 @@
             }
         }
         
-        /* ================= MODAL DE EDIÇÃO ================= */
+        /* ================= EDITAR ALUNO ================= */
         async function abrirModalEdicao(id, nome, turma, neurodivergente) {
             document.getElementById("edit-aluno-id").value = id;
             document.getElementById("edit-nome").value = nome;
             const selectTurma = document.getElementById("edit-turma");
             
-            // Preenche com TODAS as turmas (igual ao antigo)
             selectTurma.innerHTML = "";
             if (!todasAsTurmas.length) {
                 selectTurma.innerHTML = '<option value="">Nenhuma turma cadastrada</option>';
@@ -780,7 +787,6 @@
                 if (error) throw error;
                 fecharModal();
                 
-                // Restaura a seleção atual (igual ao antigo)
                 const turmaAtual = turmaAtualSelecionada;
                 await carregarTurmas();
                 const etapaAtual = descobrirEtapaDaTurma(turmaAtual);
