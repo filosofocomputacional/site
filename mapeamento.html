@@ -44,7 +44,7 @@
         <p>Organização dos assentos</p>
       </div>
       <div class="header-right">
-        <a id="btn-carometro" href="index.html" class="btn btn-secondary">
+        <a id="btn-carometro" href="carometro.html" class="btn btn-secondary">
           <i class="fas fa-users"></i> Carômetro
         </a>
         <a id="btn-diario-bordo" href="diariodebordo.html" class="btn btn-secondary">
@@ -153,7 +153,7 @@
     function atualizarLinks(nomeTurma) {
       const btnCarometro = document.getElementById("btn-carometro");
       if (btnCarometro) {
-        btnCarometro.href = `index.html?turma=${encodeURIComponent(nomeTurma)}`;
+        btnCarometro.href = `carometro.html?turma=${encodeURIComponent(nomeTurma)}`;
       }
       const btnDiario = document.getElementById("btn-diario-bordo");
       if (btnDiario) {
