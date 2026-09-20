@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapeamento de Sala</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 10px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { text-align: center; color: #333; margin-bottom: 15px; font-size: 24px; }
+    .turma-selector { margin-bottom: 15px; text-align: center; }
+    .turma-selector select { padding: 10px 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; width: 100%; max-width: 300px; }
+    
+    .sala-container { display: flex; flex-direction: row; gap: 5px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-height: 600px; }
+    .fileira-col { flex: 1; display: flex; flex-direction: column; background: #fafafa; border-radius: 8px; overflow: hidden; transition: all 0.4s ease; border: 2px solid transparent; }
+    .fileira-col.active { flex: 3; border-color: #667eea; box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3); }
+    .fileira-col:not(.active) { flex: 1; }
+    
+    .fileira-header { padding: 12px 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer; text-align: center; user-select: none; transition: all 0.3s ease; }
+    .fileira-col.active .fileira-header { padding: 15px 10px; }
+    .fileira-header h3 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fileira-col.active .fileira-header h3 { font-size: 18px; }
+    
+    .fileira-content { flex: 1; display: flex; flex-direction: column; padding: 8px; overflow-y: auto; }
+    .fileira-col.active .fileira-content { padding: 15px; }
+    
+    .carteiras-stack { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .carteira { 
+      background: white; border: 2px dashed #ccc; border-radius: 8px; 
+      display: flex; align-items: center; justify-content: center; 
+      cursor: pointer; transition: all 0.2s ease; position: relative; 
+      min-height: 50px; padding: 5px;
+    }
+    .carteira:hover { border-color: #667eea; background: #f0f4ff; }
+    .carteira.vazia:hover { border-style: solid; border-color: #667eea; background: #eef2ff; }
+    .fileira-col.active .carteira { min-height: 70px; padding: 10px; }
+    .carteira.occupied { border-style: solid; border-color: #667eea; background: #e8ecff; }
+    .carteira.drag-over { border-color: #764ba2; background: #f5f0ff; transform: scale(1.05); }
+    
+    .carteira-numero { position: absolute; top: 2px; left: 5px; font-size: 10px; color: #999; font-weight: bold; }
+    .fileira-col.active .carteira-numero { font-size: 12px; }
+    
+    .carteira-aluno { display: flex; align-items: center; gap: 8px; width: 100%; padding-left: 20px; }
+    .carteira-aluno img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #ddd; }
+    .fileira-col.active .carteira-aluno img { width: 45px; height: 45px; }
+    .carteira-aluno p { font-size: 11px; color: #333; font-weight: 600; word-wrap: break-word; flex: 1; }
+    .fileira-col.active .carteira-aluno p { font-size: 14px; }
+    
+    .btn-remover { position: absolute; top: 2px; right: 2px; background: #ff6b6b; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10; }
+    .btn-remover:hover { background: #ee5a5a; }
+    
+    .alunos-disponiveis { margin-top: 15px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #eee; display: none; }
+    .fileira-col.active .alunos-disponiveis { display: block; }
+    .alunos-disponiveis h4 { margin-bottom: 10px; color: #333; font-size: 14px; }
+    .alunos-lista { display: flex; flex-wrap: wrap; gap: 8px; max-height: 150px; overflow-y: auto; padding: 5px; }
+    .aluno-item { padding: 6px 10px; background: #667eea; color: white; border-radius: 16px; cursor: pointer; font-size: 12px; user-select: none; transition: all 0.2s ease; }
+    .aluno-item:hover { background: #764ba2; transform: translateY(-2px); }
+    .aluno-item.dragging { opacity: 0.5; }
+    
+    /* POPUPS GERAIS */
+    .popup-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .popup-overlay.aberto { opacity: 1; visibility: visible; }
+    .popup {
+      background: white; border-radius: 12px; padding: 24px; max-width: 420px; width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2); transform: translateY(20px); transition: transform 0.3s ease;
+    }
+    .popup-overlay.aberto .popup { transform: translateY(0); }
+    .popup-cabecalho { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .popup-cabecalho h3 { color: #333; font-size: 18px; }
+    .popup-fechar { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; line-height: 1; }
+    .popup-fechar:hover { color: #333; }
+    .popup-lista { display: flex; flex-direction: column; gap: 8px; }
+    .popup-aluno {
+      display: flex; align-items: center; gap: 10px; padding: 10px;
+      border-radius: 8px; cursor: pointer; transition: background 0.2s ease;
+      border: 1px solid #eee;
+    }
+    .popup-aluno:hover { background: #f0f4ff; border-color: #667eea; }
+    .popup-aluno img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #ddd; }
+    .popup-aluno span { font-size: 14px; color: #333; font-weight: 500; }
+    .popup-vazio { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+    
+    /* POPUP DE CONFIRMAÇÃO */
+    .popup-mensagem { text-align: center; margin-bottom: 20px; color: #444; font-size: 15px; line-height: 1.5; }
+    .popup-botoes { display: flex; gap: 10px; justify-content: center; }
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .btn-cancelar { background: #eee; color: #555; }
+    .btn-cancelar:hover { background: #ddd; }
+    .btn-confirmar { background: #667eea; color: white; }
+    .btn-confirmar:hover { background: #5a6fd8; }
+    .btn-confirmar.perigo { background: #ff6b6b; }
+    .btn-confirmar.perigo:hover { background: #ee5a5a; }
+    
+    /* NOTIFICAÇÕES (no topo) */
+    .notificacao {
+      position: fixed; top: 20px; right: 20px; z-index: 2000;
+      padding: 14px 20px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      font-weight: 500; font-size: 14px; max-width: 320px;
+      transform: translateX(120%); transition: transform 0.3s ease;
+    }
+    .notificacao.mostrar { transform: translateX(0); }
+    .notificacao.sucesso { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .notificacao.erro { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    
+    .loading { text-align: center; padding: 20px; color: #666; font-weight: bold; display: none; }
+    
+    @media (max-width: 768px) {
+      .sala-container { flex-direction: column; min-height: auto; }
+      .fileira-col { flex: none !important; max-height: 80px; transition: max-height 0.4s ease; }
+      .fileira-col.active { max-height: none; }
+      .fileira-col:not(.active) .fileira-content { display: none; }
+      .fileira-header h3 { font-size: 16px !important; }
+      .notificacao { right: 10px; left: 10px; max-width: unset; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📚 Mapeamento de Sala</h1>
+    <div class="turma-selector">
+      <select id="turmaSelect">
+        <option value="">-- Escolha uma Turma --</option>
+      </select>
+    </div>
+    <div id="loading" class="loading">Carregando dados do Supabase...</div>
+    <div id="salaContainer" class="sala-container" style="display: none;"></div>
+  </div>
+
+  <!-- POPUP: Escolher Aluno para Assento -->
+  <div id="popupEscolhaOverlay" class="popup-overlay">
+    <div class="popup">
+      <div class="popup-cabecalho">
+        <h3 id="popupEscolhaTitulo">Ocupar Assento</h3>
+        <button class="popup-fechar" id="popupEscolhaFechar">&times;</button>
+      </div>
+      <div id="popupEscolhaConteudo" class="popup-lista"></div>
+    </div>
+  </div>
+
+  <!-- POPUP: Confirmação Genérica -->
+  <div id="popupConfirmarOverlay" class="popup-overlay">
+    <div class="popup">
+      <div class="popup-cabecalho">
+        <h3 id="popupConfirmarTitulo">Confirmação</h3>
+        <button class="popup-fechar" id="popupConfirmarFechar">&times;</button>
+      </div>
+      <p class="popup-mensagem" id="popupConfirmarTexto"></p>
+      <div class="popup-botoes">
+        <button class="btn btn-cancelar" id="popupConfirmarCancelar">Cancelar</button>
+        <button class="btn btn-confirmar" id="popupConfirmarOk">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notificação (mensagens de sucesso/erro) -->
+  <div id="notificacao" class="notificacao"></div>
+
+  <script>
+    const SUPABASE_URL = "https://vydnefdeqljazqaisslq.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZG5lZmRlcWxqYXpxYWlzc2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTkwNDEsImV4cCI6MjA5ODM5NTA0MX0.tnt7XMk3lpHU00lWQH-0wg-9fCjKEc4MiMVgZZWlY2U";
+    
+    const PLACEHOLDER_FOTO = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjNjY2IiBmb250LXNpemU9IjE0Ij5Gb3RvPC90ZXh0Pjwvc3ZnPg==';
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const TABELA_CAROMETRO = 'carometro';
+    
+    let currentTurma = '';
+    let todosAlunos = [];
+    const nomesFileiras = ['Porta', 'Fileira 1', 'Fileira 2', 'Fileira 3', 'Mesa do Prof'];
+    
+    let assentoAlvo = { fileira: null, carteira: null };
+    let fileiraAtiva = null;
+
+    // Armazena a função de confirmação pendente
+    let acaoConfirmada = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarTurmas();
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      document.getElementById('turmaSelect').addEventListener('change', (e) => {
+        currentTurma = e.target.value;
+        fileiraAtiva = null;
+        if (currentTurma) carregarMapeamento();
+        else {
+          document.getElementById('salaContainer').style.display = 'none';
+          todosAlunos = [];
+        }
+      });
+      
+      // Popup Escolha de Aluno
+      document.getElementById('popupEscolhaFechar').addEventListener('click', fecharPopupEscolha);
+      document.getElementById('popupEscolhaOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) fecharPopupEscolha();
+      });
+      
+      // Popup Confirmação
+      document.getElementById('popupConfirmarFechar').addEventListener('click', fecharPopupConfirmar);
+      document.getElementById('popupConfirmarCancelar').addEventListener('click', fecharPopupConfirmar);
+      document.getElementById('popupConfirmarOk').addEventListener('click', executarAcaoConfirmada);
+      document.getElementById('popupConfirmarOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) fecharPopupConfirmar();
+      });
+    }
+
+    async function carregarTurmas() {
+      try {
+        const { data, error } = await supabaseClient
+          .from(TABELA_CAROMETRO)
+          .select('class_name')
+          .order('class_name');
+        
+        if (error) throw error;
+        
+        const turmasUnicas = [...new Set(data.map(a => a.class_name).filter(Boolean))].sort();
+        const select = document.getElementById('turmaSelect');
+        select.innerHTML = '<option value="">-- Escolha uma Turma --</option>';
+        turmasUnicas.forEach(turma => {
+          const option = document.createElement('option');
+          option.value = turma;
+          option.textContent = turma;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        mostrarNotificacao('Erro ao carregar turmas: ' + error.message, 'erro');
+      }
+    }
+
+    async function carregarMapeamento() {
+      showLoading(true);
+      try {
+        const { data: alunos, error } = await supabaseClient
+          .from(TABELA_CAROMETRO)
+          .select('id, student_name, photo_url, class_name, mapeamento')
+          .eq('class_name', currentTurma)
+          .order('student_name');
+        
+        if (error) throw error;
+        
+        todosAlunos = alunos || [];
+        renderizarSala();
+        showLoading(false);
+        mostrarNotificacao('Mapeamento carregado com sucesso!', 'sucesso');
+      } catch (error) {
+        showLoading(false);
+        mostrarNotificacao('Erro ao carregar mapeamento: ' + error.message, 'erro');
+      }
+    }
+
+    function renderizarSala() {
+      const container = document.getElementById('salaContainer');
+      container.innerHTML = '';
+      container.style.display = 'flex';
+      
+      for (let fileira = 1; fileira <= 5; fileira++) {
+        const col = criarFileiraCol(fileira);
+        if (fileiraAtiva === fileira) col.classList.add('active');
+        container.appendChild(col);
+      }
+    }
+
+    function criarFileiraCol(fileiraNum) {
+      const col = document.createElement('div');
+      col.className = 'fileira-col';
+      col.dataset.fileira = fileiraNum;
+
+      const header = document.createElement('div');
+      header.className = 'fileira-header';
+      header.innerHTML = `<h3>${nomesFileiras[fileiraNum - 1]}</h3>`;
+      header.addEventListener('click', () => toggleFileira(col, fileiraNum));
+
+      const content = document.createElement('div');
+      content.className = 'fileira-content';
+
+      const stack = document.createElement('div');
+      stack.className = 'carteiras-stack';
+      for (let carteira = 1; carteira <= 8; carteira++) {
+        stack.appendChild(criarCarteira(fileiraNum, carteira));
+      }
+      content.appendChild(stack);
+
+      const alunosDiv = document.createElement('div');
+      alunosDiv.className = 'alunos-disponiveis';
+      alunosDiv.innerHTML = '<h4>Alunos Disponíveis:</h4>';
+      
+      const lista = document.createElement('div');
+      lista.className = 'alunos-lista';
+      const disponiveis = todosAlunos.filter(a => !a.mapeamento || a.mapeamento.trim() === '');
+      
+      if (disponiveis.length === 0) {
+        lista.innerHTML = '<p style="color: #666; font-size: 12px; width: 100%; text-align: center;">Todos posicionados</p>';
+      } else {
+        disponiveis.forEach(aluno => {
+          const alunoItem = document.createElement('div');
+          alunoItem.className = 'aluno-item';
+          alunoItem.draggable = true;
+          alunoItem.textContent = aluno.student_name.split(' ')[0];
+          alunoItem.dataset.alunoId = aluno.id;
+          alunoItem.addEventListener('dragstart', handleDragStart);
+          alunoItem.addEventListener('dragend', handleDragEnd);
+          lista.appendChild(alunoItem);
+        });
+      }
+      
+      alunosDiv.appendChild(lista);
+      content.appendChild(alunosDiv);
+      col.appendChild(header);
+      col.appendChild(content);
+      return col;
+    }
+
+    function criarCarteira(fileira, carteira) {
+      const div = document.createElement('div');
+      div.className = 'carteira';
+      const posicaoEsperada = `${fileira}-${carteira}`;
+      const alunoAlocado = todosAlunos.find(a => a.mapeamento === posicaoEsperada);
+
+      const numero = document.createElement('span');
+      numero.className = 'carteira-numero';
+      numero.textContent = carteira;
+      div.appendChild(numero);
+
+      if (alunoAlocado) {
+        div.classList.add('occupied');
+        const alunoDiv = document.createElement('div');
+        alunoDiv.className = 'carteira-aluno';
+
+        const btnRemover = document.createElement('button');
+        btnRemover.className = 'btn-remover';
+        btnRemover.innerHTML = '×';
+        btnRemover.title = 'Remover';
+        btnRemover.onclick = (e) => {
+          e.stopPropagation();
+          abrirPopupConfirmar(
+            'Remover Aluno',
+            'Deseja realmente remover o aluno deste assento?',
+            () => removerAlunoDoAssento(alunoAlocado.id),
+            true
+          );
+        };
+        alunoDiv.appendChild(btnRemover);
+
+        const img = document.createElement('img');
+        img.src = alunoAlocado.photo_url || PLACEHOLDER_FOTO;
+        img.alt = alunoAlocado.student_name;
+        
+        const nome = document.createElement('p');
+        nome.textContent = alunoAlocado.student_name;
+        alunoDiv.appendChild(img);
+        alunoDiv.appendChild(nome);
+        div.appendChild(alunoDiv);
+
+        div.draggable = true;
+        div.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('application/aluno-id', alunoAlocado.id);
+          div.classList.add('dragging');
+        });
+        div.addEventListener('dragend', () => div.classList.remove('dragging'));
+      } else {
+        div.classList.add('vazia');
+        div.addEventListener('click', () => abrirPopupEscolha(fileira, carteira));
+      }
+
+      div.addEventListener('dragover', handleDragOver);
+      div.addEventListener('dragleave', handleDragLeave);
+      div.addEventListener('drop', (e) => handleDrop(e, fileira, carteira));
+      
+      return div;
+    }
+
+    // ========= POPUP ESCOLHA DE ALUNO =========
+    function abrirPopupEscolha(fileira, carteira) {
+      assentoAlvo = { fileira, carteira };
+      
+      const disponiveis = todosAlunos.filter(a => !a.mapeamento || a.mapeamento.trim() === '');
+      const conteudo = document.getElementById('popupEscolhaConteudo');
+      const titulo = document.getElementById('popupEscolhaTitulo');
+      
+      titulo.textContent = `Assento: ${nomesFileiras[fileira - 1]} — Lugar ${carteira}`;
+      
+      if (disponiveis.length === 0) {
+        conteudo.innerHTML = '<p class="popup-vazio">Não há alunos disponíveis no momento.</p>';
+      } else {
+        conteudo.innerHTML = '';
+        disponiveis.forEach(aluno => {
+          const item = document.createElement('div');
+          item.className = 'popup-aluno';
+          item.innerHTML = `
+            <img src="${aluno.photo_url || PLACEHOLDER_FOTO}" alt="${aluno.student_name}">
+            <span>${aluno.student_name}</span>
+          `;
+          item.addEventListener('click', () => selecionarAlunoParaAssento(aluno.id));
+          conteudo.appendChild(item);
+        });
+      }
+      
+      document.getElementById('popupEscolhaOverlay').classList.add('aberto');
+    }
+
+    function fecharPopupEscolha() {
+      document.getElementById('popupEscolhaOverlay').classList.remove('aberto');
+      assentoAlvo = { fileira: null, carteira: null };
+    }
+
+    async function selecionarAlunoParaAssento(alunoId) {
+      const { fileira, carteira } = assentoAlvo;
+      if (!fileira || !carteira) return;
+      
+      const novaPosicao = `${fileira}-${carteira}`;
+      fecharPopupEscolha();
+      
+      // Atualiza na memória
+      const aluno = todosAlunos.find(a => a.id === alunoId);
+      if (aluno) aluno.mapeamento = novaPosicao;
+      
+      const alunoNoAlvo = todosAlunos.find(a => a.mapeamento === novaPosicao && a.id !== alunoId);
+      if (alunoNoAlvo) alunoNoAlvo.mapeamento = null;
+      
+      renderizarSala();
+      
+      try {
+        const updates = [];
+        if (alunoNoAlvo) {
+          updates.push(
+            supabaseClient.from(TABELA_CAROMETRO)
+              .update({ mapeamento: null })
+              .eq('id', alunoNoAlvo.id)
+          );
+        }
+        updates.push(
+          supabaseClient.from(TABELA_CAROMETRO)
+            .update({ mapeamento: novaPosicao })
+            .eq('id', alunoId)
+        );
+
+        const results = await Promise.all(updates);
+        const errors = results.filter(r => r.error);
+        if (errors.length > 0) throw errors[0].error;
+        
+        mostrarNotificacao('Aluno alocado com sucesso!', 'sucesso');
+      } catch (error) {
+        mostrarNotificacao('Erro: ' + error.message, 'erro');
+        await carregarMapeamento();
+      }
+    }
+
+    // ========= POPUP DE CONFIRMAÇÃO =========
+    function abrirPopupConfirmar(titulo, texto, acao, perigo = false) {
+      acaoConfirmada = acao;
+      document.getElementById('popupConfirmarTitulo').textContent = titulo;
+      document.getElementById('popupConfirmarTexto').textContent = texto;
+      
+      const btnOk = document.getElementById('popupConfirmarOk');
+      if (perigo) {
+        btnOk.classList.add('perigo');
+      } else {
+        btnOk.classList.remove('perigo');
+      }
+      
+      document.getElementById('popupConfirmarOverlay').classList.add('aberto');
+    }
+
+    function fecharPopupConfirmar() {
+      document.getElementById('popupConfirmarOverlay').classList.remove('aberto');
+      acaoConfirmada = null;
+    }
+
+    function executarAcaoConfirmada() {
+      if (typeof acaoConfirmada === 'function') {
+        acaoConfirmada();
+      }
+      fecharPopupConfirmar();
+    }
+
+    // ========= LÓGICA PRINCIPAL =========
+    function toggleFileira(col, numero) {
+      const isActive = col.classList.contains('active');
+      document.querySelectorAll('.fileira-col').forEach(c => c.classList.remove('active'));
+      
+      if (!isActive) {
+        col.classList.add('active');
+        fileiraAtiva = numero;
+      } else {
+        fileiraAtiva = null;
+      }
+    }
+
+    function handleDragStart(e) {
+      e.dataTransfer.setData('application/aluno-id', e.target.dataset.alunoId);
+      e.target.classList.add('dragging');
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    async function handleDrop(e, fileira, carteira) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      
+      const alunoId = e.dataTransfer.getData('application/aluno-id');
+      if (!alunoId) return;
+
+      const novaPosicao = `${fileira}-${carteira}`;
+      const alunoNoAlvo = todosAlunos.find(a => a.mapeamento === novaPosicao && a.id !== alunoId);
+      
+      // Atualização local
+      const aluno = todosAlunos.find(a => a.id === alunoId);
+      if (aluno) aluno.mapeamento = novaPosicao;
+      if (alunoNoAlvo) alunoNoAlvo.mapeamento = null;
+      
+      renderizarSala();
+
+      try {
+        const updates = [];
+        if (alunoNoAlvo) {
+          updates.push(
+            supabaseClient.from(TABELA_CAROMETRO)
+              .update({ mapeamento: null })
+              .eq('id', alunoNoAlvo.id)
+          );
+        }
+        updates.push(
+          supabaseClient.from(TABELA_CAROMETRO)
+            .update({ mapeamento: novaPosicao })
+            .eq('id', alunoId)
+        );
+
+        const results = await Promise.all(updates);
+        const errors = results.filter(r => r.error);
+        if (errors.length > 0) throw errors[0].error;
+        
+        mostrarNotificacao('Posição atualizada com sucesso!', 'sucesso');
+      } catch (error) {
+        mostrarNotificacao('Erro: ' + error.message, 'erro');
+        await carregarMapeamento();
+      }
+    }
+
+    async function removerAlunoDoAssento(alunoId) {
+      // Atualização local
+      const aluno = todosAlunos.find(a => a.id === alunoId);
+      if (aluno) aluno.mapeamento = null;
+      renderizarSala();
+      
+      try {
+        const { error } = await supabaseClient
+          .from(TABELA_CAROMETRO)
+          .update({ mapeamento: null })
+          .eq('id', alunoId);
+        
+        if (error) throw error;
+        mostrarNotificacao('Aluno removido com sucesso!', 'sucesso');
+      } catch (error) {
+        mostrarNotificacao('Erro: ' + error.message, 'erro');
+        await carregarMapeamento();
+      }
+    }
+
+    function showLoading(show) {
+      document.getElementById('loading').style.display = show ? 'block' : 'none';
+      if (show) document.getElementById('salaContainer').style.display = 'none';
+    }
+
+    // ========= SISTEMA DE NOTIFICAÇÕES =========
+    function mostrarNotificacao(texto, tipo) {
+      const el = document.getElementById('notificacao');
+      el.className = `notificacao ${tipo}`;
+      el.textContent = texto;
+      el.classList.add('mostrar');
+      
+      setTimeout(() => {
+        el.classList.remove('mostrar');
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
